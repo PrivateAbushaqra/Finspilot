@@ -1262,10 +1262,9 @@
                                 </ul>
                             </div>
                         </li>
-                    
-                                               
-                        <!-- Human Resources
-                        {% if user.is_superadmin or user.user_type == 'admin' or perms.hr.can_view_hr %}
+                                                                  
+<!-- Human Resources ------------------------------------------------------------->
+                        {% if perms.hr.view_hr_menu %}
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#hrMenu">
                                 <i class="fas fa-users-cog me-2"></i>
@@ -1274,35 +1273,51 @@
                             </a>
                             <div class="collapse {% if active_menu == 'hr' %}show{% endif %}" id="hrMenu">
                                 <ul class="nav flex-column ms-3">
+                                    {% if perms.hr.view_hr_menu %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'hr' and 'dashboard' in request.path %}active{% endif %}" href="{% url 'hr:dashboard' %}">{% trans "HR Dashboard" %}</a>
                                     </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'hr' and 'employee_list' in request.path %}active{% endif %}" href="{% url 'hr:employee_list' %}">{% trans "Employees" %}</a>
-                                    </li>
+                                    {% endif %}
+                                    {% if perms.hr.view_hr_department %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'hr' and 'department_list' in request.path %}active{% endif %}" href="{% url 'hr:department_list' %}">{% trans "Departments" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if perms.hr.view_hr_position %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'hr' and 'position_list' in request.path %}active{% endif %}" href="{% url 'hr:position_list' %}">{% trans "Positions" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if perms.hr.view_hr_employee %}
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if active_menu == 'hr' and 'employee_list' in request.path %}active{% endif %}" href="{% url 'hr:employee_list' %}">{% trans "Employees" %}</a>
+                                    </li>
+                                    {% endif %}
+                                    {% if perms.hr.view_hr_attendance %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'hr' and 'attendance_list' in request.path %}active{% endif %}" href="{% url 'hr:attendance_list' %}">{% trans "Attendance" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if perms.hr.view_hr_leaverequest %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'hr' and 'leave_request_list' in request.path %}active{% endif %}" href="{% url 'hr:leave_request_list' %}">{% trans "Leave Requests" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if perms.hr.view_hr_payrollperiod %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'hr' and 'payroll_period_list' in request.path %}active{% endif %}" href="{% url 'hr:payroll_period_list' %}">{% trans "Payroll" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if perms.hr.view_hr_menu %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'hr' and 'hr_reports' in request.path %}active{% endif %}" href="{% url 'hr:hr_reports' %}">{% trans "HR Reports" %}</a>
                                     </li>
+                                    {% endif %}
                                 </ul>
                             </div>
                         </li>
-                        {% endif %}-->
-                        
+                        {% endif %}
+<!-- Human Resources ------------------------------------------------------------->
                         <!-- System Management -->
                             <li class="nav-item">
                                 {% if user.is_superuser or perms.users.can_view_users_list or perms.users.can_view_groups_permissions or perms.users.can_view_activity_log or perms.users.can_view_document_number_management or perms.users.can_view_system_settings %}

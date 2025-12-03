@@ -148,7 +148,7 @@
     <div class="row">
         {% for attendance in attendances %}
         <div class="col-lg-6 col-xl-4 mb-4">
-            <div class="card attendance-card {{ attendance.status|lower }}">
+            <div class="card attendance-card {{ attendance.attendance_type|lower }}">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div>
@@ -159,8 +159,8 @@
                             </h6>
                             <small class="text-muted">{{ attendance.employee.employee_id }}</small>
                         </div>
-                        <span class="badge bg-{% if attendance.status == 'present' %}success{% elif attendance.status == 'absent' %}danger{% elif attendance.status == 'late' %}warning{% else %}secondary{% endif %}">
-                            {{ attendance.get_status_display }}
+                        <span class="badge bg-{% if attendance.attendance_type == 'present' %}success{% elif attendance.attendance_type == 'absent' %}danger{% elif attendance.attendance_type == 'late' %}warning{% else %}secondary{% endif %}">
+                            {{ attendance.get_attendance_type_display }}
                         </span>
                     </div>
                     
@@ -179,10 +179,13 @@
                         </div>
                     </div>
                     
-                    {% if attendance.working_hours %}
+                    {% if attendance.worked_hours %}
                     <div class="mt-3 text-center">
                         <small class="text-muted">{% trans "Working Hours" %}</small>
-                        <div class="fw-bold">{{ attendance.working_hours }} {% trans "hours" %}</div>
+                        <div class="fw-bold">{{ attendance.worked_hours }} {% trans "hours" %}</div>
+                        {% if attendance.overtime_hours %}
+                            <small class="text-warning">+{{ attendance.overtime_hours }} {% trans "overtime" %}</small>
+                        {% endif %}
                     </div>
                     {% endif %}
                     

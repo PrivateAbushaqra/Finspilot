@@ -46,7 +46,7 @@
                                         <td>{{ request.end_date|date:"d/m/Y" }}</td>
                                         <td>
                                             <span class="badge bg-info">
-                                                {{ request.total_days }}
+                                                {{ request.days_count }}
                                             </span>
                                         </td>
                                         <td>
@@ -65,7 +65,7 @@
                                                 <a href="{% url 'hr:approve_leave_request' request.pk %}" 
                                                        class="btn btn-sm btn-outline-success" 
                                                        title="{% trans 'Approve' %}"
-                                                       onclick="return confirm('هل تريد الموافقة على هذا الطلب؟')">
+                                                       onclick="return confirm('{% trans "Do you want to approve this request?" %}')">
                                                         <i class="fas fa-check"></i>
                                                     </a>
                                                     <a href="{% url 'hr:leave_request_edit' request.pk %}" 

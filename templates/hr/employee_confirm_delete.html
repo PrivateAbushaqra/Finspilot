@@ -191,29 +191,29 @@
                             <div class="row mt-2">
                                 <div class="col-md-6">
                                     <strong>{% trans "Department:" %}</strong>
-                                    <span class="ms-2">{{ object.department.name|default:"غير محدد" }}</span>
+                                    <span class="ms-2">{{ object.department.name|default:"{% trans 'Not Specified' %}" }}</span>
                                 </div>
                                 <div class="col-md-6">
                                     <strong>{% trans "Position:" %}</strong>
-                                    <span class="ms-2">{{ object.position.title|default:"غير محدد" }}</span>
+                                    <span class="ms-2">{{ object.position.title|default:"{% trans 'Not Specified' %}" }}</span>
                                 </div>
                             </div>
                             
                             <div class="row mt-2">
                                 <div class="col-md-6">
                                     <strong>{% trans "Email:" %}</strong>
-                                    <span class="ms-2">{{ object.email|default:"غير محدد" }}</span>
+                                    <span class="ms-2">{{ object.email|default:"{% trans 'Not Specified' %}" }}</span>
                                 </div>
                                 <div class="col-md-6">
                                     <strong>{% trans "Phone Number:" %}</strong>
-                                    <span class="ms-2">{{ object.phone|default:"غير محدد" }}</span>
+                                    <span class="ms-2">{{ object.phone|default:"{% trans 'Not Specified' %}" }}</span>
                                 </div>
                             </div>
                             
                             <div class="row mt-2">
                                 <div class="col-md-6">
                                     <strong>{% trans "Hire Date:" %}</strong>
-                                    <span class="ms-2">{{ object.hire_date|date:"d/m/Y"|default:"غير محدد" }}</span>
+                                    <span class="ms-2">{{ object.hire_date|date:"d/m/Y"|default:"{% trans 'Not Specified' %}" }}</span>
                                 </div>
                                 <div class="col-md-6">
                                     <strong>{% trans "Status:" %}</strong>
@@ -321,7 +321,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // تأكيد نهائي
         const employeeName = '{{ object.full_name|escapejs }}';
-        const confirmMessage = `{% trans "Final confirmation: Are you sure you want to delete the employee" %} "${employeeName}"؟\n\n{% trans "This action cannot be undone!" %}`;
+        const confirmMessage = `{% trans "Final confirmation: Are you sure you want to delete the employee" %} "${employeeName}"?\n\n{% trans "This action cannot be undone!" %}`;
         
         if (!confirm(confirmMessage)) {
             e.preventDefault();

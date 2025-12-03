@@ -39,7 +39,7 @@
                                     <tr>
                                         <td>
                                             <a href="{% url 'hr:payroll_period_detail' period.pk %}" class="text-decoration-none">
-                                                <strong>{{ period.year }}/{{ period.month|stringformat:"02d" }}</strong>
+                                                <strong>{{ period.name }}</strong>
                                             </a>
                                         </td>
                                         <td>{{ period.start_date|date:"d/m/Y" }}</td>
@@ -77,7 +77,7 @@
                                                     <a href="{% url 'hr:process_payroll' period.pk %}" 
                                                        class="btn btn-sm btn-outline-success" 
                                                        title="{% trans 'Process Payroll' %}"
-                                                       onclick="return confirm('هل تريد معالجة كشف الراتب لهذه الفترة؟')">
+                                                       onclick="return confirm('{% trans "Do you want to process the payroll for this period?" %}')">
                                                         <i class="fas fa-play"></i>
                                                     </a>
                                                 {% endif %}

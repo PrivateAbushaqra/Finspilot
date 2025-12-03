@@ -179,12 +179,22 @@ class AttendanceForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        from django.utils.translation import get_language
+        
+        current_lang = get_language()
+        
         # ترتيب الموظفين بحسب الاسم وإظهار الموظفين النشطين فقط
         active_employees = Employee.objects.filter(status='active').select_related('department', 'position')
         self.fields['employee'].queryset = active_employees.order_by('first_name', 'last_name')
         
         # تحسين عرض قائمة الموظفين
         self.fields['employee'].empty_label = _('اختر الموظف')
+        
+        # تخصيص عرض أسماء الموظفين بناءً على اللغة
+        if current_lang == 'en':
+            self.fields['employee'].label_from_instance = lambda obj: f"{obj.full_name_en} ({obj.employee_id})" if obj.first_name_en and obj.last_name_en else f"{obj.full_name} ({obj.employee_id})"
+        else:
+            self.fields['employee'].label_from_instance = lambda obj: f"{obj.full_name} ({obj.employee_id})"
         
         # تحديد التاريخ الافتراضي لليوم الحالي
         if not self.instance.pk:
@@ -242,8 +252,17 @@ class LeaveRequestForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        from django.utils.translation import get_language
+        
+        current_lang = get_language()
         self.fields['employee'].queryset = Employee.objects.filter(status='active')
         self.fields['leave_type'].queryset = LeaveType.objects.filter(is_active=True)
+        
+        # تخصيص عرض أسماء الموظفين بناءً على اللغة
+        if current_lang == 'en':
+            self.fields['employee'].label_from_instance = lambda obj: f"{obj.full_name_en} ({obj.employee_id})" if obj.first_name_en and obj.last_name_en else f"{obj.full_name} ({obj.employee_id})"
+        else:
+            self.fields['employee'].label_from_instance = lambda obj: f"{obj.full_name} ({obj.employee_id})"
 
     def clean(self):
         cleaned_data = super().clean()
@@ -338,6 +357,9 @@ class PayrollEntryForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.payroll_period = kwargs.pop('payroll_period', None)
         super().__init__(*args, **kwargs)
+        from django.utils.translation import get_language
+        
+        current_lang = get_language()
         
         if self.payroll_period:
             # عرض الموظفين الذين لم يتم إنشاء قيد راتب لهم في هذه الفترة
@@ -348,6 +370,12 @@ class PayrollEntryForm(forms.ModelForm):
             self.fields['employee'].queryset = Employee.objects.filter(
                 status='active'
             ).exclude(id__in=existing_entries)
+        
+        # تخصيص عرض أسماء الموظفين بناءً على اللغة
+        if current_lang == 'en':
+            self.fields['employee'].label_from_instance = lambda obj: f"{obj.full_name_en} ({obj.employee_id})" if obj.first_name_en and obj.last_name_en else f"{obj.full_name} ({obj.employee_id})"
+        else:
+            self.fields['employee'].label_from_instance = lambda obj: f"{obj.full_name} ({obj.employee_id})"
 
 
 class EmployeeDocumentForm(forms.ModelForm):
@@ -366,7 +394,16 @@ class EmployeeDocumentForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        from django.utils.translation import get_language
+        
+        current_lang = get_language()
         self.fields['employee'].queryset = Employee.objects.filter(status='active')
+        
+        # تخصيص عرض أسماء الموظفين بناءً على اللغة
+        if current_lang == 'en':
+            self.fields['employee'].label_from_instance = lambda obj: f"{obj.full_name_en} ({obj.employee_id})" if obj.first_name_en and obj.last_name_en else f"{obj.full_name} ({obj.employee_id})"
+        else:
+            self.fields['employee'].label_from_instance = lambda obj: f"{obj.full_name} ({obj.employee_id})"
         
         # إذا كان هناك instance (تحديث)، اجعل حقل employee غير قابل للتعديل
         if self.instance and self.instance.pk:
@@ -391,9 +428,19 @@ class DepartmentForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        from django.utils.translation import get_language
+        
+        # تخصيص عرض الأسماء حسب اللغة
+        current_lang = get_language()
         self.fields['manager'].queryset = Employee.objects.filter(status='active')
         self.fields['manager'].required = False
         self.fields['manager'].empty_label = _('Select Manager (Optional)')
+        
+        # تخصيص عرض الأسماء بناءً على اللغة
+        if current_lang == 'en':
+            self.fields['manager'].label_from_instance = lambda obj: f"{obj.full_name_en} ({obj.employee_id})" if obj.first_name_en and obj.last_name_en else f"{obj.full_name} ({obj.employee_id})"
+        else:
+            self.fields['manager'].label_from_instance = lambda obj: f"{obj.full_name} ({obj.employee_id})"
 
     def clean_code(self):
         code = self.cleaned_data['code']

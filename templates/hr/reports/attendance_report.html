@@ -120,16 +120,21 @@
                                     <tr>
                                         <td>
                                             <a href="{% url 'hr:employee_detail' attendance.employee.pk %}">
-                                                {{ attendance.employee.get_full_name }}
+                                                {{ attendance.employee.full_name }}
                                             </a>
                                         </td>
                                         <td>{{ attendance.date|date:"d/m/Y" }}</td>
                                         <td>{{ attendance.check_in_time|time:"H:i"|default:"-" }}</td>
                                         <td>{{ attendance.check_out_time|time:"H:i"|default:"-" }}</td>
-                                        <td>{{ attendance.working_hours|default:"-" }}</td>
                                         <td>
-                                            <span class="badge bg-{% if attendance.status == 'present' %}success{% elif attendance.status == 'absent' %}danger{% elif attendance.status == 'late' %}warning{% else %}secondary{% endif %}">
-                                                {{ attendance.get_status_display }}
+                                            {{ attendance.worked_hours|floatformat:2 }}
+                                            {% if attendance.overtime_hours > 0 %}
+                                                <small class="text-warning">(+{{ attendance.overtime_hours|floatformat:2 }})</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if attendance.attendance_type == 'present' %}success{% elif attendance.attendance_type == 'absent' %}danger{% elif attendance.attendance_type == 'late' %}warning{% else %}secondary{% endif %}">
+                                                {{ attendance.get_attendance_type_display }}
                                             </span>
                                         </td>
                                     </tr>

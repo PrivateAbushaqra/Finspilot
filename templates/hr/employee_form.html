@@ -59,7 +59,7 @@
         <div class="form-section">
             <h5><i class="fas fa-user me-2"></i>{% trans "Personal Information" %}</h5>
             <div class="row">
-                <div class="col-md-6 mb-3">
+                <div class="col-md-3 mb-3">
                     <label for="{{ form.first_name.id_for_label }}" class="form-label required-field">{{ form.first_name.label }}</label>
                     {{ form.first_name }}
                     {% if form.first_name.errors %}
@@ -68,7 +68,7 @@
                         </div>
                     {% endif %}
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-3 mb-3">
                     <label for="{{ form.last_name.id_for_label }}" class="form-label required-field">{{ form.last_name.label }}</label>
                     {{ form.last_name }}
                     {% if form.last_name.errors %}
@@ -77,8 +77,71 @@
                         </div>
                     {% endif %}
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
+                <div class="col-md-3 mb-3">
+                    <label for="{{ form.first_name_en.id_for_label }}" class="form-label">{{ form.first_name_en.label }}</label>
+                    {{ form.first_name_en }}
+                    {% if form.first_name_en.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.first_name_en.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="{{ form.last_name_en.id_for_label }}" class="form-label">{{ form.last_name_en.label }}</label>
+                    {{ form.last_name_en }}
+                    {% if form.last_name_en.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.last_name_en.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.national_id.id_for_label }}" class="form-label required-field">{{ form.national_id.label }}</label>
+                    {{ form.national_id }}
+                    {% if form.national_id.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.national_id.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.passport_number.id_for_label }}" class="form-label">{{ form.passport_number.label }}</label>
+                    {{ form.passport_number }}
+                    {% if form.passport_number.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.passport_number.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.birth_date.id_for_label }}" class="form-label required-field">{{ form.birth_date.label }}</label>
+                    {{ form.birth_date }}
+                    {% if form.birth_date.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.birth_date.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="{{ form.gender.id_for_label }}" class="form-label required-field">{{ form.gender.label }}</label>
+                    {{ form.gender }}
+                    {% if form.gender.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.gender.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="{{ form.marital_status.id_for_label }}" class="form-label required-field">{{ form.marital_status.label }}</label>
+                    {{ form.marital_status }}
+                    {% if form.marital_status.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.marital_status.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="{{ form.email.id_for_label }}" class="form-label required-field">{{ form.email.label }}</label>
                     {{ form.email }}
                     {% if form.email.errors %}
                         <div class="invalid-feedback d-block">
@@ -86,30 +149,21 @@
                         </div>
                     {% endif %}
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label for="{{ form.phone_number.id_for_label }}" class="form-label">{{ form.phone_number.label }}</label>
-                    {{ form.phone_number }}
-                    {% if form.phone_number.errors %}
+                <div class="col-md-3 mb-3">
+                    <label for="{{ form.phone.id_for_label }}" class="form-label required-field">{{ form.phone.label }}</label>
+                    {{ form.phone }}
+                    {% if form.phone.errors %}
                         <div class="invalid-feedback d-block">
-                            {% for error in form.phone_number.errors %}{{ error }}{% endfor %}
+                            {% for error in form.phone.errors %}{{ error }}{% endfor %}
                         </div>
                     {% endif %}
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">{{ form.date_of_birth.label }}</label>
-                    {{ form.date_of_birth }}
-                    {% if form.date_of_birth.errors %}
+                    <label for="{{ form.mobile.id_for_label }}" class="form-label">{{ form.mobile.label }}</label>
+                    {{ form.mobile }}
+                    {% if form.mobile.errors %}
                         <div class="invalid-feedback d-block">
-                            {% for error in form.date_of_birth.errors %}{{ error }}{% endfor %}
-                        </div>
-                    {% endif %}
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="{{ form.national_id.id_for_label }}" class="form-label">{{ form.national_id.label }}</label>
-                    {{ form.national_id }}
-                    {% if form.national_id.errors %}
-                        <div class="invalid-feedback d-block">
-                            {% for error in form.national_id.errors %}{{ error }}{% endfor %}
+                            {% for error in form.mobile.errors %}{{ error }}{% endfor %}
                         </div>
                     {% endif %}
                 </div>
@@ -122,6 +176,24 @@
                         </div>
                     {% endif %}
                 </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.emergency_contact_name.id_for_label }}" class="form-label">{{ form.emergency_contact_name.label }}</label>
+                    {{ form.emergency_contact_name }}
+                    {% if form.emergency_contact_name.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.emergency_contact_name.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.emergency_contact_phone.id_for_label }}" class="form-label">{{ form.emergency_contact_phone.label }}</label>
+                    {{ form.emergency_contact_phone }}
+                    {% if form.emergency_contact_phone.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.emergency_contact_phone.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
 
@@ -129,7 +201,7 @@
         <div class="form-section">
             <h5><i class="fas fa-briefcase me-2"></i>{% trans "Employment Information" %}</h5>
             <div class="row">
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
                     <label for="{{ form.employee_id.id_for_label }}" class="form-label required-field">{{ form.employee_id.label }}</label>
                     {{ form.employee_id }}
                     {% if form.employee_id.errors %}
@@ -139,17 +211,26 @@
                     {% endif %}
                     <div class="form-text">{% trans "Unique identifier for the employee" %}</div>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label for="{{ form.date_joined.id_for_label }}" class="form-label required-field">{{ form.date_joined.label }}</label>
-                    {{ form.date_joined }}
-                    {% if form.date_joined.errors %}
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.hire_date.id_for_label }}" class="form-label required-field">{{ form.hire_date.label }}</label>
+                    {{ form.hire_date }}
+                    {% if form.hire_date.errors %}
                         <div class="invalid-feedback d-block">
-                            {% for error in form.date_joined.errors %}{{ error }}{% endfor %}
+                            {% for error in form.hire_date.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.employment_type.id_for_label }}" class="form-label required-field">{{ form.employment_type.label }}</label>
+                    {{ form.employment_type }}
+                    {% if form.employment_type.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.employment_type.errors %}{{ error }}{% endfor %}
                         </div>
                     {% endif %}
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label for="{{ form.department.id_for_label }}" class="form-label">{{ form.department.label }}</label>
+                    <label for="{{ form.department.id_for_label }}" class="form-label required-field">{{ form.department.label }}</label>
                     {{ form.department }}
                     {% if form.department.errors %}
                         <div class="invalid-feedback d-block">
@@ -158,11 +239,20 @@
                     {% endif %}
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label for="{{ form.position.id_for_label }}" class="form-label">{{ form.position.label }}</label>
+                    <label for="{{ form.position.id_for_label }}" class="form-label required-field">{{ form.position.label }}</label>
                     {{ form.position }}
                     {% if form.position.errors %}
                         <div class="invalid-feedback d-block">
                             {% for error in form.position.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.status.id_for_label }}" class="form-label required-field">{{ form.status.label }}</label>
+                    {{ form.status }}
+                    {% if form.status.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.status.errors %}{{ error }}{% endfor %}
                         </div>
                     {% endif %}
                 </div>
@@ -176,16 +266,69 @@
                     {% endif %}
                     <div class="form-text">{% trans "Link employee to a system user (optional)" %}</div>
                 </div>
+            </div>
+        </div>
+        
+        <!-- Salary Information Section -->
+        <div class="form-section">
+            <h5><i class="fas fa-money-bill-wave me-2"></i>{% trans "Salary Information" %}</h5>
+            <div class="row">
                 <div class="col-md-6 mb-3">
-                    <div class="form-check">
-                        {{ form.is_active }}
-                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
-                            {{ form.is_active.label }}
-                        </label>
-                    </div>
-                    {% if form.is_active.errors %}
+                    <label for="{{ form.basic_salary.id_for_label }}" class="form-label required-field">{{ form.basic_salary.label }}</label>
+                    {{ form.basic_salary }}
+                    {% if form.basic_salary.errors %}
                         <div class="invalid-feedback d-block">
-                            {% for error in form.is_active.errors %}{{ error }}{% endfor %}
+                            {% for error in form.basic_salary.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.allowances.id_for_label }}" class="form-label">{{ form.allowances.label }}</label>
+                    {{ form.allowances }}
+                    {% if form.allowances.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.allowances.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Social Security Information Section -->
+        <div class="form-section">
+            <h5><i class="fas fa-shield-alt me-2"></i>{% trans "Social Security Information" %}</h5>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.social_security_number.id_for_label }}" class="form-label">{{ form.social_security_number.label }}</label>
+                    {{ form.social_security_number }}
+                    {% if form.social_security_number.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.social_security_number.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.social_security_rate.id_for_label }}" class="form-label">{{ form.social_security_rate.label }}</label>
+                    {{ form.social_security_rate }}
+                    {% if form.social_security_rate.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.social_security_rate.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Additional Notes Section -->
+        <div class="form-section">
+            <h5><i class="fas fa-sticky-note me-2"></i>{% trans "Additional Notes" %}</h5>
+            <div class="row">
+                <div class="col-12 mb-3">
+                    <label for="{{ form.notes.id_for_label }}" class="form-label">{{ form.notes.label }}</label>
+                    {{ form.notes }}
+                    {% if form.notes.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.notes.errors %}{{ error }}{% endfor %}
                         </div>
                     {% endif %}
                 </div>

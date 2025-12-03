@@ -23,6 +23,12 @@ class Department(models.Model):
         verbose_name = _('Department')
         verbose_name_plural = _('Departments')
         ordering = ['name']
+        permissions = [
+            ("view_hr_department", _("Can View Departments")),
+            ("add_hr_department", _("Can Add Departments")),
+            ("change_hr_department", _("Can Change Departments")),
+            ("delete_hr_department", _("Can Delete Departments")),
+        ]
 
     def __str__(self):
         return self.name
@@ -46,6 +52,12 @@ class Position(models.Model):
         verbose_name = _('Position')
         verbose_name_plural = _('Positions')
         ordering = ['department__name', 'title']
+        permissions = [
+            ("view_hr_position", _("Can View Positions")),
+            ("add_hr_position", _("Can Add Positions")),
+            ("change_hr_position", _("Can Change Positions")),
+            ("delete_hr_position", _("Can Delete Positions")),
+        ]
 
     def __str__(self):
         return f"{self.title} - {self.department.name}"
@@ -135,11 +147,11 @@ class Employee(models.Model):
         verbose_name_plural = _('Employees')
         ordering = ['first_name', 'last_name']
         permissions = [
-            ("can_view_hr", _("Can View HR")),
-            ("can_manage_employees", _("Can Manage Employees")),
-            ("can_manage_attendance", _("Can Manage Attendance")),
-            ("can_manage_payroll", _("Can Manage Payroll")),
-            ("can_approve_leaves", _("Can Approve Leaves")),
+            ("view_hr_menu", _("Can View HR Menu")),
+            ("view_hr_employee", _("Can View Employees")),
+            ("add_hr_employee", _("Can Add Employees")),
+            ("change_hr_employee", _("Can Change Employees")),
+            ("delete_hr_employee", _("Can Delete Employees")),
         ]
 
     def __str__(self):
@@ -162,6 +174,10 @@ class Employee(models.Model):
             return self.last_name
         else:
             return f"{_('Employee')} {self.employee_id}"
+    
+    def get_full_name(self):
+        """Method for compatibility with Django User model"""
+        return self.full_name
 
     @property
     def full_name_en(self):
@@ -239,6 +255,12 @@ class Contract(models.Model):
         verbose_name = _('Contract')
         verbose_name_plural = _('Contracts')
         ordering = ['-start_date']
+        permissions = [
+            ("view_hr_contract", _("Can View Contracts")),
+            ("add_hr_contract", _("Can Add Contracts")),
+            ("change_hr_contract", _("Can Change Contracts")),
+            ("delete_hr_contract", _("Can Delete Contracts")),
+        ]
 
     def __str__(self):
         return f"{self.contract_number} - {self.employee.full_name}"
@@ -273,6 +295,12 @@ class Attendance(models.Model):
         verbose_name_plural = _('Attendances')
         ordering = ['-date', 'employee__first_name']
         unique_together = ['employee', 'date']
+        permissions = [
+            ("view_hr_attendance", _("Can View Attendance")),
+            ("add_hr_attendance", _("Can Add Attendance")),
+            ("change_hr_attendance", _("Can Change Attendance")),
+            ("delete_hr_attendance", _("Can Delete Attendance")),
+        ]
 
     def __str__(self):
         return f"{self.employee.full_name} - {self.date}"
@@ -320,6 +348,12 @@ class LeaveType(models.Model):
         verbose_name = _('Leave Type')
         verbose_name_plural = _('Leave Types')
         ordering = ['name']
+        permissions = [
+            ("view_hr_leavetype", _("Can View Leave Types")),
+            ("add_hr_leavetype", _("Can Add Leave Types")),
+            ("change_hr_leavetype", _("Can Change Leave Types")),
+            ("delete_hr_leavetype", _("Can Delete Leave Types")),
+        ]
 
     def __str__(self):
         return self.name
@@ -355,6 +389,13 @@ class LeaveRequest(models.Model):
         verbose_name = _('Leave Request')
         verbose_name_plural = _('Leave Requests')
         ordering = ['-created_at']
+        permissions = [
+            ("view_hr_leaverequest", _("Can View Leave Requests")),
+            ("add_hr_leaverequest", _("Can Add Leave Requests")),
+            ("change_hr_leaverequest", _("Can Change Leave Requests")),
+            ("delete_hr_leaverequest", _("Can Delete Leave Requests")),
+            ("approve_hr_leaverequest", _("Can Approve Leave Requests")),
+        ]
 
     def __str__(self):
         return f"{self.employee.full_name} - {self.leave_type.name} ({self.start_date} to {self.end_date})"
@@ -384,9 +425,30 @@ class PayrollPeriod(models.Model):
         verbose_name = _('Payroll Period')
         verbose_name_plural = _('Payroll Periods')
         ordering = ['-start_date']
+        permissions = [
+            ("view_hr_payrollperiod", _("Can View Payroll Periods")),
+            ("add_hr_payrollperiod", _("Can Add Payroll Periods")),
+            ("change_hr_payrollperiod", _("Can Change Payroll Periods")),
+            ("delete_hr_payrollperiod", _("Can Delete Payroll Periods")),
+            ("process_hr_payrollperiod", _("Can Process Payroll Periods")),
+        ]
 
     def __str__(self):
         return f"{self.name} ({self.start_date} to {self.end_date})"
+    
+    @property
+    def total_gross_salary(self):
+        """حساب إجمالي الرواتب الإجمالية للفترة"""
+        return self.payroll_entries.aggregate(
+            total=models.Sum('gross_salary')
+        )['total'] or 0
+    
+    @property
+    def total_net_salary(self):
+        """حساب إجمالي الرواتب الصافية للفترة"""
+        return self.payroll_entries.aggregate(
+            total=models.Sum('net_salary')
+        )['total'] or 0
 
 class PayrollEntry(models.Model):
     """قيود الرواتب"""
@@ -431,6 +493,12 @@ class PayrollEntry(models.Model):
         verbose_name_plural = _('Payroll Entries')
         ordering = ['-payroll_period__start_date', 'employee__first_name']
         unique_together = ['payroll_period', 'employee']
+        permissions = [
+            ("view_hr_payrollentry", _("Can View Payroll Entries")),
+            ("add_hr_payrollentry", _("Can Add Payroll Entries")),
+            ("change_hr_payrollentry", _("Can Change Payroll Entries")),
+            ("delete_hr_payrollentry", _("Can Delete Payroll Entries")),
+        ]
 
     def __str__(self):
         return f"{self.employee.full_name} - {self.payroll_period.name}"
@@ -522,6 +590,12 @@ class EmployeeDocument(models.Model):
         verbose_name = _('Employee Document')
         verbose_name_plural = _('Employee Documents')
         ordering = ['-upload_date']
+        permissions = [
+            ("view_hr_employeedocument", _("Can View Employee Documents")),
+            ("add_hr_employeedocument", _("Can Add Employee Documents")),
+            ("change_hr_employeedocument", _("Can Change Employee Documents")),
+            ("delete_hr_employeedocument", _("Can Delete Employee Documents")),
+        ]
 
     def __str__(self):
         return f"{self.employee.full_name} - {self.title}"

@@ -19,7 +19,7 @@
                     </a>
                 </div>
                 <div class="card-body">
-                    {% if employees %}
+                    {% if employee_balances %}
                         <div class="table-responsive">
                             <table class="table table-striped table-hover">
                                 <thead class="table-dark">
@@ -34,46 +34,58 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for employee in employees %}
+                                    {% for balance in employee_balances %}
                                     <tr>
                                         <td>
-                                            <a href="{% url 'hr:employee_detail' employee.pk %}">
-                                                {{ employee.get_full_name }}
+                                            <a href="{% url 'hr:employee_detail' balance.employee.pk %}">
+                                                {{ balance.employee.full_name }}
                                             </a>
                                         </td>
-                                        <td>{{ employee.department.name|default:"-" }}</td>
+                                        <td>{{ balance.employee.department.name|default:"-" }}</td>
                                         <td>
                                             <div class="progress" style="height: 20px;">
-                                                <div class="progress-bar" role="progressbar" 
-                                                     style="width: {{ employee.annual_leave_used_percentage }}%">
-                                                    {{ employee.annual_leave_used }}/{{ employee.annual_leave_total }}
+                                                <div class="progress-bar bg-primary" role="progressbar" 
+                                                     style="width: {{ balance.annual_leave_used_percentage }}%"
+                                                     aria-valuenow="{{ balance.annual_leave_used }}"
+                                                     aria-valuemin="0"
+                                                     aria-valuemax="{{ balance.annual_leave_total }}">
+                                                    {{ balance.annual_leave_used }}/{{ balance.annual_leave_total }}
                                                 </div>
                                             </div>
+                                            <small class="text-muted">{% trans "Remaining" %}: {{ balance.annual_leave_remaining }}</small>
                                         </td>
                                         <td>
                                             <div class="progress" style="height: 20px;">
                                                 <div class="progress-bar bg-warning" role="progressbar" 
-                                                     style="width: {{ employee.sick_leave_used_percentage }}%">
-                                                    {{ employee.sick_leave_used }}/{{ employee.sick_leave_total }}
+                                                     style="width: {{ balance.sick_leave_used_percentage }}%"
+                                                     aria-valuenow="{{ balance.sick_leave_used }}"
+                                                     aria-valuemin="0"
+                                                     aria-valuemax="{{ balance.sick_leave_total }}">
+                                                    {{ balance.sick_leave_used }}/{{ balance.sick_leave_total }}
                                                 </div>
                                             </div>
+                                            <small class="text-muted">{% trans "Remaining" %}: {{ balance.sick_leave_remaining }}</small>
                                         </td>
                                         <td>
                                             <div class="progress" style="height: 20px;">
                                                 <div class="progress-bar bg-danger" role="progressbar" 
-                                                     style="width: {{ employee.emergency_leave_used_percentage }}%">
-                                                    {{ employee.emergency_leave_used }}/{{ employee.emergency_leave_total }}
+                                                     style="width: {{ balance.emergency_leave_used_percentage }}%"
+                                                     aria-valuenow="{{ balance.emergency_leave_used }}"
+                                                     aria-valuemin="0"
+                                                     aria-valuemax="{{ balance.emergency_leave_total }}">
+                                                    {{ balance.emergency_leave_used }}/{{ balance.emergency_leave_total }}
                                                 </div>
                                             </div>
+                                            <small class="text-muted">{% trans "Remaining" %}: {{ balance.emergency_leave_remaining }}</small>
                                         </td>
                                         <td>
                                             <span class="badge bg-primary">
-                                                {{ employee.total_leave_used }}
+                                                {{ balance.total_leave_used }}
                                             </span>
                                         </td>
                                         <td>
                                             <span class="badge bg-success">
-                                                {{ employee.total_leave_remaining }}
+                                                {{ balance.total_leave_remaining }}
                                             </span>
                                         </td>
                                     </tr>

@@ -92,8 +92,8 @@
                             </h5>
                             <p class="text-muted mb-0">{{ employee.employee_id }}</p>
                         </div>
-                        <span class="badge bg-{% if employee.is_active %}success{% else %}secondary{% endif %} status-badge">
-                            {% if employee.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}
+                        <span class="badge bg-{% if employee.status == 'active' %}success{% else %}secondary{% endif %} status-badge">
+                            {{ employee.get_status_display }}
                         </span>
                     </div>
                     

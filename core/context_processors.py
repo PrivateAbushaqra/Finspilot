@@ -98,6 +98,8 @@ def active_menu_context(request):
         active_menu = 'users'
     elif '/backup/' in path:
         active_menu = 'backup'
+    elif '/hr/' in path:
+        active_menu = 'hr'
     elif '/reports/tax/' in path:
         active_menu = 'reports'
     elif '/reports/' in path:
@@ -108,8 +110,6 @@ def active_menu_context(request):
         active_menu = 'banks'
     elif '/accounts/' in path:
         active_menu = 'accounts'
-    elif '/hr/' in path:
-        active_menu = 'hr'
     elif '/tools/' in path:
         active_menu = 'tools'
     elif '/search/' in path:

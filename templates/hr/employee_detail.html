@@ -65,8 +65,8 @@
                 <h1 class="mb-1">{{ employee.first_name }} {{ employee.last_name }}</h1>
                 <p class="mb-2">{{ employee.position.title|default:"-" }} • {{ employee.department.name|default:"-" }}</p>
                 <p class="mb-0">
-                    <span class="badge bg-{% if employee.is_active %}success{% else %}secondary{% endif %} me-2">
-                        {% if employee.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}
+                    <span class="badge bg-{% if employee.status == 'active' %}success{% else %}secondary{% endif %} me-2">
+                        {{ employee.get_status_display }}
                     </span>
                     <span class="badge bg-light text-dark">{{ employee.employee_id }}</span>
                 </p>
@@ -108,16 +108,32 @@
                             <p class="mb-0">{{ employee.email|default:"-" }}</p>
                         </div>
                         <div class="col-sm-6 mb-3">
-                            <label class="text-muted small">{% trans "Phone Number" %}</label>
-                            <p class="mb-0">{{ employee.phone_number|default:"-" }}</p>
+                            <label class="text-muted small">{% trans "Phone" %}</label>
+                            <p class="mb-0">{{ employee.phone|default:"-" }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Mobile" %}</label>
+                            <p class="mb-0">{{ employee.mobile|default:"-" }}</p>
                         </div>
                         <div class="col-12 mb-3">
                             <label class="text-muted small">{% trans "Address" %}</label>
                             <p class="mb-0">{{ employee.address|default:"-" }}</p>
                         </div>
+                        <div class="col-sm-4 mb-3">
+                            <label class="text-muted small">{% trans "Birth Date" %}</label>
+                            <p class="mb-0">{{ employee.birth_date|date:"Y-m-d"|default:"-" }}</p>
+                        </div>
+                        <div class="col-sm-4 mb-3">
+                            <label class="text-muted small">{% trans "Age" %}</label>
+                            <p class="mb-0">{{ employee.age }} {% trans "years" %}</p>
+                        </div>
+                        <div class="col-sm-4 mb-3">
+                            <label class="text-muted small">{% trans "Gender" %}</label>
+                            <p class="mb-0">{{ employee.get_gender_display }}</p>
+                        </div>
                         <div class="col-sm-6 mb-3">
-                            <label class="text-muted small">{% trans "Date of Birth" %}</label>
-                            <p class="mb-0">{{ employee.date_of_birth|date:"M d, Y"|default:"-" }}</p>
+                            <label class="text-muted small">{% trans "Marital Status" %}</label>
+                            <p class="mb-0">{{ employee.get_marital_status_display }}</p>
                         </div>
                         <div class="col-sm-6 mb-3">
                             <label class="text-muted small">{% trans "National ID" %}</label>
@@ -150,17 +166,33 @@
                             <label class="text-muted small">{% trans "Position" %}</label>
                             <p class="mb-0">{{ employee.position.title|default:"-" }}</p>
                         </div>
-                        <div class="col-sm-6 mb-3">
-                            <label class="text-muted small">{% trans "Date Joined" %}</label>
-                            <p class="mb-0">{{ employee.date_joined|date:"M d, Y" }}</p>
+                        <div class="col-sm-4 mb-3">
+                            <label class="text-muted small">{% trans "Hire Date" %}</label>
+                            <p class="mb-0">{{ employee.hire_date|date:"Y-m-d" }}</p>
                         </div>
-                        <div class="col-sm-6 mb-3">
+                        <div class="col-sm-4 mb-3">
+                            <label class="text-muted small">{% trans "Employment Type" %}</label>
+                            <p class="mb-0">{{ employee.get_employment_type_display }}</p>
+                        </div>
+                        <div class="col-sm-4 mb-3">
                             <label class="text-muted small">{% trans "Status" %}</label>
                             <p class="mb-0">
-                                <span class="badge bg-{% if employee.is_active %}success{% else %}secondary{% endif %}">
-                                    {% if employee.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}
+                                <span class="badge bg-{% if employee.status == 'active' %}success{% else %}secondary{% endif %}">
+                                    {{ employee.get_status_display }}
                                 </span>
                             </p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Basic Salary" %}</label>
+                            <p class="mb-0">{{ employee.basic_salary|currency_format }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Allowances" %}</label>
+                            <p class="mb-0">{{ employee.allowances|currency_format }}</p>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="text-muted small">{% trans "Total Salary" %}</label>
+                            <p class="mb-0"><strong>{{ employee.total_salary|currency_format }}</strong></p>
                         </div>
                         {% if employee.user %}
                         <div class="col-sm-6 mb-3">

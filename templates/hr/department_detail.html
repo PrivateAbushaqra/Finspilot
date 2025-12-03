@@ -35,7 +35,7 @@
                                 </tr>
                                 <tr>
                                     <td><strong>{% trans "Description" %}:</strong></td>
-                                    <td>{{ department.description|default:"لا يوجد وصف" }}</td>
+                                    <td>{% if department.description %}{{ department.description }}{% else %}{% trans "No Description" %}{% endif %}</td>
                                 </tr>
                                 <tr>
                                     <td><strong>{% trans "Manager" %}:</strong></td>
@@ -108,7 +108,7 @@
                                                 {{ employee.get_full_name }}
                                             </a>
                                         </td>
-                                        <td>{{ employee.position.title|default:"غير محدد" }}</td>
+                                        <td>{% if employee.position %}{{ employee.position.title }}{% else %}{% trans "Not Specified" %}{% endif %}</td>
                                         <td>{{ employee.hire_date|date:"d/m/Y" }}</td>
                                         <td>
                                             <span class="badge bg-{% if employee.status == 'active' %}success{% elif employee.status == 'inactive' %}secondary{% else %}warning{% endif %}">

@@ -45,18 +45,12 @@ def create_hr_audit_log(request, action_type, content_type_model, object_id, des
         pass
 
 
-class HRMixin(LoginRequiredMixin):
-    """Mixin للتحقق من صلاحيات HR"""
-    
-    def dispatch(self, request, *args, **kwargs):
-        if not (request.user.is_superuser or request.user.has_perm('hr.can_view_hr')):
-            messages.error(request, _('You do not have permission to access HR module.'))
-            return redirect('core:dashboard')
-        return super().dispatch(request, *args, **kwargs)
+# HRMixin تم إزالته - الآن يمكن للجميع الوصول للموارد البشرية
 
 
 # Employee Views
-class EmployeeListView(HRMixin, ListView):
+class EmployeeListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = "hr.view_hr_employee"
     model = Employee
     template_name = 'hr/employee_list.html'
     context_object_name = 'employees'
@@ -93,7 +87,8 @@ class EmployeeListView(HRMixin, ListView):
         return context
 
 
-class EmployeeDetailView(HRMixin, DetailView):
+class EmployeeDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
+    permission_required = "hr.view_hr_employee"
     model = Employee
     template_name = 'hr/employee_detail.html'
     context_object_name = 'employee'
@@ -120,12 +115,12 @@ class EmployeeDetailView(HRMixin, DetailView):
         return context
 
 
-class EmployeeCreateView(HRMixin, PermissionRequiredMixin, CreateView):
+class EmployeeCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    permission_required = "hr.add_hr_employee"
     model = Employee
     form_class = EmployeeForm
     template_name = 'hr/employee_form.html'
     success_url = reverse_lazy('hr:employee_list')
-    permission_required = 'hr.can_manage_employees'
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
@@ -144,12 +139,12 @@ class EmployeeCreateView(HRMixin, PermissionRequiredMixin, CreateView):
         return response
 
 
-class EmployeeUpdateView(HRMixin, PermissionRequiredMixin, UpdateView):
+class EmployeeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    permission_required = "hr.change_hr_employee"
     model = Employee
     form_class = EmployeeForm
     template_name = 'hr/employee_form.html'
     success_url = reverse_lazy('hr:employee_list')
-    permission_required = 'hr.can_manage_employees'
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -167,11 +162,11 @@ class EmployeeUpdateView(HRMixin, PermissionRequiredMixin, UpdateView):
         return response
 
 
-class EmployeeDeleteView(HRMixin, PermissionRequiredMixin, DeleteView):
+class EmployeeDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    permission_required = "hr.delete_hr_employee"
     model = Employee
     template_name = 'hr/employee_confirm_delete.html'
     success_url = reverse_lazy('hr:employee_list')
-    permission_required = 'hr.can_manage_employees'
 
     def delete(self, request, *args, **kwargs):
         employee = self.get_object()
@@ -192,7 +187,8 @@ class EmployeeDeleteView(HRMixin, PermissionRequiredMixin, DeleteView):
 
 
 # Attendance Views
-class AttendanceListView(HRMixin, ListView):
+class AttendanceListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = "hr.view_hr_attendance"
     model = Attendance
     template_name = 'hr/attendance_list.html'
     context_object_name = 'attendances'
@@ -224,7 +220,6 @@ class AttendanceListView(HRMixin, ListView):
 
 
 @login_required
-@permission_required('hr.can_manage_attendance')
 def attendance_upload(request):
     """رفع ملف الحضور CSV"""
     if request.method == 'POST':
@@ -299,7 +294,8 @@ def attendance_upload(request):
 
 
 # Leave Views
-class LeaveRequestListView(HRMixin, ListView):
+class LeaveRequestListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = "hr.view_hr_leaverequest"
     model = LeaveRequest
     template_name = 'hr/leave_request_list.html'
     context_object_name = 'leave_requests'
@@ -317,7 +313,7 @@ class LeaveRequestListView(HRMixin, ListView):
 
 
 @login_required
-@permission_required('hr.can_approve_leaves')
+@permission_required("hr.approve_hr_leaverequest", raise_exception=True)
 def approve_leave_request(request, pk):
     """الموافقة على طلب إجازة"""
     leave_request = get_object_or_404(LeaveRequest, pk=pk)
@@ -362,7 +358,8 @@ def approve_leave_request(request, pk):
 
 
 # Payroll Views
-class PayrollPeriodListView(HRMixin, ListView):
+class PayrollPeriodListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = "hr.view_hr_payrollperiod"
     model = PayrollPeriod
     template_name = 'hr/payroll_period_list.html'
     context_object_name = 'payroll_periods'
@@ -370,7 +367,6 @@ class PayrollPeriodListView(HRMixin, ListView):
 
 
 @login_required
-@permission_required('hr.can_manage_payroll')
 def process_payroll(request, pk):
     """معالجة الرواتب لفترة معينة"""
     payroll_period = get_object_or_404(PayrollPeriod, pk=pk)
@@ -455,7 +451,6 @@ def process_payroll(request, pk):
 
 
 @login_required
-@permission_required('hr.can_manage_payroll')
 def create_payroll_journal_entries(request, pk):
     """إنشاء قيود المحاسبة للرواتب"""
     payroll_period = get_object_or_404(PayrollPeriod, pk=pk)
@@ -538,11 +533,9 @@ def create_payroll_journal_entries(request, pk):
 
 # Dashboard
 @login_required
+@permission_required("hr.view_hr_menu", raise_exception=True)
 def hr_dashboard(request):
     """لوحة تحكم الموارد البشرية"""
-    if not (request.user.is_superuser or request.user.has_perm('hr.can_view_hr')):
-        messages.error(request, _('You do not have permission to access HR module.'))
-        return redirect('core:dashboard')
     
     context = {
         'total_employees': Employee.objects.filter(status='active').count(),
@@ -579,51 +572,55 @@ def hr_dashboard(request):
 
 
 # Department Views
-class DepartmentListView(HRMixin, ListView):
+class DepartmentListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = "hr.view_hr_department"
     model = Department
     template_name = 'hr/department_list.html'
     context_object_name = 'departments'
     paginate_by = 20
 
 
-class DepartmentDetailView(HRMixin, DetailView):
+class DepartmentDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
+    permission_required = "hr.view_hr_department"
     model = Department
     template_name = 'hr/department_detail.html'
     context_object_name = 'department'
 
 
-class DepartmentCreateView(HRMixin, PermissionRequiredMixin, CreateView):
+class DepartmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    permission_required = "hr.add_hr_department"
     model = Department
     form_class = DepartmentForm
     template_name = 'hr/department_form.html'
     success_url = reverse_lazy('hr:department_list')
-    permission_required = 'hr.can_manage_employees'
 
 
-class DepartmentUpdateView(HRMixin, PermissionRequiredMixin, UpdateView):
+class DepartmentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    permission_required = "hr.change_hr_department"
     model = Department
     form_class = DepartmentForm
     template_name = 'hr/department_form.html'
     success_url = reverse_lazy('hr:department_list')
-    permission_required = 'hr.can_manage_employees'
 
 
-class DepartmentDeleteView(HRMixin, PermissionRequiredMixin, DeleteView):
+class DepartmentDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    permission_required = "hr.delete_hr_department"
     model = Department
     template_name = 'hr/department_confirm_delete.html'
     success_url = reverse_lazy('hr:department_list')
-    permission_required = 'hr.can_manage_employees'
 
 
 # Position Views
-class PositionListView(HRMixin, ListView):
+class PositionListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = "hr.view_hr_position"
     model = Position
     template_name = 'hr/position_list.html'
     context_object_name = 'positions'
     paginate_by = 20
 
 
-class PositionDetailView(HRMixin, DetailView):
+class PositionDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
+    permission_required = "hr.view_hr_position"
     model = Position
     template_name = 'hr/position_detail.html'
     context_object_name = 'position'
@@ -639,49 +636,51 @@ class PositionDetailView(HRMixin, DetailView):
         return context
 
 
-class PositionCreateView(HRMixin, PermissionRequiredMixin, CreateView):
+class PositionCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    permission_required = "hr.add_hr_position"
     model = Position
     form_class = PositionForm
     template_name = 'hr/position_form.html'
     success_url = reverse_lazy('hr:position_list')
-    permission_required = 'hr.can_manage_employees'
 
 
-class PositionUpdateView(HRMixin, PermissionRequiredMixin, UpdateView):
+class PositionUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    permission_required = "hr.change_hr_position"
     model = Position
     form_class = PositionForm
     template_name = 'hr/position_form.html'
     success_url = reverse_lazy('hr:position_list')
-    permission_required = 'hr.can_manage_employees'
 
 
-class PositionDeleteView(HRMixin, PermissionRequiredMixin, DeleteView):
+class PositionDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    permission_required = "hr.delete_hr_position"
     model = Position
     template_name = 'hr/position_confirm_delete.html'
     success_url = reverse_lazy('hr:position_list')
-    permission_required = 'hr.can_manage_employees'
 
 
 # Contract Views
-class ContractListView(HRMixin, ListView):
+class ContractListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = "hr.view_hr_contract"
     model = Contract
     template_name = 'hr/contract_list.html'
     context_object_name = 'contracts'
     paginate_by = 20
 
 
-class ContractDetailView(HRMixin, DetailView):
+class ContractDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
+    permission_required = "hr.view_hr_contract"
     model = Contract
     template_name = 'hr/contract_detail.html'
     context_object_name = 'contract'
 
 
-class ContractCreateView(HRMixin, PermissionRequiredMixin, CreateView):
+class ContractCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    permission_required = "hr.add_hr_contract"
     model = Contract
     form_class = ContractForm
     template_name = 'hr/contract_form.html'
     success_url = reverse_lazy('hr:contract_list')
-    permission_required = 'hr.can_manage_employees'
 
     def get_initial(self):
         initial = super().get_initial()
@@ -711,12 +710,12 @@ class ContractCreateView(HRMixin, PermissionRequiredMixin, CreateView):
         return response
 
 
-class ContractUpdateView(HRMixin, PermissionRequiredMixin, UpdateView):
+class ContractUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    permission_required = "hr.change_hr_contract"
     model = Contract
     form_class = ContractForm
     template_name = 'hr/contract_form.html'
     success_url = reverse_lazy('hr:contract_list')
-    permission_required = 'hr.can_manage_employees'
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -733,11 +732,11 @@ class ContractUpdateView(HRMixin, PermissionRequiredMixin, UpdateView):
         return response
 
 
-class ContractDeleteView(HRMixin, PermissionRequiredMixin, DeleteView):
+class ContractDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    permission_required = "hr.delete_hr_contract"
     model = Contract
     template_name = 'hr/contract_confirm_delete.html'
     success_url = reverse_lazy('hr:contract_list')
-    permission_required = 'hr.can_manage_employees'
 
     def delete(self, request, *args, **kwargs):
         contract = self.get_object()
@@ -753,18 +752,19 @@ class ContractDeleteView(HRMixin, PermissionRequiredMixin, DeleteView):
 
 
 # Additional Attendance Views
-class AttendanceDetailView(HRMixin, DetailView):
+class AttendanceDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
+    permission_required = "hr.view_hr_attendance"
     model = Attendance
     template_name = 'hr/attendance_detail.html'
     context_object_name = 'attendance'
 
 
-class AttendanceCreateView(HRMixin, PermissionRequiredMixin, CreateView):
+class AttendanceCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    permission_required = "hr.add_hr_attendance"
     model = Attendance
     form_class = AttendanceForm
     template_name = 'hr/attendance_form.html'
     success_url = reverse_lazy('hr:attendance_list')
-    permission_required = 'hr.can_manage_attendance'
 
     def get_initial(self):
         initial = super().get_initial()
@@ -798,12 +798,12 @@ class AttendanceCreateView(HRMixin, PermissionRequiredMixin, CreateView):
         return response
 
 
-class AttendanceUpdateView(HRMixin, PermissionRequiredMixin, UpdateView):
+class AttendanceUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    permission_required = "hr.change_hr_attendance"
     model = Attendance
     form_class = AttendanceForm
     template_name = 'hr/attendance_form.html'
     success_url = reverse_lazy('hr:attendance_list')
-    permission_required = 'hr.can_manage_attendance'
     
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -824,11 +824,11 @@ class AttendanceUpdateView(HRMixin, PermissionRequiredMixin, UpdateView):
         return response
 
 
-class AttendanceDeleteView(HRMixin, PermissionRequiredMixin, DeleteView):
+class AttendanceDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    permission_required = "hr.delete_hr_attendance"
     model = Attendance
     template_name = 'hr/attendance_confirm_delete.html'
     success_url = reverse_lazy('hr:attendance_list')
-    permission_required = 'hr.can_manage_attendance'
     
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -854,13 +854,15 @@ class AttendanceDeleteView(HRMixin, PermissionRequiredMixin, DeleteView):
 
 
 # Additional Leave Views
-class LeaveRequestDetailView(HRMixin, DetailView):
+class LeaveRequestDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
+    permission_required = "hr.view_hr_leaverequest"
     model = LeaveRequest
     template_name = 'hr/leave_request_detail.html'
     context_object_name = 'leave_request'
 
 
-class LeaveRequestCreateView(HRMixin, CreateView):
+class LeaveRequestCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    permission_required = "hr.add_hr_leaverequest"
     model = LeaveRequest
     form_class = LeaveRequestForm
     template_name = 'hr/leave_request_form.html'
@@ -894,7 +896,8 @@ class LeaveRequestCreateView(HRMixin, CreateView):
         return response
 
 
-class LeaveRequestUpdateView(HRMixin, UpdateView):
+class LeaveRequestUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    permission_required = "hr.change_hr_leaverequest"
     model = LeaveRequest
     form_class = LeaveRequestForm
     template_name = 'hr/leave_request_form.html'
@@ -915,7 +918,8 @@ class LeaveRequestUpdateView(HRMixin, UpdateView):
         return response
 
 
-class LeaveRequestDeleteView(HRMixin, DeleteView):
+class LeaveRequestDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    permission_required = "hr.delete_hr_leaverequest"
     model = LeaveRequest
     template_name = 'hr/leave_request_confirm_delete.html'
     success_url = reverse_lazy('hr:leave_request_list')
@@ -934,124 +938,132 @@ class LeaveRequestDeleteView(HRMixin, DeleteView):
 
 
 # Leave Type Views
-class LeaveTypeListView(HRMixin, ListView):
+class LeaveTypeListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = "hr.view_hr_leavetype"
     model = LeaveType
     template_name = 'hr/leave_type_list.html'
     context_object_name = 'leave_types'
     paginate_by = 20
 
 
-class LeaveTypeDetailView(HRMixin, DetailView):
+class LeaveTypeDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
+    permission_required = "hr.view_hr_leavetype"
     model = LeaveType
     template_name = 'hr/leave_type_detail.html'
     context_object_name = 'leave_type'
 
 
-class LeaveTypeCreateView(HRMixin, PermissionRequiredMixin, CreateView):
+class LeaveTypeCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    permission_required = "hr.add_hr_leavetype"
     model = LeaveType
     fields = ['name', 'days_per_year', 'max_days', 'is_paid', 'is_active', 'notes']
     template_name = 'hr/leave_type_form.html'
     success_url = reverse_lazy('hr:leave_type_list')
-    permission_required = 'hr.can_manage_employees'
 
 
-class LeaveTypeUpdateView(HRMixin, PermissionRequiredMixin, UpdateView):
+class LeaveTypeUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    permission_required = "hr.change_hr_leavetype"
     model = LeaveType
     fields = ['name', 'days_per_year', 'max_days', 'is_paid', 'is_active', 'notes']
     template_name = 'hr/leave_type_form.html'
     success_url = reverse_lazy('hr:leave_type_list')
-    permission_required = 'hr.can_manage_employees'
 
 
-class LeaveTypeDeleteView(HRMixin, PermissionRequiredMixin, DeleteView):
+class LeaveTypeDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    permission_required = "hr.delete_hr_leavetype"
     model = LeaveType
     template_name = 'hr/leave_type_confirm_delete.html'
     success_url = reverse_lazy('hr:leave_type_list')
-    permission_required = 'hr.can_manage_employees'
 
 
 # Additional Payroll Views
-class PayrollPeriodDetailView(HRMixin, DetailView):
+class PayrollPeriodDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
+    permission_required = "hr.view_hr_payrollperiod"
     model = PayrollPeriod
     template_name = 'hr/payroll_period_detail.html'
     context_object_name = 'payroll_period'
 
 
-class PayrollPeriodCreateView(HRMixin, PermissionRequiredMixin, CreateView):
+class PayrollPeriodCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    permission_required = "hr.add_hr_payrollperiod"
     model = PayrollPeriod
     form_class = PayrollPeriodForm
     template_name = 'hr/payroll_period_form.html'
     success_url = reverse_lazy('hr:payroll_period_list')
-    permission_required = 'hr.can_manage_payroll'
 
 
-class PayrollPeriodUpdateView(HRMixin, PermissionRequiredMixin, UpdateView):
+class PayrollPeriodUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    permission_required = "hr.change_hr_payrollperiod"
     model = PayrollPeriod
     form_class = PayrollPeriodForm
     template_name = 'hr/payroll_period_form.html'
     success_url = reverse_lazy('hr:payroll_period_list')
-    permission_required = 'hr.can_manage_payroll'
 
 
-class PayrollPeriodDeleteView(HRMixin, PermissionRequiredMixin, DeleteView):
+class PayrollPeriodDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    permission_required = "hr.delete_hr_payrollperiod"
     model = PayrollPeriod
     template_name = 'hr/payroll_period_confirm_delete.html'
     success_url = reverse_lazy('hr:payroll_period_list')
-    permission_required = 'hr.can_manage_payroll'
 
 
 # Payroll Entry Views
-class PayrollEntryListView(HRMixin, ListView):
+class PayrollEntryListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = "hr.view_hr_payrollentry"
     model = PayrollEntry
     template_name = 'hr/payroll_entry_list.html'
     context_object_name = 'payroll_entries'
     paginate_by = 20
 
 
-class PayrollEntryDetailView(HRMixin, DetailView):
+class PayrollEntryDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
+    permission_required = "hr.view_hr_payrollentry"
     model = PayrollEntry
     template_name = 'hr/payroll_entry_detail.html'
     context_object_name = 'payroll_entry'
 
 
-class PayrollEntryCreateView(HRMixin, PermissionRequiredMixin, CreateView):
+class PayrollEntryCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    permission_required = "hr.add_hr_payrollentry"
     model = PayrollEntry
     form_class = PayrollEntryForm
     template_name = 'hr/payroll_entry_form.html'
     success_url = reverse_lazy('hr:payroll_entry_list')
-    permission_required = 'hr.can_manage_payroll'
 
 
-class PayrollEntryUpdateView(HRMixin, PermissionRequiredMixin, UpdateView):
+class PayrollEntryUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    permission_required = "hr.change_hr_payrollentry"
     model = PayrollEntry
     form_class = PayrollEntryForm
     template_name = 'hr/payroll_entry_form.html'
     success_url = reverse_lazy('hr:payroll_entry_list')
-    permission_required = 'hr.can_manage_payroll'
 
 
-class PayrollEntryDeleteView(HRMixin, PermissionRequiredMixin, DeleteView):
+class PayrollEntryDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    permission_required = "hr.delete_hr_payrollentry"
     model = PayrollEntry
     template_name = 'hr/payroll_entry_confirm_delete.html'
     success_url = reverse_lazy('hr:payroll_entry_list')
-    permission_required = 'hr.can_manage_payroll'
 
 
 # Employee Document Views
-class EmployeeDocumentListView(HRMixin, ListView):
+class EmployeeDocumentListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    permission_required = "hr.view_hr_employeedocument"
     model = EmployeeDocument
     template_name = 'hr/employee_document_list.html'
     context_object_name = 'employee_documents'
     paginate_by = 20
 
 
-class EmployeeDocumentDetailView(HRMixin, DetailView):
+class EmployeeDocumentDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
+    permission_required = "hr.view_hr_employeedocument"
     model = EmployeeDocument
     template_name = 'hr/employee_document_detail.html'
     context_object_name = 'employee_document'
 
 
-class EmployeeDocumentCreateView(HRMixin, CreateView):
+class EmployeeDocumentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    permission_required = "hr.add_hr_employeedocument"
     model = EmployeeDocument
     form_class = EmployeeDocumentForm
     template_name = 'hr/employee_document_form.html'
@@ -1090,7 +1102,8 @@ class EmployeeDocumentCreateView(HRMixin, CreateView):
         return response
 
 
-class EmployeeDocumentUpdateView(HRMixin, UpdateView):
+class EmployeeDocumentUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    permission_required = "hr.change_hr_employeedocument"
     model = EmployeeDocument
     form_class = EmployeeDocumentForm
     template_name = 'hr/employee_document_form.html'
@@ -1115,7 +1128,8 @@ class EmployeeDocumentUpdateView(HRMixin, UpdateView):
         return response
 
 
-class EmployeeDocumentDeleteView(HRMixin, DeleteView):
+class EmployeeDocumentDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    permission_required = "hr.delete_hr_employeedocument"
     model = EmployeeDocument
     template_name = 'hr/employee_document_confirm_delete.html'
     success_url = reverse_lazy('hr:employee_document_list')
@@ -1175,7 +1189,20 @@ def hr_reports(request):
 @login_required
 def employee_report(request):
     """تقرير الموظفين"""
-    employees = Employee.objects.select_related('department', 'position')
+    employees = Employee.objects.select_related('department', 'position').order_by('department__name', 'first_name')
+    
+    # إحصائيات
+    total_employees = employees.count()
+    active_employees = employees.filter(status='active').count()
+    inactive_employees = employees.filter(status='inactive').count()
+    
+    context = {
+        'employees': employees,
+        'total_employees': total_employees,
+        'active_employees': active_employees,
+        'inactive_employees': inactive_employees,
+        'title': _('Employee Report')
+    }
     
     # تسجيل النشاط
     create_hr_audit_log(
@@ -1186,7 +1213,7 @@ def employee_report(request):
         description=_("Viewed employee report")
     )
     
-    return render(request, 'hr/reports/employee_report.html', {'employees': employees})
+    return render(request, 'hr/reports/employee_report.html', context)
 
 
 @login_required
@@ -1200,10 +1227,10 @@ def attendance_report(request):
     selected_department = request.GET.get('department', '')
     
     # بناء الاستعلام
-    attendances = Attendance.objects.select_related('employee').filter(
+    attendances = Attendance.objects.select_related('employee', 'employee__department').filter(
         date__month=selected_month,
         date__year=selected_year
-    )
+    ).order_by('-date', 'employee__first_name')
     
     if selected_department:
         attendances = attendances.filter(employee__department_id=selected_department)
@@ -1214,13 +1241,17 @@ def attendance_report(request):
     absent_count = attendances.filter(attendance_type='absent').count()
     late_count = attendances.filter(attendance_type='late').count()
     
-    # بيانات إضافية للفلاتر
-    months = [(i, datetime(2024, i, 1).strftime('%B')) for i in range(1, 13)]
+    # بيانات إضافية للفلاتر - أسماء الأشهر بالعربية
+    months = [
+        (1, 'يناير'), (2, 'فبراير'), (3, 'مارس'), (4, 'أبريل'),
+        (5, 'مايو'), (6, 'يونيو'), (7, 'يوليو'), (8, 'أغسطس'),
+        (9, 'سبتمبر'), (10, 'أكتوبر'), (11, 'نوفمبر'), (12, 'ديسمبر')
+    ]
     years = list(range(2020, datetime.now().year + 2))
     departments = Department.objects.all()
     
     context = {
-        'attendances': attendances[:100],  # عرض أول 100 سجل
+        'attendances': attendances,  # عرض جميع السجلات
         'total_records': total_records,
         'present_count': present_count,
         'absent_count': absent_count,
@@ -1266,30 +1297,72 @@ def payroll_report(request, pk):
 def payroll_summary_report(request):
     """تقرير ملخص الرواتب"""
     from django.db.models import Sum, Count, Avg
+    from datetime import datetime
     
-    # إحصائيات الرواتب العامة
-    total_employees = Employee.objects.filter(status='active').count()
-    total_salary = Employee.objects.filter(status='active').aggregate(
-        total=Sum('basic_salary')
-    )['total'] or 0
-    avg_salary = Employee.objects.filter(status='active').aggregate(
-        avg=Avg('basic_salary')
-    )['avg'] or 0
+    # فلاتر
+    selected_month = int(request.GET.get('month', datetime.now().month))
+    selected_year = int(request.GET.get('year', datetime.now().year))
+    selected_department = request.GET.get('department', '')
     
-    # الرواتب حسب القسم
-    department_summary = Employee.objects.filter(
-        status='active'
-    ).values('department__name').annotate(
-        total_salary=Sum('basic_salary'),
-        employee_count=Count('id'),
-        avg_salary=Avg('basic_salary')
-    )
+    # بناء query للموظفين
+    employees = Employee.objects.filter(status='active').select_related('department')
+    
+    if selected_department:
+        employees = employees.filter(department_id=selected_department)
+    
+    # إنشاء payroll_entries وهمية من بيانات الموظفين
+    payroll_entries = []
+    total_gross = 0
+    total_deductions = 0
+    total_net = 0
+    
+    for emp in employees:
+        basic_salary = float(emp.basic_salary)
+        allowances = float(emp.allowances)
+        overtime_amount = 0  # يمكن حسابه من Attendance
+        gross_salary = basic_salary + allowances + overtime_amount
+        deductions = gross_salary * 0.09  # 9% تأمينات وهمي
+        net_salary = gross_salary - deductions
+        
+        # إنشاء كائن وهمي
+        class PayrollEntry:
+            def __init__(self, employee, basic_salary, allowances, overtime_amount, gross_salary, total_deductions, net_salary):
+                self.employee = employee
+                self.basic_salary = basic_salary
+                self.allowances = allowances
+                self.overtime_amount = overtime_amount
+                self.gross_salary = gross_salary
+                self.total_deductions = total_deductions
+                self.net_salary = net_salary
+        
+        entry = PayrollEntry(emp, basic_salary, allowances, overtime_amount, gross_salary, deductions, net_salary)
+        payroll_entries.append(entry)
+        
+        total_gross += gross_salary
+        total_deductions += deductions
+        total_net += net_salary
+    
+    # بيانات للفلاتر
+    months = [
+        (1, 'يناير'), (2, 'فبراير'), (3, 'مارس'), (4, 'أبريل'),
+        (5, 'مايو'), (6, 'يونيو'), (7, 'يوليو'), (8, 'أغسطس'),
+        (9, 'سبتمبر'), (10, 'أكتوبر'), (11, 'نوفمبر'), (12, 'ديسمبر')
+    ]
+    years = list(range(datetime.now().year - 5, datetime.now().year + 1))
+    departments = Department.objects.filter(is_active=True)
     
     context = {
-        'total_employees': total_employees,
-        'total_salary': total_salary,
-        'avg_salary': avg_salary,
-        'department_summary': department_summary,
+        'payroll_entries': payroll_entries,
+        'total_employees': len(payroll_entries),
+        'total_gross': total_gross,
+        'total_deductions': total_deductions,
+        'total_net': total_net,
+        'months': months,
+        'years': years,
+        'departments': departments,
+        'selected_month': selected_month,
+        'selected_year': selected_year,
+        'selected_department': selected_department,
         'title': _('Payroll Summary Report')
     }
     
@@ -1308,24 +1381,72 @@ def payroll_summary_report(request):
 @login_required
 def leave_balance_report(request):
     """تقرير أرصدة الإجازات"""
-    employees = Employee.objects.filter(status='active')
+    from django.db.models import Sum, Q
+    
+    employees = Employee.objects.filter(status='active').select_related('department')
+    
+    # الحصول على أنواع الإجازات
+    leave_types = LeaveType.objects.filter(is_active=True)
+    annual_leave_type = leave_types.filter(code='ANNUAL').first()
+    sick_leave_type = leave_types.filter(code='SICK').first()
+    emergency_leave_type = leave_types.filter(code='EMERGENCY').first()
     
     employee_balances = []
     for employee in employees:
-        # حساب رصيد الإجازات (يمكن تحسينه لاحقاً)
-        total_leaves = 30  # افتراضي
-        used_leaves = LeaveRequest.objects.filter(
-            employee=employee, 
+        # حساب الإجازات السنوية
+        annual_used = LeaveRequest.objects.filter(
+            employee=employee,
+            leave_type=annual_leave_type,
             status='approved'
-        ).count()
-        remaining_balance = max(0, total_leaves - used_leaves)
+        ).aggregate(total=Sum('days_count'))['total'] or 0
+        annual_total = annual_leave_type.days_per_year if annual_leave_type else 21
+        
+        # حساب الإجازات المرضية
+        sick_used = LeaveRequest.objects.filter(
+            employee=employee,
+            leave_type=sick_leave_type,
+            status='approved'
+        ).aggregate(total=Sum('days_count'))['total'] or 0
+        sick_total = sick_leave_type.days_per_year if sick_leave_type else 14
+        
+        # حساب الإجازات الطارئة
+        emergency_used = LeaveRequest.objects.filter(
+            employee=employee,
+            leave_type=emergency_leave_type,
+            status='approved'
+        ).aggregate(total=Sum('days_count'))['total'] or 0
+        emergency_total = emergency_leave_type.days_per_year if emergency_leave_type else 7
+        
+        # الإجماليات
+        total_used = annual_used + sick_used + emergency_used
+        total_available = annual_total + sick_total + emergency_total
+        total_remaining = max(0, total_available - total_used)
         
         employee_balances.append({
             'employee': employee,
-            'total_leaves': total_leaves,
-            'used_leaves': used_leaves,
-            'remaining_balance': remaining_balance
+            'annual_leave_used': int(annual_used),
+            'annual_leave_total': annual_total,
+            'annual_leave_remaining': max(0, annual_total - annual_used),
+            'annual_leave_used_percentage': min(100, (annual_used / annual_total * 100) if annual_total > 0 else 0),
+            
+            'sick_leave_used': int(sick_used),
+            'sick_leave_total': sick_total,
+            'sick_leave_remaining': max(0, sick_total - sick_used),
+            'sick_leave_used_percentage': min(100, (sick_used / sick_total * 100) if sick_total > 0 else 0),
+            
+            'emergency_leave_used': int(emergency_used),
+            'emergency_leave_total': emergency_total,
+            'emergency_leave_remaining': max(0, emergency_total - emergency_used),
+            'emergency_leave_used_percentage': min(100, (emergency_used / emergency_total * 100) if emergency_total > 0 else 0),
+            
+            'total_leave_used': int(total_used),
+            'total_leave_remaining': int(total_remaining),
         })
+    
+    context = {
+        'employee_balances': employee_balances,
+        'title': _('Leave Balance Report')
+    }
     
     # تسجيل النشاط
     create_hr_audit_log(
@@ -1336,7 +1457,7 @@ def leave_balance_report(request):
         _("Viewed leave balance report")
     )
     
-    return render(request, 'hr/reports/leave_balance_report.html', {'employee_balances': employee_balances})
+    return render(request, 'hr/reports/leave_balance_report.html', context)
 
 
 @login_required
@@ -1399,7 +1520,21 @@ def department_report(request):
         messages.error(request, _('You do not have permission to access HR module.'))
         return redirect('core:dashboard')
     
-    departments = Department.objects.prefetch_related('employees')
+    from django.db.models import Count, Avg, Sum
+    
+    departments = Department.objects.filter(is_active=True).prefetch_related('employees').annotate(
+        employee_count=Count('employees', filter=Q(employees__status='active')),
+        avg_salary=Avg('employees__basic_salary', filter=Q(employees__status='active')),
+        total_salary=Sum('employees__basic_salary', filter=Q(employees__status='active'))
+    ).order_by('name')
+    
+    total_employees = Employee.objects.filter(status='active').count()
+    
+    context = {
+        'departments': departments,
+        'total_employees': total_employees,
+        'title': _('Department Report')
+    }
     
     # تسجيل النشاط
     create_hr_audit_log(
@@ -1410,7 +1545,7 @@ def department_report(request):
         _("Viewed department report")
     )
     
-    return render(request, 'hr/reports/department_report.html', {'departments': departments})
+    return render(request, 'hr/reports/department_report.html', context)
 
 
 @login_required
@@ -1429,7 +1564,17 @@ def new_hires_report(request):
     
     new_hires = Employee.objects.filter(
         hire_date__range=[from_date, to_date]
-    ).select_related('department', 'position')
+    ).select_related('department', 'position').order_by('-hire_date', 'first_name')
+    
+    total_new_hires = new_hires.count()
+    
+    context = {
+        'new_hires': new_hires,
+        'total_new_hires': total_new_hires,
+        'from_date': from_date,
+        'to_date': to_date,
+        'title': _('New Hires Report')
+    }
     
     # تسجيل النشاط
     create_hr_audit_log(
@@ -1440,13 +1585,14 @@ def new_hires_report(request):
         _("Viewed new hires report")
     )
     
-    return render(request, 'hr/reports/new_hires_report.html', {'new_hires': new_hires})
+    return render(request, 'hr/reports/new_hires_report.html', context)
 
 
 @login_required
 def late_arrivals_report(request):
     """تقرير التأخير"""
     from datetime import datetime
+    from django.db.models import Count
     
     # فلترة حسب التاريخ
     from_date = request.GET.get('from_date')
@@ -1460,7 +1606,21 @@ def late_arrivals_report(request):
     late_arrivals = Attendance.objects.filter(
         attendance_type='late',
         date__range=[from_date, to_date]
-    ).select_related('employee')
+    ).select_related('employee', 'employee__department').order_by('-date', 'employee__first_name')
+    
+    # حساب الإحصائيات
+    total_late = late_arrivals.count()
+    by_employee = late_arrivals.values('employee__first_name', 'employee__last_name').annotate(
+        count=Count('id')
+    ).order_by('-count')[:10]
+    
+    context = {
+        'late_arrivals': late_arrivals,
+        'total_late': total_late,
+        'by_employee': by_employee,
+        'from_date': from_date,
+        'to_date': to_date,
+    }
     
     # تسجيل النشاط
     create_hr_audit_log(
@@ -1471,13 +1631,14 @@ def late_arrivals_report(request):
         _("Viewed late arrivals report")
     )
     
-    return render(request, 'hr/reports/late_arrivals_report.html', {'late_arrivals': late_arrivals})
+    return render(request, 'hr/reports/late_arrivals_report.html', context)
 
 
 @login_required
 def overtime_report(request):
     """تقرير العمل الإضافي"""
     from datetime import datetime
+    from django.db.models import Sum
     
     # فلترة حسب التاريخ
     from_date = request.GET.get('from_date')
@@ -1488,21 +1649,23 @@ def overtime_report(request):
     if not to_date:
         to_date = datetime.now().strftime('%Y-%m-%d')
     
-    # إنشاء سجلات وهمية للعمل الإضافي
-    overtime_records = []
-    attendances = Attendance.objects.filter(
+    # الحصول على سجلات الساعات الإضافية
+    overtime_attendances = Attendance.objects.filter(
         date__range=[from_date, to_date],
-        worked_hours__gt=8.0
-    ).select_related('employee')
+        overtime_hours__gt=0
+    ).select_related('employee', 'employee__department').order_by('-date', 'employee__first_name')
     
-    for attendance in attendances:
-        if attendance.worked_hours and attendance.worked_hours > 8.0:
-            overtime_records.append({
-                'employee': attendance.employee,
-                'date': attendance.date,
-                'overtime_hours': attendance.worked_hours - 8.0,
-                'total_hours': attendance.worked_hours,
-            })
+    # حساب الإجماليات
+    total_overtime = overtime_attendances.aggregate(total=Sum('overtime_hours'))['total'] or 0
+    total_records = overtime_attendances.count()
+    
+    context = {
+        'overtime_attendances': overtime_attendances,
+        'total_overtime': float(total_overtime),
+        'total_records': total_records,
+        'from_date': from_date,
+        'to_date': to_date,
+    }
     
     # تسجيل النشاط
     create_hr_audit_log(
@@ -1520,31 +1683,42 @@ def overtime_report(request):
 def leave_summary_report(request):
     """تقرير ملخص الإجازات"""
     from datetime import datetime
-    from django.db.models import Count
+    from django.db.models import Count, Sum
     
     # فلترة حسب السنة
-    year = request.GET.get('year', datetime.now().year)
+    year = int(request.GET.get('year', datetime.now().year))
     
     # إحصائيات الإجازات
-    total_leaves = LeaveRequest.objects.filter(start_date__year=year).count()
-    approved_leaves = LeaveRequest.objects.filter(start_date__year=year, status='approved').count()
-    pending_leaves = LeaveRequest.objects.filter(start_date__year=year, status='pending').count()
-    rejected_leaves = LeaveRequest.objects.filter(start_date__year=year, status='rejected').count()
+    leave_requests = LeaveRequest.objects.filter(start_date__year=year)
+    total_leaves = leave_requests.count()
+    approved_leaves = leave_requests.filter(status='approved').count()
+    pending_leaves = leave_requests.filter(status='pending').count()
+    rejected_leaves = leave_requests.filter(status='rejected').count()
     
-    # الإجازات بالتفصيل
+    # إجمالي الأيام
+    total_days = leave_requests.aggregate(total=Sum('days_count'))['total'] or 0
+    approved_days = leave_requests.filter(status='approved').aggregate(total=Sum('days_count'))['total'] or 0
+    
+    # الإجازات بالتفصيل حسب النوع
     leave_summary = LeaveRequest.objects.filter(
         start_date__year=year
-    ).values('leave_type').annotate(
+    ).values('leave_type__name').annotate(
         count=Count('id'),
-        total_days=Count('id')  # يمكن تحسينها لاحقاً
-    )
+        total_days=Sum('days_count')
+    ).order_by('-total_days')
+    
+    # السنوات المتاحة
+    years = list(range(2020, datetime.now().year + 2))
     
     context = {
         'year': year,
+        'years': years,
         'total_leaves': total_leaves,
         'approved_leaves': approved_leaves,
         'pending_leaves': pending_leaves,
         'rejected_leaves': rejected_leaves,
+        'total_days': int(total_days),
+        'approved_days': int(approved_days),
         'leave_summary': leave_summary,
         'title': _('Leave Summary Report')
     }
@@ -1573,12 +1747,13 @@ def upcoming_leaves_report(request):
     upcoming_leaves = LeaveRequest.objects.filter(
         start_date__range=[today, next_month],
         status='approved'
-    ).select_related('employee')
+    ).select_related('employee', 'employee__department', 'leave_type').order_by('start_date')
     
     context = {
         'upcoming_leaves': upcoming_leaves,
         'today': today,
         'next_month': next_month,
+        'total_leaves': upcoming_leaves.count(),
         'title': _('Upcoming Leaves Report')
     }
     
@@ -1586,7 +1761,7 @@ def upcoming_leaves_report(request):
     create_hr_audit_log(
         request,
         "view",
-        None,
+        LeaveRequest,
         None,
         _("Viewed upcoming leaves report")
     )
@@ -1597,35 +1772,43 @@ def upcoming_leaves_report(request):
 @login_required
 def salary_breakdown_report(request):
     """تقرير تفصيل الرواتب"""
-    from django.db.models import Sum, Avg
+    from django.db.models import Sum, Avg, Count
     
     # فلترة حسب القسم
     department_id = request.GET.get('department')
     
-    employees = Employee.objects.filter(status='active')
+    employees = Employee.objects.filter(status='active').select_related('department')
     if department_id:
         employees = employees.filter(department_id=department_id)
     
-    # حساب إحصائيات الرواتب
-    salary_stats = employees.aggregate(
-        total_salary=Sum('basic_salary'),
-        avg_salary=Avg('basic_salary'),
-        count=Count('id')
-    )
-    
-    # تجميع حسب القسم
-    department_breakdown = employees.values('department__name').annotate(
-        total_salary=Sum('basic_salary'),
-        avg_salary=Avg('basic_salary'),
-        count=Count('id')
-    )
-    
+    # حساب إحصائيات حسب القسم
+    salary_breakdown = []
     departments = Department.objects.filter(is_active=True)
     
+    for dept in departments:
+        dept_employees = employees.filter(department=dept)
+        employee_count = dept_employees.count()
+        
+        if employee_count > 0:
+            total_basic = sum(float(e.basic_salary) for e in dept_employees)
+            total_allowances = sum(float(e.allowances) for e in dept_employees)
+            total_salary = total_basic + total_allowances
+            avg_salary = total_salary / employee_count
+            
+            salary_breakdown.append({
+                'department_name': dept.name,
+                'employee_count': employee_count,
+                'total_basic_salary': total_basic,
+                'total_allowances': total_allowances,
+                'total_salary': total_salary,
+                'average_salary': avg_salary
+            })
+    
+    # ترتيب حسب إجمالي الراتب
+    salary_breakdown.sort(key=lambda x: x['total_salary'], reverse=True)
+    
     context = {
-        'employees': employees,
-        'salary_stats': salary_stats,
-        'department_breakdown': department_breakdown,
+        'salary_breakdown': salary_breakdown,
         'departments': departments,
         'selected_department': department_id,
         'title': _('Salary Breakdown Report')
@@ -1650,31 +1833,36 @@ def payroll_comparison_report(request):
     from django.db.models import Sum, Count
     
     # فلترة حسب السنة
-    year = request.GET.get('year', datetime.now().year)
+    year = int(request.GET.get('year', datetime.now().year))
     
-    # إحصائيات سنوية وهمية (يمكن ربطها بجدول Payroll لاحقاً)
+    # إحصائيات شهرية
     monthly_data = []
     for month in range(1, 13):
-        total_employees = Employee.objects.filter(
-            status='active',
-            hire_date__year__lte=year,
-            hire_date__month__lte=month
-        ).count()
-        
-        total_salary = Employee.objects.filter(
+        # الموظفين الذين تم تعيينهم قبل أو في هذا الشهر
+        employees_in_month = Employee.objects.filter(
+            hire_date__lte=f"{year}-{month:02d}-01",
             status='active'
-        ).aggregate(total=Sum('basic_salary'))['total'] or 0
+        )
+        
+        total_employees = employees_in_month.count()
+        total_salary = employees_in_month.aggregate(total=Sum('basic_salary'))['total'] or 0
+        total_allowances = employees_in_month.aggregate(total=Sum('allowances'))['total'] or 0
         
         monthly_data.append({
             'month': month,
             'month_name': datetime(year, month, 1).strftime('%B'),
             'total_employees': total_employees,
-            'total_salary': total_salary,
+            'total_salary': float(total_salary),
+            'total_allowances': float(total_allowances),
+            'total_payroll': float(total_salary + total_allowances),
         })
+    
+    years = list(range(datetime.now().year - 5, datetime.now().year + 1))
     
     context = {
         'monthly_data': monthly_data,
         'year': year,
+        'years': years,
         'title': _('Payroll Comparison Report')
     }
     
@@ -1698,15 +1886,32 @@ def contract_expiry_report(request):
         return redirect('core:dashboard')
     
     from datetime import datetime, timedelta
-    next_three_months = datetime.now().date() + timedelta(days=90)
-    expiring_contracts = Contract.objects.filter(
+    today = datetime.now().date()
+    next_three_months = today + timedelta(days=90)
+    
+    contracts = Contract.objects.filter(
         end_date__lte=next_three_months,
-        end_date__gte=datetime.now().date(),
+        end_date__gte=today,
         status='active'
-    ).select_related('employee')
+    ).select_related('employee', 'employee__department').order_by('end_date', 'employee__first_name')
+    
+    # إضافة days_remaining و is_active لكل عقد
+    expiring_contracts = []
+    for contract in contracts:
+        # حساب الأيام المتبقية
+        days_remaining = (contract.end_date - today).days
+        
+        # إضافة الخاصية للعقد
+        contract.days_remaining = days_remaining
+        contract.is_active = contract.status == 'active'
+        
+        expiring_contracts.append(contract)
+    
+    total_expiring = len(expiring_contracts)
     
     context = {
         'expiring_contracts': expiring_contracts,
+        'total_expiring': total_expiring,
         'title': _('Contract Expiry Report')
     }
     
@@ -1726,17 +1931,24 @@ def contract_expiry_report(request):
 def contract_types_report(request):
     """تقرير أنواع العقود"""
     from django.db.models import Count
-    from datetime import date
     
-    # إحصائيات أنواع العقود (بيانات وهمية)
-    contract_types_data = [
-        {'type': 'Permanent', 'count': Employee.objects.filter(status='active').count() // 2},
-        {'type': 'Temporary', 'count': Employee.objects.filter(status='active').count() // 3},
-        {'type': 'Probation', 'count': Employee.objects.filter(status='active').count() // 6},
-        {'type': 'Part-time', 'count': Employee.objects.filter(status='active').count() // 10},
-    ]
+    # إحصائيات أنواع العقود
+    contract_types_data = []
+    total_contracts = Contract.objects.filter(status='active').count()
     
-    total_contracts = sum(item['count'] for item in contract_types_data)
+    for contract_type, label in Contract.CONTRACT_TYPES:
+        count = Contract.objects.filter(contract_type=contract_type, status='active').count()
+        percentage = (count / total_contracts * 100) if total_contracts > 0 else 0
+        
+        contract_types_data.append({
+            'type': label,
+            'type_code': contract_type,
+            'count': count,
+            'percentage': percentage
+        })
+    
+    # ترتيب حسب العدد
+    contract_types_data.sort(key=lambda x: x['count'], reverse=True)
     
     context = {
         'contract_types_data': contract_types_data,
@@ -1748,7 +1960,7 @@ def contract_types_report(request):
     create_hr_audit_log(
         request,
         "view",
-        Employee,
+        Contract,
         None,
         _("Viewed contract types report")
     )
@@ -1763,12 +1975,28 @@ def probation_report(request):
         messages.error(request, _('You do not have permission to access HR module.'))
         return redirect('core:dashboard')
     
+    from datetime import datetime, timedelta
+    
     probation_contracts = Contract.objects.filter(
-        contract_type='probation'
-    ).select_related('employee')
+        contract_type='probation',
+        status='active'
+    ).select_related('employee', 'employee__department').order_by('end_date', 'employee__first_name')
+    
+    # إضافة days_remaining لكل عقد
+    today = datetime.now().date()
+    probation_list = []
+    
+    for contract in probation_contracts:
+        if contract.end_date:
+            days_remaining = (contract.end_date - today).days
+            contract.days_remaining = days_remaining
+            probation_list.append(contract)
+    
+    total_probation = len(probation_list)
     
     context = {
-        'probation_contracts': probation_contracts,
+        'probation_contracts': probation_list,
+        'total_probation': total_probation,
         'title': _('Probation Period Report')
     }
     
@@ -1787,29 +2015,39 @@ def probation_report(request):
 @login_required
 def headcount_report(request):
     """تقرير العدد الإجمالي للموظفين"""
-    from django.db.models import Count
+    from django.db.models import Count, Q
     
     # إحصائيات الموظفين
-    total_employees = Employee.objects.filter(status='active').count()
+    total_employees = Employee.objects.count()
+    total_active = Employee.objects.filter(status='active').count()
+    total_inactive = Employee.objects.exclude(status='active').count()
     
     # العدد حسب القسم
-    headcount_by_department = Department.objects.filter(
-        is_active=True
-    ).annotate(
-        employee_count=Count('employees', filter=Q(employees__status='active'))
+    departments = Department.objects.filter(is_active=True).annotate(
+        active_count=Count('employees', filter=Q(employees__status='active')),
+        inactive_count=Count('employees', filter=~Q(employees__status='active'))
     )
     
-    # العدد حسب المنصب
-    headcount_by_position = Position.objects.filter(
-        is_active=True
-    ).annotate(
-        employee_count=Count('employees', filter=Q(employees__status='active'))
-    )
+    # إنشاء headcount_data للقالب
+    headcount_data = []
+    for dept in departments:
+        total_count = dept.active_count + dept.inactive_count
+        percentage = (total_count / total_employees * 100) if total_employees > 0 else 0
+        
+        headcount_data.append({
+            'department_name': dept.name,
+            'active_count': dept.active_count,
+            'inactive_count': dept.inactive_count,
+            'total_count': total_count,
+            'percentage': percentage
+        })
+    
+    # ترتيب حسب العدد الكلي
+    headcount_data.sort(key=lambda x: x['total_count'], reverse=True)
     
     context = {
-        'total_employees': total_employees,
-        'headcount_by_department': headcount_by_department,
-        'headcount_by_position': headcount_by_position,
+        'total_employees': total_active,
+        'headcount_data': headcount_data,
         'title': _('Headcount Report')
     }
     
@@ -1836,10 +2074,17 @@ def turnover_report(request):
     current_year = datetime.now().year
     terminated_employees = Employee.objects.filter(
         termination_date__year=current_year
-    )
+    ).select_related('department', 'position').order_by('-termination_date', 'first_name')
+    
+    total_terminated = terminated_employees.count()
+    total_active = Employee.objects.filter(status='active').count()
+    turnover_rate = (total_terminated / (total_active + total_terminated) * 100) if (total_active + total_terminated) > 0 else 0
     
     context = {
         'terminated_employees': terminated_employees,
+        'total_terminated': total_terminated,
+        'total_active': total_active,
+        'turnover_rate': round(turnover_rate, 2),
         'current_year': current_year,
         'title': _('Employee Turnover Report')
     }
@@ -1864,15 +2109,33 @@ def anniversary_report(request):
         return redirect('core:dashboard')
     
     from datetime import datetime
+    from dateutil.relativedelta import relativedelta
+    
     current_month = datetime.now().month
+    current_year = datetime.now().year
+    
     anniversary_employees = Employee.objects.filter(
         hire_date__month=current_month,
         status='active'
-    )
+    ).select_related('department', 'position').order_by('hire_date', 'first_name')
+    
+    # إضافة years_of_service و anniversary_date
+    anniversaries = []
+    for emp in anniversary_employees:
+        # حساب سنوات الخدمة
+        years_of_service = current_year - emp.hire_date.year
+        
+        # تاريخ الذكرى لهذا العام
+        anniversary_date = emp.hire_date.replace(year=current_year)
+        
+        emp.years_of_service = years_of_service
+        emp.anniversary_date = anniversary_date
+        anniversaries.append(emp)
     
     context = {
-        'anniversary_employees': anniversary_employees,
+        'anniversaries': anniversaries,
         'current_month': datetime.now().strftime('%B'),
+        'total_anniversaries': len(anniversaries),
         'title': _('Work Anniversary Report')
     }
     

@@ -956,7 +956,7 @@ class UserGroupCreateView(LoginRequiredMixin, CreateView):
             # الأقسام المسموح بها فقط
             allowed_apps = ['journal', 'sales', 'purchases', 'customers', 'products', 'inventory', 
                           'assets_liabilities', 'revenues_expenses', 'banks', 'cashboxes', 
-                          'payments', 'receipts', 'reports', 'users']
+                          'payments', 'receipts', 'reports', 'users', 'hr']
             
             for permission in queryset:
                 app_label = permission.content_type.app_label
@@ -987,6 +987,22 @@ class UserGroupCreateView(LoginRequiredMixin, CreateView):
                         'can_delete_all_data'
                     ]
                     if permission.codename not in allowed_users_perms:
+                        continue
+                    
+                # فلترة صلاحيات HR: إظهار الصلاحيات المخصصة فقط (hr_* و can_*)
+                if app_label == 'hr':
+                    # إظهار فقط الصلاحيات المخصصة
+                    if not (permission.codename.startswith('view_hr_') or 
+                           permission.codename.startswith('add_hr_') or
+                           permission.codename.startswith('change_hr_') or
+                           permission.codename.startswith('delete_hr_') or
+                           permission.codename.startswith('approve_hr_') or
+                           permission.codename.startswith('process_hr_') or
+                           permission.codename == 'can_view_hr' or
+                           permission.codename == 'can_manage_employees' or
+                           permission.codename == 'can_manage_attendance' or
+                           permission.codename == 'can_manage_payroll' or
+                           permission.codename == 'can_approve_leaves'):
                         continue
                     
                 # فصل صلاحيات إدارة الشيكات عن صلاحيات السندات
@@ -1459,7 +1475,10 @@ class UserGroupCreateView(LoginRequiredMixin, CreateView):
             'can_create_cashboxes_transfers': _('Create Cashbox Transfers'),
         }
         
-        return translations.get(permission.codename, permission.name)
+        # إذا وجدنا الترجمة في القاموس، نستخدمها
+        # وإلا نستخدم gettext لترجمة النص الأصلي
+        from django.utils.translation import gettext
+        return translations.get(permission.codename, gettext(permission.name))
     
     def _get_app_names(self):
         """أسماء التطبيقات المترجمة"""
@@ -1479,6 +1498,7 @@ class UserGroupCreateView(LoginRequiredMixin, CreateView):
             'check_management': _('Cheque Management'),
             'reports': _('Reports'),
             'users': _('System Management (Basic)'),
+            'hr': _('HR'),
         }
 
 
@@ -1628,7 +1648,7 @@ class UserGroupUpdateView(LoginRequiredMixin, UpdateView):
         # الأقسام المسموح بها فقط
         allowed_apps = ['journal', 'sales', 'purchases', 'customers', 'products', 'inventory', 
                       'assets_liabilities', 'revenues_expenses', 'banks', 'cashboxes', 
-                      'payments', 'receipts', 'reports', 'users']
+                      'payments', 'receipts', 'reports', 'users', 'hr']
         
         for permission in queryset:
             app_label = permission.content_type.app_label
@@ -1659,6 +1679,22 @@ class UserGroupUpdateView(LoginRequiredMixin, UpdateView):
                     'can_delete_all_data'
                 ]
                 if permission.codename not in allowed_users_perms:
+                    continue
+            
+            # فلترة صلاحيات HR: إظهار الصلاحيات المخصصة فقط (hr_* و can_*)
+            if app_label == 'hr':
+                # إظهار فقط الصلاحيات المخصصة
+                if not (permission.codename.startswith('view_hr_') or 
+                       permission.codename.startswith('add_hr_') or
+                       permission.codename.startswith('change_hr_') or
+                       permission.codename.startswith('delete_hr_') or
+                       permission.codename.startswith('approve_hr_') or
+                       permission.codename.startswith('process_hr_') or
+                       permission.codename == 'can_view_hr' or
+                       permission.codename == 'can_manage_employees' or
+                       permission.codename == 'can_manage_attendance' or
+                       permission.codename == 'can_manage_payroll' or
+                       permission.codename == 'can_approve_leaves'):
                     continue
             
             # فصل صلاحيات إدارة الشيكات عن صلاحيات السندات
@@ -2002,7 +2038,10 @@ class UserGroupUpdateView(LoginRequiredMixin, UpdateView):
             'can_create_cashboxes_transfers': _('Create Cashbox Transfers'),
         }
         
-        return translations.get(permission.codename, permission.name)
+        # إذا وجدنا الترجمة في القاموس، نستخدمها
+        # وإلا نستخدم gettext لترجمة النص الأصلي
+        from django.utils.translation import gettext
+        return translations.get(permission.codename, gettext(permission.name))
     
     def _get_app_names(self):
         """أسماء التطبيقات المترجمة"""
@@ -2022,6 +2061,7 @@ class UserGroupUpdateView(LoginRequiredMixin, UpdateView):
             'check_management': _('Cheque Management'),
             'reports': _('Reports'),
             'users': _('System Management (Basic)'),
+            'hr': _('HR'),
         }
 
 
