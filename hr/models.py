@@ -89,6 +89,12 @@ class Employee(models.Model):
         ('terminated', _('Terminated')),
         ('on_leave', _('On Leave')),
     ]
+    
+    TERMINATION_REASON_CHOICES = [
+        ('dismissal', _('Dismissal')),
+        ('resignation', _('Resignation')),
+        ('retirement', _('Retirement')),
+    ]
 
     # معلومات شخصية
     employee_id = models.CharField(_('Employee ID'), max_length=20, unique=True)
@@ -117,7 +123,18 @@ class Employee(models.Model):
                                 related_name='employees', verbose_name=_('Position'))
     employment_type = models.CharField(_('Employment Type'), max_length=20, choices=EMPLOYMENT_TYPE_CHOICES)
     hire_date = models.DateField(_('Hire Date'))
+    probation_period_days = models.IntegerField(_('Probation Period (Days)'), 
+                                               validators=[MinValueValidator(0)], 
+                                               default=0,
+                                               help_text=_('Number of days for probation period. 0 means no probation.'))
     termination_date = models.DateField(_('Termination Date'), null=True, blank=True)
+    
+    # معلومات إنهاء الخدمة
+    is_terminated = models.BooleanField(_('Is Terminated'), default=False)
+    termination_reason = models.CharField(_('Termination Reason'), max_length=20, 
+                                         choices=TERMINATION_REASON_CHOICES, blank=True, null=True)
+    termination_notes = models.TextField(_('Termination Notes'), blank=True)
+    
     status = models.CharField(_('Status'), max_length=20, choices=STATUS_CHOICES, default='active')
     
     # معلومات الراتب
@@ -126,11 +143,25 @@ class Employee(models.Model):
     allowances = models.DecimalField(_('Allowances'), max_digits=10, decimal_places=3, 
                                    validators=[MinValueValidator(Decimal('0'))], default=0)
     
+    # معلومات الضريبة المقتطعة
+    withholding_tax_rate = models.DecimalField(_('Withholding Tax Rate %'), max_digits=5, decimal_places=2,
+                                              validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
+                                              default=Decimal('0'))
+    
     # معلومات الضمان الاجتماعي
     social_security_number = models.CharField(_('Social Security Number'), max_length=20, blank=True)
     social_security_rate = models.DecimalField(_('Social Security Rate %'), max_digits=5, decimal_places=2, 
                                              validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))], 
                                              default=Decimal('7.5'))
+    company_social_security_rate = models.DecimalField(_('Company Social Security Rate %'), max_digits=5, decimal_places=2,
+                                                       validators=[MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))],
+                                                       default=Decimal('9.75'))
+    
+    # الاقتطاعات الإضافية - تم نقلها إلى نموذج EmployeeDeduction
+    DEDUCTION_TYPE_CHOICES = [
+        ('percentage', _('Percentage')),
+        ('fixed', _('Fixed Amount')),
+    ]
     
     # معلومات أخرى
     emergency_contact_name = models.CharField(_('Emergency Contact Name'), max_length=200, blank=True)
@@ -188,6 +219,58 @@ class Employee(models.Model):
     @property
     def total_salary(self):
         return self.basic_salary + self.allowances
+    
+    @property
+    def withholding_tax_amount(self):
+        """حساب قيمة الضريبة المقتطعة من الراتب الأساسي"""
+        if self.withholding_tax_rate and self.basic_salary:
+            return (self.basic_salary * self.withholding_tax_rate) / Decimal('100')
+        return Decimal('0')
+    
+    @property
+    def social_security_amount(self):
+        """حساب قيمة الضمان الاجتماعي المترتبة على الموظف"""
+        if self.social_security_rate and self.basic_salary:
+            return (self.basic_salary * self.social_security_rate) / Decimal('100')
+        return Decimal('0')
+    
+    @property
+    def company_social_security_amount(self):
+        """حساب قيمة الضمان الاجتماعي المترتبة على الشركة"""
+        if self.company_social_security_rate and self.basic_salary:
+            return (self.basic_salary * self.company_social_security_rate) / Decimal('100')
+        return Decimal('0')
+    
+    @property
+    def additional_deduction_amount(self):
+        """حساب إجمالي قيمة الاقتطاعات الإضافية"""
+        total = Decimal('0')
+        for deduction in self.deductions.filter(is_active=True):
+            total += deduction.calculated_amount
+        return total
+    
+    @property
+    def net_salary(self):
+        """حساب صافي الراتب بعد جميع الاقتطاعات"""
+        gross_salary = self.basic_salary + self.allowances
+        total_deductions = self.withholding_tax_amount + self.social_security_amount + self.additional_deduction_amount
+        return gross_salary - total_deductions
+    
+    @property
+    def probation_end_date(self):
+        """حساب تاريخ انتهاء فترة التجربة"""
+        if self.probation_period_days and self.probation_period_days > 0:
+            from datetime import timedelta
+            return self.hire_date + timedelta(days=self.probation_period_days)
+        return None
+    
+    @property
+    def is_in_probation(self):
+        """التحقق من أن الموظف في فترة التجربة"""
+        if self.probation_end_date:
+            from datetime import date
+            return date.today() <= self.probation_end_date
+        return False
 
     @property
     def current_contract(self):
@@ -203,16 +286,20 @@ class Employee(models.Model):
         """حساب رصيد الإجازات الحالي"""
         from datetime import datetime
         current_year = datetime.now().year
-        annual_leave_days = 21  # يمكن جعلها قابلة للتخصيص
         
-        used_leaves = self.leave_requests.filter(
-            start_date__year=current_year,
-            status='approved'
-        ).aggregate(
-            total_days=models.Sum('days_count')
-        )['total_days'] or 0
+        balance = {}
+        for leave_type in LeaveType.objects.filter(is_active=True):
+            used_leaves = self.leave_requests.filter(
+                leave_type=leave_type,
+                start_date__year=current_year,
+                status='approved'
+            ).aggregate(
+                total_days=models.Sum('days_count')
+            )['total_days'] or 0
+            
+            balance[leave_type.id] = leave_type.days_per_year - used_leaves
         
-        return annual_leave_days - used_leaves
+        return balance
 
 class Contract(models.Model):
     """عقود الموظفين"""
@@ -599,3 +686,50 @@ class EmployeeDocument(models.Model):
 
     def __str__(self):
         return f"{self.employee.full_name} - {self.title}"
+
+
+class EmployeeDeduction(models.Model):
+    """اقتطاعات الموظفين الإضافية"""
+    DEDUCTION_TYPE_CHOICES = [
+        ('percentage', _('Percentage')),
+        ('fixed', _('Fixed Amount')),
+    ]
+    
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE,
+                                related_name='deductions', verbose_name=_('Employee'))
+    name = models.CharField(_('Deduction Name'), max_length=200)
+    deduction_type = models.CharField(_('Deduction Type'), max_length=20,
+                                     choices=DEDUCTION_TYPE_CHOICES, default='fixed')
+    value = models.DecimalField(_('Deduction Value'), max_digits=10, decimal_places=3,
+                               validators=[MinValueValidator(Decimal('0'))], default=0)
+    notes = models.TextField(_('Deduction Notes'), blank=True)
+    is_active = models.BooleanField(_('Active'), default=True)
+    created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
+    created_by = models.ForeignKey(User, on_delete=models.PROTECT,
+                                  related_name='created_deductions', verbose_name=_('Created By'))
+    
+    class Meta:
+        verbose_name = _('Employee Deduction')
+        verbose_name_plural = _('Employee Deductions')
+        ordering = ['employee', '-created_at']
+        permissions = [
+            ("view_hr_employeededuction", _("Can View Employee Deductions")),
+            ("add_hr_employeededuction", _("Can Add Employee Deductions")),
+            ("change_hr_employeededuction", _("Can Change Employee Deductions")),
+            ("delete_hr_employeededuction", _("Can Delete Employee Deductions")),
+        ]
+    
+    def __str__(self):
+        return f"{self.employee.full_name} - {self.name}"
+    
+    @property
+    def calculated_amount(self):
+        """حساب قيمة الاقتطاع"""
+        if not self.is_active:
+            return Decimal('0')
+        
+        if self.deduction_type == 'percentage':
+            return (self.employee.basic_salary * self.value) / Decimal('100')
+        else:
+            return self.value

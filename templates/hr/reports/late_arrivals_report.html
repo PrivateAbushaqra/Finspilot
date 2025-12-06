@@ -3,6 +3,13 @@
 
 {% block title %}{% trans "Late Arrivals Report" %} - {{ block.super }}{% endblock %}
 
+{% block extra_css %}
+<style>
+    th { cursor: pointer; user-select: none; }
+    th i { margin-left: 5px; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <div class="row">
@@ -39,15 +46,15 @@
 
                     {% if late_arrivals %}
                         <div class="table-responsive">
-                            <table class="table table-striped table-hover">
+                            <table class="table table-striped table-hover" id="late-arrivals-table">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th>{% trans "Employee" %}</th>
-                                        <th>{% trans "Date" %}</th>
-                                        <th>{% trans "Check In Time" %}</th>
-                                        <th>{% trans "Expected Time" %}</th>
-                                        <th>{% trans "Late Minutes" %}</th>
-                                        <th>{% trans "Department" %}</th>
+                                        <th><span>{% trans "Employee" %}</span><i class="fas fa-sort"></i></th>
+                                        <th><span>{% trans "Date" %}</span><i class="fas fa-sort"></i></th>
+                                        <th><span>{% trans "Check In Time" %}</span><i class="fas fa-sort"></i></th>
+                                        <th><span>{% trans "Expected Time" %}</span><i class="fas fa-sort"></i></th>
+                                        <th><span>{% trans "Late Minutes" %}</span><i class="fas fa-sort"></i></th>
+                                        <th><span>{% trans "Department" %}</span><i class="fas fa-sort"></i></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -93,4 +100,63 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function initTableSort(tableId) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    
+    const headers = table.querySelectorAll('thead th');
+    headers.forEach((header, index) => {
+        header.addEventListener('click', () => {
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            const isAscending = header.classList.contains('sort-asc');
+            headers.forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+            headers.forEach(h => h.querySelectorAll('i').forEach(i => i.className = 'fas fa-sort'));
+            
+            if (isAscending) {
+                header.classList.add('sort-desc');
+                header.querySelector('i').className = 'fas fa-sort-down';
+            } else {
+                header.classList.add('sort-asc');
+                header.querySelector('i').className = 'fas fa-sort-up';
+            }
+            
+            rows.sort((a, b) => {
+                const aValue = a.cells[index].textContent.trim();
+                const bValue = b.cells[index].textContent.trim();
+                
+                const datePattern = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+                const aDateMatch = aValue.match(datePattern);
+                const bDateMatch = bValue.match(datePattern);
+                
+                if (aDateMatch && bDateMatch) {
+                    const aDate = new Date(aDateMatch[3], aDateMatch[2] - 1, aDateMatch[1]);
+                    const bDate = new Date(bDateMatch[3], bDateMatch[2] - 1, bDateMatch[1]);
+                    return isAscending ? bDate - aDate : aDate - bDate;
+                }
+                
+                const aNum = parseFloat(aValue.replace(/[^0-9.-]/g, ''));
+                const bNum = parseFloat(bValue.replace(/[^0-9.-]/g, ''));
+                
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return isAscending ? bNum - aNum : aNum - bNum;
+                }
+                
+                return isAscending ? bValue.localeCompare(aValue, 'ar') : aValue.localeCompare(bValue, 'ar');
+            });
+            
+            rows.forEach(row => tbody.appendChild(row));
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initTableSort('late-arrivals-table');
+});
+</script>
 {% endblock %}

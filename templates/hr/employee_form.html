@@ -229,6 +229,21 @@
                         </div>
                     {% endif %}
                 </div>
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.probation_period_days.id_for_label }}" class="form-label">{{ form.probation_period_days.label }}</label>
+                    {{ form.probation_period_days }}
+                    {% if form.probation_period_days.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.probation_period_days.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="form-text">{% trans "Enter 0 for no probation period" %}</div>
+                </div>
+                <div class="col-md-4 mb-3" id="probation_end_date_display" style="display: none;">
+                    <label class="form-label">{% trans "Probation End Date" %}</label>
+                    <input type="text" id="probation_end_date_value" class="form-control bg-light" readonly disabled>
+                    <div class="form-text">{% trans "Calculated automatically" %}</div>
+                </div>
                 <div class="col-md-6 mb-3">
                     <label for="{{ form.department.id_for_label }}" class="form-label required-field">{{ form.department.label }}</label>
                     {{ form.department }}
@@ -294,11 +309,33 @@
             </div>
         </div>
         
+        <!-- Withholding Tax Information Section -->
+        <div class="form-section">
+            <h5><i class="fas fa-percentage me-2"></i>{% trans "Withholding Tax Information" %}</h5>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.withholding_tax_rate.id_for_label }}" class="form-label">{{ form.withholding_tax_rate.label }}</label>
+                    {{ form.withholding_tax_rate }}
+                    {% if form.withholding_tax_rate.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.withholding_tax_rate.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="form-text">{% trans "Enter the withholding tax rate percentage" %}</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="withholding_tax_amount" class="form-label">{% trans "Withholding Tax Amount" %}</label>
+                    <input type="text" id="withholding_tax_amount" class="form-control" readonly disabled>
+                    <div class="form-text">{% trans "Calculated automatically from basic salary" %}</div>
+                </div>
+            </div>
+        </div>
+        
         <!-- Social Security Information Section -->
         <div class="form-section">
             <h5><i class="fas fa-shield-alt me-2"></i>{% trans "Social Security Information" %}</h5>
             <div class="row">
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
                     <label for="{{ form.social_security_number.id_for_label }}" class="form-label">{{ form.social_security_number.label }}</label>
                     {{ form.social_security_number }}
                     {% if form.social_security_number.errors %}
@@ -307,7 +344,7 @@
                         </div>
                     {% endif %}
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
                     <label for="{{ form.social_security_rate.id_for_label }}" class="form-label">{{ form.social_security_rate.label }}</label>
                     {{ form.social_security_rate }}
                     {% if form.social_security_rate.errors %}
@@ -315,6 +352,125 @@
                             {% for error in form.social_security_rate.errors %}{{ error }}{% endfor %}
                         </div>
                     {% endif %}
+                    <div class="form-text">{% trans "Employee contribution rate" %}</div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="social_security_amount" class="form-label">{% trans "Employee Social Security Amount" %}</label>
+                    <input type="text" id="social_security_amount" class="form-control" readonly disabled>
+                    <div class="form-text">{% trans "Calculated automatically from basic salary" %}</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.company_social_security_rate.id_for_label }}" class="form-label">{{ form.company_social_security_rate.label }}</label>
+                    {{ form.company_social_security_rate }}
+                    {% if form.company_social_security_rate.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.company_social_security_rate.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="form-text">{% trans "Company contribution rate" %}</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="company_social_security_amount" class="form-label">{% trans "Company Social Security Amount" %}</label>
+                    <input type="text" id="company_social_security_amount" class="form-control" readonly disabled>
+                    <div class="form-text">{% trans "Calculated automatically from basic salary" %}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Additional Deductions Section -->
+        <div class="form-section">
+            <h5><i class="fas fa-minus-circle me-2"></i>{% trans "Additional Deductions" %}</h5>
+            <div class="row mb-3">
+                <div class="col-12">
+                    <button type="button" class="btn btn-primary btn-sm" id="addDeductionBtn">
+                        <i class="fas fa-plus me-1"></i>إضافة اقتطاع
+                    </button>
+                    {% if not form.instance.pk %}
+                    <small class="text-muted ms-2">سيتم حفظ الاقتطاعات عند حفظ بيانات الموظف</small>
+                    {% endif %}
+                </div>
+            </div>
+            <div id="deductionsList">
+                <p class="text-muted">لا توجد اقتطاعات بعد</p>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6 mb-3">
+                    <label for="total_additional_deductions_display" class="form-label">{% trans "Total Additional Deductions" %}</label>
+                    <input type="text" id="total_additional_deductions_display" class="form-control bg-light fw-bold" readonly disabled value="0.000">
+                    <div class="form-text">{% trans "Sum of all active deductions" %}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Net Salary Section -->
+        <div class="form-section">
+            <h5><i class="fas fa-hand-holding-usd me-2"></i>{% trans "Net Salary Information" %}</h5>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="gross_salary_display" class="form-label">{% trans "Gross Salary" %}</label>
+                    <input type="text" id="gross_salary_display" class="form-control bg-light" readonly disabled>
+                    <div class="form-text">{% trans "Basic Salary + Allowances" %}</div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="total_deductions_display" class="form-label">{% trans "Total Deductions" %}</label>
+                    <input type="text" id="total_deductions_display" class="form-control bg-light" readonly disabled>
+                    <div class="form-text">{% trans "Withholding Tax + Social Security" %}</div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="net_salary_display" class="form-label">{% trans "Net Salary" %}</label>
+                    <input type="text" id="net_salary_display" class="form-control bg-success text-white fw-bold" readonly disabled style="font-size: 1.1rem;">
+                    <div class="form-text">{% trans "Final salary after all deductions" %}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- End of Service / Termination Section -->
+        <div class="form-section">
+            <h5><i class="fas fa-user-times me-2"></i>{% trans "End of Service / Termination" %}</h5>
+            <div class="row">
+                <div class="col-12 mb-3">
+                    <div class="form-check">
+                        {{ form.is_terminated }}
+                        <label for="{{ form.is_terminated.id_for_label }}" class="form-check-label">
+                            {{ form.is_terminated.label }}
+                        </label>
+                    </div>
+                    {% if form.is_terminated.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.is_terminated.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div id="termination_details" style="display: none;">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.termination_date.id_for_label }}" class="form-label">{{ form.termination_date.label }}</label>
+                        {{ form.termination_date }}
+                        {% if form.termination_date.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.termination_date.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.termination_reason.id_for_label }}" class="form-label">{{ form.termination_reason.label }}</label>
+                        {{ form.termination_reason }}
+                        {% if form.termination_reason.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.termination_reason.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-12 mb-3">
+                        <label for="{{ form.termination_notes.id_for_label }}" class="form-label">{{ form.termination_notes.label }}</label>
+                        {{ form.termination_notes }}
+                        {% if form.termination_notes.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.termination_notes.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -366,9 +522,575 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Get form elements
+    const basicSalaryInput = document.getElementById('{{ form.basic_salary.id_for_label }}');
+    const allowancesInput = document.getElementById('{{ form.allowances.id_for_label }}');
+    const withholdingTaxRateInput = document.getElementById('{{ form.withholding_tax_rate.id_for_label }}');
+    const withholdingTaxAmountInput = document.getElementById('withholding_tax_amount');
+    const socialSecurityRateInput = document.getElementById('{{ form.social_security_rate.id_for_label }}');
+    const socialSecurityAmountInput = document.getElementById('social_security_amount');
+    const companySocialSecurityRateInput = document.getElementById('{{ form.company_social_security_rate.id_for_label }}');
+    const companySocialSecurityAmountInput = document.getElementById('company_social_security_amount');
+    
+    // Get probation period elements
+    const hireDateInput = document.getElementById('{{ form.hire_date.id_for_label }}');
+    const probationPeriodInput = document.getElementById('{{ form.probation_period_days.id_for_label }}');
+    const probationEndDateDisplay = document.getElementById('probation_end_date_display');
+    const probationEndDateValue = document.getElementById('probation_end_date_value');
+    
+    // Get net salary display elements
+    const grossSalaryDisplay = document.getElementById('gross_salary_display');
+    const totalDeductionsDisplay = document.getElementById('total_deductions_display');
+    const netSalaryDisplay = document.getElementById('net_salary_display');
+    const totalAdditionalDeductionsDisplay = document.getElementById('total_additional_deductions_display');
+    
+    // Employee deductions management (for both create and edit)
+    let employeeDeductions = [];
+    const employeeId = {{ form.instance.pk|default:"null" }};
+    const isCreating = !employeeId; // Track if we're creating or editing
+    
+    // Intercept form submission to save deductions for new employees
+    const employeeForm = document.querySelector('.needs-validation');
+    if (isCreating && employeeForm) {
+        employeeForm.addEventListener('submit', function(e) {
+            // If there are deductions to save, handle specially
+            if (employeeDeductions.length > 0) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Validate form first
+                if (!employeeForm.checkValidity()) {
+                    employeeForm.classList.add('was-validated');
+                    return;
+                }
+                
+                // Save employee first, then save deductions
+                saveEmployeeWithDeductions();
+            }
+            // Otherwise let form submit normally
+        });
+    }
+    
+    // Function to calculate probation end date
+    function calculateProbationEndDate() {
+        const hireDate = hireDateInput.value;
+        const probationDays = parseInt(probationPeriodInput.value) || 0;
+        
+        if (hireDate && probationDays > 0) {
+            const hire = new Date(hireDate);
+            const endDate = new Date(hire);
+            endDate.setDate(hire.getDate() + probationDays);
+            
+            const formatted = endDate.toISOString().split('T')[0];
+            probationEndDateValue.value = formatted;
+            probationEndDateDisplay.style.display = 'block';
+        } else {
+            probationEndDateDisplay.style.display = 'none';
+        }
+    }
+
+    // Function to calculate and display amounts
+    function calculateAmounts() {
+        const basicSalary = parseFloat(basicSalaryInput.value) || 0;
+        const allowances = parseFloat(allowancesInput.value) || 0;
+        const withholdingTaxRate = parseFloat(withholdingTaxRateInput.value) || 0;
+        const socialSecurityRate = parseFloat(socialSecurityRateInput.value) || 0;
+        const companySocialSecurityRate = parseFloat(companySocialSecurityRateInput.value) || 0;
+
+        // Calculate withholding tax amount
+        const withholdingTaxAmount = (basicSalary * withholdingTaxRate) / 100;
+        withholdingTaxAmountInput.value = withholdingTaxAmount.toFixed(3);
+
+        // Calculate employee social security amount
+        const socialSecurityAmount = (basicSalary * socialSecurityRate) / 100;
+        socialSecurityAmountInput.value = socialSecurityAmount.toFixed(3);
+
+        // Calculate company social security amount
+        const companySocialSecurityAmount = (basicSalary * companySocialSecurityRate) / 100;
+        companySocialSecurityAmountInput.value = companySocialSecurityAmount.toFixed(3);
+        
+        // Calculate total additional deductions
+        let totalAdditionalDeductions = 0;
+        if (employeeDeductions && employeeDeductions.length > 0) {
+            employeeDeductions.forEach(deduction => {
+                if (deduction.is_active) {
+                    totalAdditionalDeductions += parseFloat(deduction.calculated_amount) || 0;
+                }
+            });
+        }
+        
+        if (totalAdditionalDeductionsDisplay) {
+            totalAdditionalDeductionsDisplay.value = totalAdditionalDeductions.toFixed(3);
+        }
+        
+        // Calculate gross salary
+        const grossSalary = basicSalary + allowances;
+        grossSalaryDisplay.value = grossSalary.toFixed(3);
+        
+        // Calculate total deductions (including additional deductions)
+        const totalDeductions = withholdingTaxAmount + socialSecurityAmount + totalAdditionalDeductions;
+        totalDeductionsDisplay.value = totalDeductions.toFixed(3);
+        
+        // Calculate net salary
+        const netSalary = grossSalary - totalDeductions;
+        netSalaryDisplay.value = netSalary.toFixed(3);
+    }
+
+    // Add event listeners for automatic calculation
+    if (basicSalaryInput) {
+        basicSalaryInput.addEventListener('input', calculateAmounts);
+        basicSalaryInput.addEventListener('change', calculateAmounts);
+    }
+    if (allowancesInput) {
+        allowancesInput.addEventListener('input', calculateAmounts);
+        allowancesInput.addEventListener('change', calculateAmounts);
+    }
+    if (withholdingTaxRateInput) {
+        withholdingTaxRateInput.addEventListener('input', calculateAmounts);
+        withholdingTaxRateInput.addEventListener('change', calculateAmounts);
+    }
+    if (socialSecurityRateInput) {
+        socialSecurityRateInput.addEventListener('input', calculateAmounts);
+        socialSecurityRateInput.addEventListener('change', calculateAmounts);
+    }
+    if (companySocialSecurityRateInput) {
+        companySocialSecurityRateInput.addEventListener('input', calculateAmounts);
+        companySocialSecurityRateInput.addEventListener('change', calculateAmounts);
+    }
+
+    // Calculate initial values if editing
+    calculateAmounts();
+    
+    // Load deductions if editing existing employee, otherwise start with empty array
+    if (employeeId) {
+        loadDeductions();
+    } else {
+        // Start with empty array for new employees
+        renderDeductions();
+    }
+    
+    // Add deduction button - works for both create and edit
+    const addDeductionBtn = document.getElementById('addDeductionBtn');
+    if (addDeductionBtn) {
+        addDeductionBtn.addEventListener('click', showAddDeductionModal);
+    }
+    
+    // Function to save employee with deductions
+    function saveEmployeeWithDeductions() {
+        const formData = new FormData(employeeForm);
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        console.log('Saving employee with', employeeDeductions.length, 'deductions');
+        
+        // Submit employee form via AJAX
+        fetch(employeeForm.action || window.location.pathname, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Employee created response:', data);
+            
+            if (!data.success) {
+                alert('خطأ في حفظ الموظف: ' + (data.message || 'حدث خطأ غير متوقع'));
+                return;
+            }
+            
+            const newEmployeeId = data.employee_id;
+            console.log('Employee created with ID:', newEmployeeId);
+            
+            // Now save all deductions
+            return saveAllDeductions(newEmployeeId, csrftoken);
+        })
+        .then(() => {
+            // Redirect to employee list
+            alert('تم حفظ الموظف والاقتطاعات بنجاح');
+            window.location.href = '{% url "hr:employee_list" %}';
+        })
+        .catch(error => {
+            console.error('Error saving employee with deductions:', error);
+            alert('خطأ في حفظ البيانات: ' + error.message);
+        });
+    }
+    
+    function saveAllDeductions(newEmployeeId, csrftoken) {
+        console.log('Saving', employeeDeductions.length, 'deductions for employee', newEmployeeId);
+        
+        // Save each deduction
+        const promises = employeeDeductions.map(deduction => {
+            const formData = new FormData();
+            formData.append('name', deduction.name);
+            formData.append('deduction_type', deduction.deduction_type);
+            formData.append('value', deduction.value);
+            formData.append('notes', deduction.notes);
+            formData.append('is_active', deduction.is_active ? 'on' : '');
+            formData.append('csrfmiddlewaretoken', csrftoken);
+            
+            return fetch(`/ar/hr/api/employees/${newEmployeeId}/deductions/add/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    console.error('Failed to save deduction:', deduction.name, data);
+                }
+                return data;
+            });
+        });
+        
+        return Promise.all(promises);
+    }
+    
+    // Deduction management functions
+    function loadDeductions() {
+        if (!employeeId) return;
+        
+        fetch(`/ar/hr/api/employees/${employeeId}/deductions/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    employeeDeductions = data.deductions;
+                    renderDeductions();
+                    calculateAmounts();
+                }
+            })
+            .catch(error => console.error('Error loading deductions:', error));
+    }
+    
+    function renderDeductions() {
+        const deductionsList = document.getElementById('deductionsList');
+        if (!deductionsList) return;
+        
+        if (employeeDeductions.length === 0) {
+            deductionsList.innerHTML = '<p class="text-muted">{% trans "No deductions added yet" %}</p>';
+            return;
+        }
+        
+        let html = '<div class="table-responsive"><table class="table table-sm table-bordered">';
+        html += '<thead class="table-light"><tr>';
+        html += '<th>{% trans "Name" %}</th>';
+        html += '<th>{% trans "Type" %}</th>';
+        html += '<th>{% trans "Value" %}</th>';
+        html += '<th>{% trans "Calculated" %}</th>';
+        html += '<th>{% trans "Notes" %}</th>';
+        html += '<th>{% trans "Active" %}</th>';
+        html += '<th>{% trans "Actions" %}</th>';
+        html += '</tr></thead><tbody>';
+        
+        employeeDeductions.forEach(deduction => {
+            const percentSign = deduction.type_value === 'percentage' ? '%' : '';
+            html += `<tr>
+                <td>${deduction.name}</td>
+                <td>${deduction.type}</td>
+                <td>${deduction.value}${percentSign}</td>
+                <td>${deduction.calculated_amount}</td>
+                <td>${deduction.notes || '-'}</td>
+                <td>${deduction.is_active ? '<span class="badge bg-success">نعم</span>' : '<span class="badge bg-secondary">لا</span>'}</td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-info btn-edit-deduction" data-deduction-id="${deduction.id}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-danger btn-delete-deduction" data-deduction-id="${deduction.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>`;
+        });
+        
+        html += '</tbody></table></div>';
+        deductionsList.innerHTML = html;
+        
+        // Add event listeners to buttons
+        document.querySelectorAll('.btn-edit-deduction').forEach(btn => {
+            btn.addEventListener('click', function() {
+                editDeduction(this.dataset.deductionId);
+            });
+        });
+        
+        document.querySelectorAll('.btn-delete-deduction').forEach(btn => {
+            btn.addEventListener('click', function() {
+                deleteDeduction(this.dataset.deductionId);
+            });
+        });
+    }
+    
+    function showAddDeductionModal() {
+        const modalHtml = `
+            <div class="modal fade" id="deductionModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">{% trans "Add Deduction" %}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="deductionForm">
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Deduction Name" %}</label>
+                                    <input type="text" class="form-control" name="name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Type" %}</label>
+                                    <select class="form-control" name="deduction_type" id="modalDeductionType" required>
+                                        <option value="fixed">{% trans "Fixed Amount" %}</option>
+                                        <option value="percentage">{% trans "Percentage" %}</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Value" %}</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" name="value" step="0.001" required>
+                                        <span class="input-group-text" id="modalDeductionUnit" style="display: none;">%</span>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Notes" %}</label>
+                                    <textarea class="form-control" name="notes" rows="2"></textarea>
+                                </div>
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" class="form-check-input" name="is_active" id="deductionActive" checked>
+                                    <label class="form-check-label" for="deductionActive">{% trans "Active" %}</label>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                            <button type="button" class="btn btn-primary" id="saveDeductionBtn">{% trans "Save" %}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        const modal = new bootstrap.Modal(document.getElementById('deductionModal'));
+        
+        // Update unit display based on type
+        document.getElementById('modalDeductionType').addEventListener('change', function() {
+            const unit = document.getElementById('modalDeductionUnit');
+            unit.style.display = this.value === 'percentage' ? 'block' : 'none';
+        });
+        
+        // Add event listener to save button
+        document.getElementById('saveDeductionBtn').addEventListener('click', saveDeduction);
+        
+        modal.show();
+        
+        document.getElementById('deductionModal').addEventListener('hidden.bs.modal', function () {
+            this.remove();
+        });
+    }
+    
+    function saveDeduction() {
+        console.log('saveDeduction called, employeeId:', employeeId, 'isCreating:', isCreating);
+        const deductionForm = document.getElementById('deductionForm');
+        const formData = new FormData(deductionForm);
+        
+        // Get values from form
+        const deductionData = {
+            name: formData.get('name'),
+            deduction_type: formData.get('deduction_type'),
+            value: parseFloat(formData.get('value')),
+            notes: formData.get('notes') || '',
+            is_active: formData.get('is_active') === 'on'
+        };
+        
+        console.log('Deduction data:', deductionData);
+        
+        // If creating new employee, store in temporary array
+        if (isCreating) {
+            // Add temporary ID for rendering
+            deductionData.id = Date.now();
+            deductionData.type = deductionData.deduction_type === 'percentage' ? 'نسبة مئوية' : 'مبلغ ثابت';
+            deductionData.type_value = deductionData.deduction_type;
+            
+            // Calculate amount for display
+            const basicSalary = parseFloat(basicSalaryInput.value) || 0;
+            if (deductionData.deduction_type === 'percentage') {
+                deductionData.calculated_amount = (basicSalary * deductionData.value / 100).toFixed(3);
+            } else {
+                deductionData.calculated_amount = deductionData.value.toFixed(3);
+            }
+            
+            employeeDeductions.push(deductionData);
+            
+            // Close modal
+            const modalElement = document.getElementById('deductionModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalElement);
+            if (modalInstance) {
+                modalInstance.hide();
+            }
+            
+            // Render and recalculate
+            renderDeductions();
+            calculateAmounts();
+            alert('تم إضافة الاقتطاع مؤقتاً. سيتم حفظه عند حفظ بيانات الموظف.');
+            return;
+        }
+        
+        // If editing existing employee, save via AJAX
+        // Get CSRF token from the main form
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        // Add CSRF token to form data
+        formData.append('csrfmiddlewaretoken', csrftoken);
+        
+        const url = `/ar/hr/api/employees/${employeeId}/deductions/add/`;
+        console.log('Sending request to:', url);
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken
+            },
+            body: formData
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            if (data.success) {
+                const modalElement = document.getElementById('deductionModal');
+                const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+                loadDeductions();
+                alert('تم إضافة الاقتطاع بنجاح');
+            } else {
+                let errorMsg = 'خطأ في إضافة الاقتطاع';
+                if (data.errors) {
+                    errorMsg += ':\n';
+                    for (let field in data.errors) {
+                        errorMsg += field + ': ' + data.errors[field].join(', ') + '\n';
+                    }
+                } else if (data.message) {
+                    errorMsg += ': ' + data.message;
+                }
+                console.error('Error:', data);
+                alert(errorMsg);
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            alert('خطأ في الاتصال: ' + error.message);
+        });
+    }
+    
+    function editDeduction(deductionId) {
+        // Similar to add but for editing
+        // Implementation omitted for brevity
+        alert('{% trans "Edit feature - to be implemented" %}');
+    }
+    
+    function deleteDeduction(deductionId) {
+        if (!confirm('هل أنت متأكد من حذف هذا الاقتطاع؟')) {
+            return;
+        }
+        
+        // If creating new employee, remove from temporary array
+        if (isCreating) {
+            employeeDeductions = employeeDeductions.filter(d => d.id !== deductionId);
+            renderDeductions();
+            calculateAmounts();
+            alert('تم حذف الاقتطاع مؤقتاً');
+            return;
+        }
+        
+        // If editing existing employee, delete via AJAX
+        // Get CSRF token from the main form
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        fetch(`/ar/hr/api/deductions/${deductionId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `csrfmiddlewaretoken=${csrftoken}`
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                loadDeductions();
+                alert('تم حذف الاقتطاع بنجاح');
+            } else {
+                alert('خطأ في حذف الاقتطاع');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('خطأ في حذف الاقتطاع: ' + error.message);
+        });
+    }
+    
+    // Add event listeners for probation period calculation
+    if (hireDateInput) {
+        hireDateInput.addEventListener('change', calculateProbationEndDate);
+    }
+    if (probationPeriodInput) {
+        probationPeriodInput.addEventListener('input', calculateProbationEndDate);
+        probationPeriodInput.addEventListener('change', calculateProbationEndDate);
+    }
+    
+    // Calculate probation end date initially
+    calculateProbationEndDate();
+    
+    // Handle termination checkbox toggle
+    const isTerminatedCheckbox = document.getElementById('{{ form.is_terminated.id_for_label }}');
+    const terminationDetailsDiv = document.getElementById('termination_details');
+    
+    function toggleTerminationDetails() {
+        if (isTerminatedCheckbox && isTerminatedCheckbox.checked) {
+            terminationDetailsDiv.style.display = 'block';
+        } else {
+            terminationDetailsDiv.style.display = 'none';
+        }
+    }
+    
+    if (isTerminatedCheckbox) {
+        isTerminatedCheckbox.addEventListener('change', toggleTerminationDetails);
+        // Initialize on page load
+        toggleTerminationDetails();
+    }
+
     // Department/Position filtering
     const departmentSelect = document.getElementById('{{ form.department.id_for_label }}');
     const positionSelect = document.getElementById('{{ form.position.id_for_label }}');
+    
+    // Store all positions initially
+    let allPositions = [];
+    if (positionSelect) {
+        // Save all available positions on page load
+        allPositions = Array.from(positionSelect.options).map(option => ({
+            value: option.value,
+            text: option.textContent,
+            departmentId: option.getAttribute('data-department-id')
+        }));
+    }
     
     if (departmentSelect && positionSelect) {
         departmentSelect.addEventListener('change', function() {
@@ -382,7 +1104,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         positionSelect.innerHTML = '<option value="">{% trans "Select Position" %}</option>';
                         
                         // Add new options
-                        data.positions.forEach(position => {
+                        data.forEach(position => {
                             const option = document.createElement('option');
                             option.value = position.id;
                             option.textContent = position.title;
@@ -391,7 +1113,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                     .catch(error => console.error('Error:', error));
             } else {
+                // If no department selected, restore all positions
                 positionSelect.innerHTML = '<option value="">{% trans "Select Position" %}</option>';
+                allPositions.forEach(pos => {
+                    if (pos.value) { // Skip empty option
+                        const option = document.createElement('option');
+                        option.value = pos.value;
+                        option.textContent = pos.text;
+                        positionSelect.appendChild(option);
+                    }
+                });
             }
         });
     }

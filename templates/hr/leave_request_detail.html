@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}
+    {{ leave_request.employee.full_name }} - {% trans "Leave Request Details" %} - {{ block.super }}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .leave-header {
+        background: linear-gradient(135deg, #17a2b8 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    .leave-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background-color: rgba(255,255,255,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+    .info-card {
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+    }
+    .info-card:hover {
+        transform: translateY(-2px);
+    }
+    .section-title {
+        color: #495057;
+        border-bottom: 2px solid #17a2b8;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .status-badge {
+        font-size: 0.9em;
+        padding: 0.5em 1em;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'hr:dashboard' %}">{% trans "HR Dashboard" %}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'hr:leave_request_list' %}">{% trans "Leave Requests" %}</a></li>
+            <li class="breadcrumb-item active">{{ leave_request.employee.full_name }}</li>
+        </ol>
+    </nav>
+
+    <!-- Leave Header -->
+    <div class="leave-header">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <div class="leave-avatar">
+                    <i class="fas fa-calendar-times fa-3x"></i>
+                </div>
+            </div>
+            <div class="col">
+                <h1 class="mb-1">{{ leave_request.employee.full_name }}</h1>
+                <p class="mb-2">{{ leave_request.leave_type.name }} • {{ leave_request.days_count }} {% trans "days" %}</p>
+                <p class="mb-0">
+                    <span class="badge bg-{% if leave_request.status == 'approved' %}success{% elif leave_request.status == 'rejected' %}danger{% elif leave_request.status == 'cancelled' %}secondary{% else %}warning{% endif %} status-badge">
+                        {{ leave_request.get_status_display }}
+                    </span>
+                    <span class="badge bg-light text-dark ms-2">{{ leave_request.id }}</span>
+                </p>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group" role="group">
+                    <a href="{% url 'hr:leave_request_edit' leave_request.pk %}" class="btn btn-light">
+                        <i class="fas fa-edit me-2"></i>{% trans "Edit" %}
+                    </a>
+                    <a href="{% url 'hr:leave_request_delete' leave_request.pk %}" class="btn btn-outline-light">
+                        <i class="fas fa-trash me-2"></i>{% trans "Delete" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Leave Information -->
+        <div class="col-lg-8 mb-4">
+            <div class="card info-card">
+                <div class="card-header">
+                    <h5 class="section-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>{% trans "Leave Information" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">{% trans "Employee" %}</label>
+                            <p class="mb-0">
+                                <a href="{% url 'hr:employee_detail' leave_request.employee.pk %}">{{ leave_request.employee.full_name }}</a>
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">{% trans "Leave Type" %}</label>
+                            <p class="mb-0">{{ leave_request.leave_type.name }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">{% trans "Start Date" %}</label>
+                            <p class="mb-0">{{ leave_request.start_date|date:"F j, Y" }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">{% trans "End Date" %}</label>
+                            <p class="mb-0">{{ leave_request.end_date|date:"F j, Y" }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">{% trans "Days Count" %}</label>
+                            <p class="mb-0">{{ leave_request.days_count }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">{% trans "Status" %}</label>
+                            <p class="mb-0">
+                                <span class="badge bg-{% if leave_request.status == 'approved' %}success{% elif leave_request.status == 'rejected' %}danger{% elif leave_request.status == 'cancelled' %}secondary{% else %}warning{% endif %}">
+                                    {{ leave_request.get_status_display }}
+                                </span>
+                            </p>
+                        </div>
+                        {% if leave_request.approved_by %}
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">{% trans "Approved By" %}</label>
+                            <p class="mb-0">{{ leave_request.approved_by.get_full_name }}</p>
+                        </div>
+                        {% endif %}
+                        {% if leave_request.approval_date %}
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">{% trans "Approval Date" %}</label>
+                            <p class="mb-0">{{ leave_request.approval_date|date:"F j, Y H:i" }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reason -->
+            <div class="card info-card mt-4">
+                <div class="card-header">
+                    <h5 class="section-title mb-0">
+                        <i class="fas fa-comment me-2"></i>{% trans "Reason" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ leave_request.reason|linebreaks }}</p>
+                </div>
+            </div>
+
+            {% if leave_request.rejection_reason %}
+            <!-- Rejection Reason -->
+            <div class="card info-card mt-4 border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-times-circle me-2"></i>{% trans "Rejection Reason" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ leave_request.rejection_reason|linebreaks }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Metadata -->
+        <div class="col-lg-4">
+            <div class="card info-card">
+                <div class="card-header">
+                    <h5 class="section-title mb-0">
+                        <i class="fas fa-clock me-2"></i>{% trans "Metadata" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="text-muted small">{% trans "Created By" %}</label>
+                        <p class="mb-0">{{ leave_request.created_by.get_full_name }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small">{% trans "Created At" %}</label>
+                        <p class="mb-0">{{ leave_request.created_at|date:"F j, Y H:i" }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small">{% trans "Last Updated" %}</label>
+                        <p class="mb-0">{{ leave_request.updated_at|date:"F j, Y H:i" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="card info-card mt-4">
+                <div class="card-header">
+                    <h5 class="section-title mb-0">
+                        <i class="fas fa-cogs me-2"></i>{% trans "Actions" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'hr:leave_request_edit' leave_request.pk %}" class="btn btn-primary">
+                            <i class="fas fa-edit me-2"></i>{% trans "Edit Request" %}
+                        </a>
+                        <a href="{% url 'hr:leave_request_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>{% trans "Back to List" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

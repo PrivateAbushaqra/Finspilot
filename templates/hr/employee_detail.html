@@ -194,6 +194,81 @@
                             <label class="text-muted small">{% trans "Total Salary" %}</label>
                             <p class="mb-0"><strong>{{ employee.total_salary|currency_format }}</strong></p>
                         </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Withholding Tax Rate" %}</label>
+                            <p class="mb-0">{{ employee.withholding_tax_rate|default:"0" }}%</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Withholding Tax Amount" %}</label>
+                            <p class="mb-0">{{ employee.withholding_tax_amount|currency_format }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Employee Social Security Rate" %}</label>
+                            <p class="mb-0">{{ employee.social_security_rate|default:"0" }}%</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Employee Social Security Amount" %}</label>
+                            <p class="mb-0">{{ employee.social_security_amount|currency_format }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Company Social Security Rate" %}</label>
+                            <p class="mb-0">{{ employee.company_social_security_rate|default:"0" }}%</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Company Social Security Amount" %}</label>
+                            <p class="mb-0">{{ employee.company_social_security_amount|currency_format }}</p>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="text-muted small">{% trans "Additional Deductions" %}</label>
+                            {% if active_deductions %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-borderless mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th class="text-muted small">{% trans "Deduction Name" %}</th>
+                                                <th class="text-muted small">{% trans "Type" %}</th>
+                                                <th class="text-muted small">{% trans "Value" %}</th>
+                                                <th class="text-muted small">{% trans "Amount" %}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for deduction in active_deductions %}
+                                            <tr>
+                                                <td class="small">{{ deduction.name }}</td>
+                                                <td class="small">
+                                                    {% if deduction.deduction_type == 'percentage' %}
+                                                        {% trans "Percentage" %}
+                                                    {% else %}
+                                                        {% trans "Fixed Amount" %}
+                                                    {% endif %}
+                                                </td>
+                                                <td class="small">
+                                                    {% if deduction.deduction_type == 'percentage' %}
+                                                        {{ deduction.value }}%
+                                                    {% else %}
+                                                        {{ deduction.value|currency_format }}
+                                                    {% endif %}
+                                                </td>
+                                                <td class="small">{{ deduction.calculated_amount|currency_format }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                            <tr class="border-top">
+                                                <td colspan="3" class="text-end small"><strong>{% trans "Total Additional Deductions" %}:</strong></td>
+                                                <td class="small"><strong>{{ employee.additional_deduction_amount|currency_format }}</strong></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="mb-0 text-muted small">{% trans "No additional deductions" %}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-12 mb-3">
+                            <hr class="my-3">
+                            <label class="text-muted small"><strong>{% trans "Net Salary" %}</strong></label>
+                            <p class="mb-0"><strong class="text-success" style="font-size: 1.3rem;">{{ employee.net_salary|currency_format }}</strong></p>
+                            <small class="text-muted">{% trans "After all deductions" %}</small>
+                        </div>
                         {% if employee.user %}
                         <div class="col-sm-6 mb-3">
                             <label class="text-muted small">{% trans "System User" %}</label>

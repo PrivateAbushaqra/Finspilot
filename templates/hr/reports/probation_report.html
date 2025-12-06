@@ -3,6 +3,13 @@
 
 {% block title %}{% trans "Probation Period Report" %} - {{ block.super }}{% endblock %}
 
+{% block extra_css %}
+<style>
+    th { cursor: pointer; user-select: none; }
+    th i { margin-left: 5px; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <div class="row">
@@ -19,10 +26,136 @@
                     </a>
                 </div>
                 <div class="card-body">
-                    <p class="text-center">{% trans "Probation period report functionality will be implemented soon" %}</p>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <!--<h4>{{ total_probation }}</h4>
+                                    <p class="mb-0">{% trans "Employees on Probation" %}</p>-->
+                                    <h5>{% trans "Employees on Probation" %}</h5>
+                                    <p class="mb-0">{{ total_probation }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-warning text-dark">
+                                <div class="card-body text-center">
+                                    <h5 class="mb-0">{% trans "Expiring within" %} 7 {% trans "days" %}</h5>
+                                    <p class="mb-2" id="probation-expiring-count">0</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if probation_contracts %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover" id="probation-table">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th><span>{% trans "Employee" %}</span> <i class="fas fa-sort"></i></th>
+                                        <th><span>{% trans "Department" %}</span> <i class="fas fa-sort"></i></th>
+                                        <th class="text-end"><span>{% trans "Start Date" %}</span> <i class="fas fa-sort"></i></th>
+                                        <th class="text-end sort-desc"><span>{% trans "End Date" %}</span> <i class="fas fa-sort-down"></i></th>
+                                        <th class="text-end"><span>{% trans "Days Remaining" %}</span> <i class="fas fa-sort"></i></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for c in probation_contracts %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'hr:employee_detail' c.employee.pk %}">{{ c.employee.get_full_name }}</a>
+                                        </td>
+                                        <td>{{ c.employee.department.name|default:'-' }}</td>
+                                        <td class="text-end">{{ c.start_date|date:'d/m/Y' }}</td>
+                                        <td class="text-end">{{ c.end_date|date:'d/m/Y' }}</td>
+                                        <td class="text-end">
+                                            {% if c.days_remaining <= 7 %}
+                                                <span class="badge bg-danger">{{ c.days_remaining }}</span>
+                                            {% else %}
+                                                <span class="badge bg-primary">{{ c.days_remaining }}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-user-clock fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">{% trans "No Probation Contracts Found" %}</h4>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function initTableSort(tableId) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    const headers = table.querySelectorAll('thead th');
+    headers.forEach((header, index) => {
+        header.addEventListener('click', () => {
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const isAscending = header.classList.contains('sort-asc');
+            headers.forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+            headers.forEach(h => h.querySelectorAll('i').forEach(i => i.className = 'fas fa-sort'));
+            if (isAscending) {
+                header.classList.add('sort-desc');
+                header.querySelector('i').className = 'fas fa-sort-down';
+            } else {
+                header.classList.add('sort-asc');
+                header.querySelector('i').className = 'fas fa-sort-up';
+            }
+            rows.sort((a, b) => {
+                const aValue = a.cells[index].textContent.trim();
+                const bValue = b.cells[index].textContent.trim();
+                const datePattern = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+                const aDateMatch = aValue.match(datePattern);
+                const bDateMatch = bValue.match(datePattern);
+                if (aDateMatch && bDateMatch) {
+                    const aDate = new Date(aDateMatch[3], aDateMatch[2]-1, aDateMatch[1]);
+                    const bDate = new Date(bDateMatch[3], bDateMatch[2]-1, bDateMatch[1]);
+                    return isAscending ? bDate - aDate : aDate - bDate;
+                }
+                const aNum = parseFloat(aValue.replace(/[^0-9.-]/g, ''));
+                const bNum = parseFloat(bValue.replace(/[^0-9.-]/g, ''));
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return isAscending ? bNum - aNum : aNum - bNum;
+                }
+                return isAscending ? bValue.localeCompare(aValue, 'ar') : aValue.localeCompare(bValue, 'ar');
+            });
+            rows.forEach(row => tbody.appendChild(row));
+        });
+    });
+}
+document.addEventListener('DOMContentLoaded', () => {
+    initTableSort('probation-table');
+    // Trigger default sort if header pre-marked
+    const pTable = document.getElementById('probation-table');
+    if (pTable) {
+        const pHeaders = pTable.querySelectorAll('thead th');
+        pHeaders.forEach(h => {
+            if (h.classList.contains('sort-desc') || h.classList.contains('sort-asc')) {
+                h.click();
+            }
+        });
+    }
+    // Update expiring count
+    const rows = Array.from(document.querySelectorAll('#probation-table tbody tr'));
+    let expiring = rows.filter(r => {
+        const daysText = r.cells[r.cells.length - 1].textContent.trim();
+        const n = parseInt(daysText.replace(/[^0-9-]/g, ''));
+        return !isNaN(n) && n <= 7;
+    }).length;
+    const el = document.getElementById('probation-expiring-count');
+    if (el) el.textContent = expiring;
+});
+</script>
 {% endblock %}

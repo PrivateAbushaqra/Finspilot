@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}
+    {% trans "Attendance Details" %} - {{ block.super }}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-card {
+        transition: transform 0.2s;
+    }
+    .detail-card:hover {
+        transform: translateY(-2px);
+    }
+    .status-badge {
+        font-size: 1.1rem;
+        padding: 0.5rem 1rem;
+    }
+    .info-label {
+        font-weight: 600;
+        color: #6c757d;
+    }
+    .info-value {
+        font-size: 1.1rem;
+        color: #212529;
+    }
+    .time-display {
+        font-family: 'Courier New', monospace;
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="fas fa-clock me-2"></i>{% trans "Attendance Details" %}</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'hr:dashboard' %}">{% trans "HR Dashboard" %}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'hr:attendance_list' %}">{% trans "Attendance" %}</a></li>
+                    <li class="breadcrumb-item active">{% trans "Details" %}</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="btn-group" role="group">
+            <a href="{% url 'hr:attendance_edit' attendance.pk %}" class="btn btn-warning">
+                <i class="fas fa-edit me-1"></i>{% trans "Edit" %}
+            </a>
+            <a href="{% url 'hr:attendance_delete' attendance.pk %}" class="btn btn-danger">
+                <i class="fas fa-trash me-1"></i>{% trans "Delete" %}
+            </a>
+            <a href="{% url 'hr:attendance_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>{% trans "Back to List" %}
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Employee Information -->
+        <div class="col-md-4 mb-4">
+            <div class="card detail-card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-user me-2"></i>{% trans "Employee Information" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <i class="fas fa-user-circle fa-5x text-primary"></i>
+                    </div>
+                    <div class="mb-3">
+                        <div class="info-label">{% trans "Name" %}</div>
+                        <div class="info-value">{{ attendance.employee.full_name }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="info-label">{% trans "Employee ID" %}</div>
+                        <div class="info-value">{{ attendance.employee.employee_id }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="info-label">{% trans "Department" %}</div>
+                        <div class="info-value">{{ attendance.employee.department.name }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="info-label">{% trans "Position" %}</div>
+                        <div class="info-value">{{ attendance.employee.position.title }}</div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{% url 'hr:employee_detail' attendance.employee.pk %}" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="fas fa-user me-1"></i>{% trans "View Employee Profile" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Details -->
+        <div class="col-md-8 mb-4">
+            <div class="card detail-card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-calendar-check me-2"></i>{% trans "Attendance Details" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="info-label">{% trans "Date" %}</div>
+                            <div class="info-value">
+                                <i class="fas fa-calendar me-2"></i>{{ attendance.date|date:"d/m/Y" }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-label">{% trans "Status" %}</div>
+                            <div>
+                                {% if attendance.attendance_type == 'present' %}
+                                    <span class="badge bg-success status-badge">
+                                        <i class="fas fa-check-circle me-1"></i>{% trans "Present" %}
+                                    </span>
+                                {% elif attendance.attendance_type == 'absent' %}
+                                    <span class="badge bg-danger status-badge">
+                                        <i class="fas fa-times-circle me-1"></i>{% trans "Absent" %}
+                                    </span>
+                                {% elif attendance.attendance_type == 'late' %}
+                                    <span class="badge bg-warning text-dark status-badge">
+                                        <i class="fas fa-clock me-1"></i>{% trans "Late" %}
+                                    </span>
+                                {% elif attendance.attendance_type == 'half_day' %}
+                                    <span class="badge bg-info status-badge">
+                                        <i class="fas fa-adjust me-1"></i>{% trans "Half Day" %}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary status-badge">{{ attendance.get_attendance_type_display }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="info-label">{% trans "Check In" %}</div>
+                            <div class="time-display text-success">
+                            {% if attendance.check_in_time %}
+                                <i class="fas fa-sign-in-alt me-2"></i>{{ attendance.check_in_time|time:"H:i" }}
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-label">{% trans "Check Out" %}</div>
+                            <div class="time-display text-danger">
+                            {% if attendance.check_out_time %}
+                                <i class="fas fa-sign-out-alt me-2"></i>{{ attendance.check_out_time|time:"H:i" }}
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-label">{% trans "Working Hours" %}</div>
+                            <div class="time-display text-primary">
+                            {% if attendance.worked_hours %}
+                                <i class="fas fa-business-time me-2"></i>{{ attendance.worked_hours|floatformat:2 }} {% trans "hrs" %}
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    {% if attendance.notes %}
+                    <div class="mb-3">
+                        <div class="info-label">{% trans "Notes" %}</div>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>{{ attendance.notes }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-label">{% trans "Created By" %}</div>
+                            <div class="info-value">
+                                <i class="fas fa-user me-2"></i>{{ attendance.created_by.get_full_name|default:attendance.created_by.username }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-label">{% trans "Created At" %}</div>
+                            <div class="info-value">
+                                <i class="fas fa-clock me-2"></i>{{ attendance.created_at|date:"d/m/Y H:i" }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Information -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card detail-card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>{% trans "Statistics" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="info-label">{% trans "This Month Attendance" %}</div>
+                            <div class="info-value text-success">
+                                <h3>{{ month_present }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-label">{% trans "This Month Absences" %}</div>
+                            <div class="info-value text-danger">
+                                <h3>{{ month_absent }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-label">{% trans "This Month Late" %}</div>
+                            <div class="info-value text-warning">
+                                <h3>{{ month_late }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-label">{% trans "Total Working Hours" %}</div>
+                            <div class="info-value text-primary">
+                                <h3>{{ month_total_hours|floatformat:1 }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+</script>
+{% endblock %}

@@ -9,7 +9,8 @@ User = get_user_model()
 
 from .models import (
     Department, Position, Employee, Contract, Attendance, 
-    LeaveType, LeaveRequest, PayrollPeriod, PayrollEntry, EmployeeDocument
+    LeaveType, LeaveRequest, PayrollPeriod, PayrollEntry, EmployeeDocument,
+    EmployeeDeduction
 )
 
 
@@ -22,9 +23,11 @@ class EmployeeForm(forms.ModelForm):
             'employee_id', 'first_name', 'last_name', 'first_name_en', 'last_name_en',
             'national_id', 'passport_number', 'birth_date', 'gender', 'marital_status',
             'email', 'phone', 'mobile', 'address', 'department', 'position',
-            'hire_date', 'employment_type', 'status', 'basic_salary',
-            'allowances', 'social_security_number', 'social_security_rate',
-            'emergency_contact_name', 'emergency_contact_phone', 'notes', 'user'
+            'hire_date', 'employment_type', 'probation_period_days', 'status', 'basic_salary',
+            'allowances', 'withholding_tax_rate', 'social_security_number', 'social_security_rate',
+            'company_social_security_rate', 'is_terminated', 'termination_date', 
+            'termination_reason', 'termination_notes', 'emergency_contact_name', 
+            'emergency_contact_phone', 'notes', 'user'
         ]
         widgets = {
             'birth_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
@@ -45,13 +48,20 @@ class EmployeeForm(forms.ModelForm):
             'department': forms.Select(attrs={'class': 'form-control'}),
             'position': forms.Select(attrs={'class': 'form-control'}),
             'employment_type': forms.Select(attrs={'class': 'form-control'}),
+            'probation_period_days': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'placeholder': _('Probation Period (Days)')}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'gender': forms.Select(attrs={'class': 'form-control'}),
             'marital_status': forms.Select(attrs={'class': 'form-control'}),
-            'basic_salary': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'placeholder': _('Basic Salary')}),
+            'basic_salary': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'placeholder': _('Basic Salary'), 'id': 'basic_salary_input'}),
             'allowances': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'placeholder': _('Allowances')}),
+            'withholding_tax_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': _('Withholding Tax Rate %')}),
             'social_security_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('Social Security Number')}),
             'social_security_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': _('Social Security Rate %')}),
+            'company_social_security_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': _('Company Social Security Rate %')}),
+            'is_terminated': forms.CheckboxInput(attrs={'class': 'form-check-input', 'id': 'id_is_terminated'}),
+            'termination_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'termination_reason': forms.Select(attrs={'class': 'form-control'}),
+            'termination_notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': _('Termination Notes')}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': _('Notes')}),
             'user': forms.Select(attrs={'class': 'form-control'}),
         }
@@ -113,6 +123,24 @@ class EmployeeForm(forms.ModelForm):
                 raise ValidationError(_('Employee must be at least 16 years old at hire date.'))
                 
         return hire_date
+
+    def clean_withholding_tax_rate(self):
+        rate = self.cleaned_data.get('withholding_tax_rate')
+        if rate and (rate < 0 or rate > 100):
+            raise ValidationError(_('Withholding tax rate must be between 0 and 100.'))
+        return rate
+
+    def clean_social_security_rate(self):
+        rate = self.cleaned_data.get('social_security_rate')
+        if rate and (rate < 0 or rate > 100):
+            raise ValidationError(_('Social security rate must be between 0 and 100.'))
+        return rate
+
+    def clean_company_social_security_rate(self):
+        rate = self.cleaned_data.get('company_social_security_rate')
+        if rate and (rate < 0 or rate > 100):
+            raise ValidationError(_('Company social security rate must be between 0 and 100.'))
+        return rate
 
 
 class ContractForm(forms.ModelForm):
@@ -279,10 +307,10 @@ class LeaveRequestForm(forms.ModelForm):
             days_count = (end_date - start_date).days + 1
 
             # التحقق من الحد الأقصى للأيام
-            if leave_type and leave_type.max_days and days_count > leave_type.max_days:
+            if leave_type and leave_type.days_per_year and days_count > leave_type.days_per_year:
                 raise ValidationError(
                     _('Leave request exceeds maximum allowed days for this leave type (%(max_days)s days).') %
-                    {'max_days': leave_type.max_days}
+                    {'max_days': leave_type.days_per_year}
                 )
 
             # التحقق من رصيد الإجازات
@@ -488,3 +516,22 @@ class PositionForm(forms.ModelForm):
                 raise ValidationError({'max_salary': _('Maximum salary must be greater than minimum salary.')})
 
         return cleaned_data
+
+
+class EmployeeDeductionForm(forms.ModelForm):
+    """نموذج اقتطاعات الموظف"""
+    
+    class Meta:
+        model = EmployeeDeduction
+        fields = ['name', 'deduction_type', 'value', 'notes', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('Deduction Name')}),
+            'deduction_type': forms.Select(attrs={'class': 'form-control'}),
+            'value': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'placeholder': _('Value')}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': _('Notes (Optional)')}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['is_active'].initial = True

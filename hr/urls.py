@@ -128,4 +128,10 @@ urlpatterns = [
     path('api/positions-by-department/<int:department_id>/', views.get_positions_by_department, name='get_positions_by_department'),
     path('api/employee-info/<int:employee_id>/', views.get_employee_info, name='get_employee_info'),
     path('api/leave-balance/<int:employee_id>/', views.get_employee_leave_balance, name='get_employee_leave_balance'),
+    
+    # Employee Deduction URLs
+    path('api/employees/<int:employee_id>/deductions/', views.employee_deduction_list, name='employee_deduction_list'),
+    path('api/employees/<int:employee_id>/deductions/add/', views.employee_deduction_add, name='employee_deduction_add'),
+    path('api/deductions/<int:deduction_id>/edit/', views.employee_deduction_edit, name='employee_deduction_edit'),
+    path('api/deductions/<int:deduction_id>/delete/', views.employee_deduction_delete, name='employee_deduction_delete'),
 ]

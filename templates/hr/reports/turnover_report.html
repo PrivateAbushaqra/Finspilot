@@ -3,6 +3,13 @@
 
 {% block title %}{% trans "Turnover Report" %} - {{ block.super }}{% endblock %}
 
+{% block extra_css %}
+<style>
+    th { cursor: pointer; user-select: none; }
+    th i { margin-left: 5px; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <div class="row">
@@ -11,7 +18,7 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title">
                         <i class="fas fa-exchange-alt me-2"></i>
-                        {% trans "Turnover Report" %}
+                        {% trans "Turnover Report" %} - {{ current_year }}
                     </h3>
                     <a href="{% url 'hr:hr_reports' %}" class="btn btn-secondary">
                         <i class="fas fa-arrow-left me-1"></i>
@@ -19,10 +26,142 @@
                     </a>
                 </div>
                 <div class="card-body">
-                    <p class="text-center">{% trans "Turnover report functionality will be implemented soon" %}</p>
+                    <!-- Summary Statistics -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">{% trans "Active Employees" %}</h5>
+                                    <h2>{{ total_active }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-danger text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">{% trans "Terminated Employees" %}</h5>
+                                    <h2>{{ total_terminated }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">{% trans "Turnover Rate" %}</h5>
+                                    <h2>{{ turnover_rate }}%</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Terminated Employees List -->
+                    {% if terminated_employees %}
+                    <h4 class="mb-3">{% trans "Terminated Employees Details" %}</h4>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" id="turnover-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th><span>{% trans "Employee ID" %}</span><i class="fas fa-sort"></i></th>
+                                    <th><span>{% trans "Name" %}</span><i class="fas fa-sort"></i></th>
+                                    <th><span>{% trans "Department" %}</span><i class="fas fa-sort"></i></th>
+                                    <th><span>{% trans "Position" %}</span><i class="fas fa-sort"></i></th>
+                                    <th><span>{% trans "Hire Date" %}</span><i class="fas fa-sort"></i></th>
+                                    <th><span>{% trans "Termination Date" %}</span><i class="fas fa-sort"></i></th>
+                                    <th><span>{% trans "Termination Reason" %}</span><i class="fas fa-sort"></i></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for employee in terminated_employees %}
+                                <tr>
+                                    <td>{{ employee.employee_id }}</td>
+                                    <td>
+                                        <a href="{% url 'hr:employee_detail' employee.pk %}">
+                                            {{ employee.full_name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ employee.department.name }}</td>
+                                    <td>{{ employee.position.title }}</td>
+                                    <td>{{ employee.hire_date|date:"Y-m-d" }}</td>
+                                    <td>{{ employee.termination_date|date:"Y-m-d" }}</td>
+                                    <td>
+                                        {% if employee.termination_reason == 'dismissal' %}
+                                            <span class="badge bg-danger">{% trans "Dismissal" %}</span>
+                                        {% elif employee.termination_reason == 'resignation' %}
+                                            <span class="badge bg-warning">{% trans "Resignation" %}</span>
+                                        {% elif employee.termination_reason == 'retirement' %}
+                                            <span class="badge bg-info">{% trans "Retirement" %}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{% trans "Not Specified" %}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        {% trans "No terminated employees found for this year." %}
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function initTableSort(tableId) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    
+    const headers = table.querySelectorAll('thead th');
+    headers.forEach((header, index) => {
+        header.addEventListener('click', () => {
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            const isAscending = header.classList.contains('sort-asc');
+            headers.forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+            headers.forEach(h => h.querySelectorAll('i').forEach(i => i.className = 'fas fa-sort'));
+            
+            if (isAscending) {
+                header.classList.add('sort-desc');
+                header.querySelector('i').className = 'fas fa-sort-down';
+            } else {
+                header.classList.add('sort-asc');
+                header.querySelector('i').className = 'fas fa-sort-up';
+            }
+            
+            rows.sort((a, b) => {
+                const aValue = a.cells[index].textContent.trim();
+                const bValue = b.cells[index].textContent.trim();
+                
+                const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+                if (datePattern.test(aValue) && datePattern.test(bValue)) {
+                    return isAscending ? new Date(bValue) - new Date(aValue) : new Date(aValue) - new Date(bValue);
+                }
+                
+                const aNum = parseFloat(aValue.replace(/[^0-9.-]/g, ''));
+                const bNum = parseFloat(bValue.replace(/[^0-9.-]/g, ''));
+                
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return isAscending ? bNum - aNum : aNum - bNum;
+                }
+                
+                return isAscending ? bValue.localeCompare(aValue, 'ar') : aValue.localeCompare(bValue, 'ar');
+            });
+            
+            rows.forEach(row => tbody.appendChild(row));
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initTableSort('turnover-table');
+});
+</script>
 {% endblock %}
