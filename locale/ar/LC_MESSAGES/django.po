@@ -93,7 +93,7 @@ msgid "Adjustment Type"
 msgstr "نوع التعديل"
 
 msgid "Type of manual adjustment (IFRS compliant)"
-msgstr "نوع التسوية اليدوية (متوافق مع IFRS)"
+msgstr "نوع التسوية اليدوية (متوافق مع المعايير الدولية لإعداد التقارير المالية)"
 
 msgid "Manual Adjustment"
 msgstr "التعديل اليدوي"
@@ -464,14 +464,14 @@ msgstr "إضافة فئة خصم جديدة: %(name)s"
 msgid "Add Liability Category"
 msgstr "إضافة فئة خصم"
 
-msgid "إصلاح جميع sequences في قاعدة البيانات"
-msgstr "إصلاح جميع sequences في قاعدة البيانات"
+msgid "إصلاح جميع التسلسلات في قاعدة البيانات"
+msgstr "إصلاح جميع التسلسلات في قاعدة البيانات"
 
-msgid "عرض تفاصيل كل sequence تم إصلاحه"
-msgstr "عرض تفاصيل كل sequence تم إصلاحه"
+msgid "عرض تفاصيل كل تسلسل تم إصلاحه"
+msgstr "عرض تفاصيل كل تسلسل تم إصلاحه"
 
-msgid "بدء إصلاح جميع التسلسلات (sequences)..."
-msgstr "بدء إصلاح جميع التسلسلات (sequences)..."
+msgid "بدء إصلاح جميع التسلسلات..."
+msgstr "بدء إصلاح جميع التسلسلات..."
 
 msgid "Can restore backup"
 msgstr "يمكن استعادة النسخة الاحتياطية"
@@ -492,7 +492,7 @@ msgid "ليس لديك صلاحية لإنشاء الحسابات الأساسي
 msgstr "You do not have permission to create basic accounts"
 
 msgid "Created basic IFRS accounts"
-msgstr "تم إنشاء الحسابات الأساسية IFRS"
+msgstr "تم إنشاء الحسابات الأساسية للمعايير الدولية"
 
 msgid "تم إنشاء الحسابات الأساسية بنجاح (أو كانت موجودة بالفعل)"
 msgstr "تم إنشاء الحسابات الأساسية بنجاح (أو كانت موجودة بالفعل)"
@@ -555,8 +555,8 @@ msgstr "تم بدء عملية الاستعادة في الخلفية"
 msgid "تم بدء عملية الاستعادة في الخلفية، يمكن متابعة التقدم على هذه الصفحة"
 msgstr "تم بدء عملية الاستعادة في الخلفية، يمكن متابعة التقدم على هذه الصفحة"
 
-msgid "ملف JSON غير صحيح"
-msgstr "ملف JSON غير صحيح"
+msgid "ملف بتنسيق JSON غير صحيح"
+msgstr "ملف بتنسيق JSON غير صحيح"
 
 msgid "تم بدء عملية المسح في الخلفية"
 msgstr "The wipe process has been started in the background"
@@ -574,10 +574,10 @@ msgid "Account Number"
 msgstr "رقم الحساب"
 
 msgid "IBAN"
-msgstr "رقم الحساب الدولي 'IBAN'"
+msgstr "رقم الحساب المصرفي الدولي"
 
 msgid "SWIFT Code"
-msgstr "رمز SWIFT"
+msgstr "رمز سويفت"
 
 msgid "Balance"
 msgstr "الرصيد"
@@ -822,9 +822,9 @@ msgid "You do not have permission to edit bank accounts."
 msgstr "ليس لديك صلاحية لتعديل حسابات بنكية."
 
 msgid ""
-"يجب اختيار نوع التعديل عند تغيير الرصيد الحالي لضمان التوافق مع معايير IFRS"
+"يجب اختيار نوع التعديل عند تغيير الرصيد الحالي لضمان التوافق مع المعايير الدولية لإعداد التقارير المالية"
 msgstr ""
-"يجب اختيار نوع التعديل عند تغيير الرصيد الحالي لضمان التوافق مع معايير IFRS"
+"يجب اختيار نوع التعديل عند تغيير الرصيد الحالي لضمان التوافق مع المعايير الدولية لإعداد التقارير المالية"
 
 #, python-format
 msgid "تعديل يدوي للرصيد - زيادة: %(amount)s - نوع: %(type)s"
@@ -852,28 +852,27 @@ msgid "You do not have permission to delete bank accounts."
 msgstr "ليس لديك صلاحية لحذف حسابات بنكية."
 
 msgid ""
-"Cannot delete account \"{}\" because it has {} financial transactions and "
+"لا يمكن حذف الحساب \"{}\" because it has {} financial transactions and "
 "non-zero balance ({}). You can use the eraser button to delete all "
 "transactions first."
 msgstr ""
-"لا يمكن حذف حساب \"{}\" because it لديه {} financial transactions و non-zero"
-" رصيد ({}). You يمكن use the eraser button إلى حذف الكل transactions أول"
+"لا يمكن حذف حساب \"{}\" لأنه يحتوي على {} معاملات مالية ورصيد غير صفري"
+" رصيد ({}). يمكنك استخدام زر المحاية لحذف جميع المعاملات أولاً"
 
 msgid ""
-"Cannot delete account \"{}\" because it has {} financial transactions and "
+"لا يمكن حذف الحساب \"{}\" because it has {} financial transactions and "
 "non-zero balance ({}). You must transfer the balance or delete all "
 "transactions first."
 msgstr ""
-"لا يمكن حذف حساب \"{}\" because it لديه {} financial transactions و non-zero"
-" رصيد ({}). You يجب transfer the رصيد أو حذف الكل transactions أول"
+"لا يمكن حذف حساب \"{}\" لأنه يحتوي على {} معاملات مالية ورصيد غير صفري"
+" رصيد ({}). يجب عليك تحويل الرصيد أو حذف جميع المعاملات أولاً"
 
 msgid ""
-"Warning: Bank transfer number sequence not configured! Please add \"Bank "
+"تحذير: التحويل البنكي تسلسل الأرقام غير مُهيأ! Please add \"Bank "
 "Account Transfer\" sequence from settings page before creating any transfer."
 msgstr ""
-"Warning: Bank transfer number sequence not configured! Please add \"Bank "
-"Account Transfer\" sequence from settings page before جاري الإنشاء any "
-"transfer."
+"تحذير: لم يتم تهيئة تسلسل أرقام التحويلات البنكية! الرجاء إضافة تسلسل "
+"\"التحويل بين الحسابات البنكية\" من صفحة الإعدادات قبل إنشاء أي تحويل."
 
 msgid ""
 "A similar transfer was created recently! Please check the transfer list."
@@ -918,8 +917,8 @@ msgstr "تم تحديث كشف حساب البنك: {}"
 msgid "Bank statement updated successfully."
 msgstr "تم تحديث كشف حساب البنك بنجاح."
 
-msgid "Bank Account Transactions Exported to Excel: {}"
-msgstr "تم تصدير معاملات الحساب البنكي إلى Excel: {}"
+msgid "Bank Account Transactions Exported إلى إكسل: {}"
+msgstr "تم تصدير معاملات الحساب البنكي إلى إكسل: {}"
 
 msgid "Bank Account Statement"
 msgstr "كشف حساب البنك"
@@ -1111,7 +1110,7 @@ msgid ""
 "Adjustment type must be selected when changing balance to ensure IFRS "
 "compliance"
 msgstr ""
-"يجب اختيار نوع التعديل عند تغيير الرصيد لضمان الامتثال مع معايير IFRS."
+"يجب اختيار نوع التعديل عند تغيير الرصيد لضمان الامتثال مع المعايير الدولية لإعداد التقارير المالية."
 
 # Cashbox adjustments
 msgid "Adjustment of Opening Balance"
@@ -1216,8 +1215,8 @@ msgstr "لا يمكن حذف الصندوق النقدي بسبب معاملات
 msgid "An error occurred while deleting the cashbox: {}"
 msgstr "حدث خطأ أثناء حذف الصندوق النقدي: {}"
 
-msgid "تم تصدير معاملات الصندوق إلى Excel: {}"
-msgstr "تم تصدير معاملات الصندوق إلى Excel: {}"
+msgid "تم تصدير معاملات الصندوق إلى إكسل: {}"
+msgstr "تم تصدير معاملات الصندوق إلى إكسل: {}"
 
 msgid "Cashbox Statement"
 msgstr "كشف الصندوق"
@@ -1231,8 +1230,8 @@ msgstr "المدير"
 msgid "Document Number"
 msgstr "رقم المستند"
 
-msgid "تشغيل فحص شامل لنظام Finspilot مع إصلاح المشاكل المتبقية"
-msgstr "تشغيل فحص شامل لنظام Finspilot مع إصلاح المشاكل المتبقية"
+msgid "تشغيل فحص شامل لالنظام مع إصلاح المشاكل المتبقية"
+msgstr "تشغيل فحص شامل لالنظام مع إصلاح المشاكل المتبقية"
 
 msgid "Company Name"
 msgstr "اسم الشركة"
@@ -1352,7 +1351,7 @@ msgid "Object ID"
 msgstr "معرف الكائن"
 
 msgid "IP Address"
-msgstr "عنوان IP"
+msgstr "عنوان الآي بي"
 
 msgid "Time"
 msgstr "الوقت"
@@ -1553,7 +1552,7 @@ msgstr "تحذير: سيتم حذف جميع البيانات المرتبطة �
 msgid ""
 "تم تعطيل العميل/المورد مع الحفاظ على جميع السجلات التاريخية: %(name)s "
 "(%(type)s). البيانات المحفوظة: %(invoices)s فاتورة، %(returns)s مرتجع، "
-"%(transactions)s معاملة. متوافق مع IFRS (IAS 1, IAS 8)."
+"%(transactions)s معاملة. متوافق مع المعايير الدولية لإعداد التقارير المالية (IAS 1, IAS 8)."
 msgstr ""
 "تم تعطيل العميل/المورد مع الحفاظ على جميع السجلات "
 "التاريخية:%(name)s(%(type)s). البيانات "
@@ -1564,11 +1563,11 @@ msgstr ""
 msgid ""
 "تم تعطيل %(type)s \"%(name)s\" بنجاح! جميع السجلات التاريخية محفوظة "
 "(%(invoices)s فاتورة، %(returns)s مرتجع، %(transactions)s معاملة). متوافق مع"
-" معايير IFRS."
+" المعايير الدولية لإعداد التقارير المالية."
 msgstr ""
 "تم تعطيل%(type)s\"%(name)s\" بنجاح! جميع السجلات التاريخية محفوظة "
 "(%(invoices)sفاتورة،%(returns)sمرتجع،%(transactions)sمعاملة). متوافق مع "
-"معايير IFRS."
+"المعايير الدولية لإعداد التقارير المالية."
 
 #, python-format
 msgid ""
@@ -1584,7 +1583,7 @@ msgstr ""
 "• %(returns)s مرتجعات\n"
 "• %(transactions)s معاملة مالية\n"
 "\n"
-"✅ يمكنك تعطيل الحساب بدلاً من حذفه للحفاظ على السجلات المحاسبية (متوافق مع IFRS)."
+"✅ يمكنك تعطيل الحساب بدلاً من حذفه للحفاظ على السجلات المحاسبية (متوافق مع المعايير الدولية لإعداد التقارير المالية)."
 
 #, python-format
 msgid ""
@@ -1606,7 +1605,7 @@ msgstr "تعديل الرصيد"
 #, python-format
 msgid ""
 "Balance issue reported for customer/supplier %(name)s. Opening: "
-"%(opening).3f, Debit: %(debit).3f, Credit: %(credit).3f, Expected: "
+"%(opening).3f, Debit: %(debit).3f, Credit: %(credit).3f, المتوقع: "
 "%(expected).3f, Displayed: %(displayed).3f"
 msgstr ""
 "تم الإبلاغ عن مشكلة رصيد للعميل/المورد %(name)s. الرصيد الافتتاحي: "
@@ -1734,7 +1733,7 @@ msgid "Check-out time must be after check-in time."
 msgstr "وقت الخروج يجب أن يكون بعد وقت الدخول."
 
 msgid "CSV File"
-msgstr "ملف CSV"
+msgstr "ملف بتنسيق CSV"
 
 msgid "File must be in CSV format."
 msgstr "يجب أن يكون الملف بتنسيق CSV."
@@ -2133,10 +2132,9 @@ msgid "Payroll period must be processed first."
 msgstr "يجب معالجة فترة الرواتب أولاً."
 
 msgid ""
-"Required accounts not found. Please create salary related accounts first."
+"Required accounts not found. يرجى إنشاء الحسابات المتعلقة بالرواتب أولاً."
 msgstr ""
-"Required accounts not تم العثور على. Please create salary related accounts "
-"first."
+"لم يتم العثور على الحسابات المطلوبة. يرجى إنشاء الحسابات المتعلقة بالرواتب أولاً."
 
 msgid "Payroll journal entries created successfully."
 msgstr "تم إنشاء قيود يومية الرواتب بنجاح."
@@ -2315,14 +2313,14 @@ msgstr "تقرير ذكرى العمل"
 msgid "Viewed anniversary report"
 msgstr "تم عرض تقرير ذكرى العمل"
 
-msgid "Exported employees data to Excel"
-msgstr "تم تصدير بيانات الموظفين إلى Excel"
+msgid "Exported employees data إلى إكسل"
+msgstr "تم تصدير بيانات الموظفين إلى إكسل"
 
-msgid "Exported attendance data to Excel"
-msgstr "تم تصدير بيانات الحضور إلى Excel"
+msgid "Exported attendance data إلى إكسل"
+msgstr "تم تصدير بيانات الحضور إلى إكسل"
 
-msgid "Exported payroll data to Excel"
-msgstr "تم تصدير بيانات الرواتب إلى Excel"
+msgid "Exported payroll data إلى إكسل"
+msgstr "تم تصدير بيانات الرواتب إلى إكسل"
 
 msgid "Warehouse Name"
 msgstr "اسم المستودع"
@@ -2506,7 +2504,7 @@ msgid "No products in source warehouse"
 msgstr "لا يوجد منتجات في مستودع المصدر"
 
 msgid "Product ID is required"
-msgstr "ID المنتج مطلوب"
+msgstr "معرّف المنتج مطلوب"
 
 msgid "Not Specified"
 msgstr "غير محدد"
@@ -2518,7 +2516,7 @@ msgid "No inventory movements to delete!"
 msgstr "لا توجد حركات مخزون لحذفها!"
 
 msgid "You must type \"DELETE_ALL_MOVEMENTS\" to confirm!"
-msgstr "يجب عليك كتابة \"DELETE_ALL_MOVEMENTS\" للتأكيد!"
+msgstr "يجب عليك كتابة \"حذف_جميع_الحركات\" للتأكيد!"
 
 msgid "Error updating warehouse. Please try again."
 msgstr "حدث خطأ أثناء تحديث المستودع. يُرجى المحاولة مرة أخرى."
@@ -2824,7 +2822,7 @@ msgid ""
 " recorded on leaf (child) accounts only to ensure IFRS compliance."
 msgstr ""
 "لا يمكن تسجيل قيود على الحساب الرئيسي \"%(account)s\". يجب تسجيل جميع القيود "
-"على الحسابات الفرعية فقط لضمان الامتثال لمعايير IFRS."
+"على الحسابات الفرعية فقط لضمان الامتثال لالمعايير الدولية لإعداد التقارير المالية."
 
 msgid "Fiscal Year"
 msgstr "السنة المالية"
@@ -2878,7 +2876,7 @@ msgstr "مجموع المدين يجب أن يساوي مجموع الدائن"
 msgid ""
 "Entry for purchase invoice number %(invoice_number)s - %(supplier_name)s"
 msgstr ""
-"قيد for purchase invoice number %(invoice_number)s - %(supplier_name)s"
+"قيد لفاتورة الشراء رقم %(invoice_number)s - %(supplier_name)s"
 
 msgid "Accounts List"
 msgstr "قائمة الحسابات"
@@ -2916,8 +2914,8 @@ msgstr "غير نشط"
 msgid "Accounts Export"
 msgstr "تصدير الحسابات"
 
-msgid "Export account list to Excel"
-msgstr "تصدير قائمة الحسابات إلى Excel"
+msgid "Export account list إلى إكسل"
+msgstr "تصدير قائمة الحسابات إلى إكسل"
 
 msgid "Create Account"
 msgstr "إنشاء حساب"
@@ -2937,7 +2935,7 @@ msgstr "تم تحديث الحساب بنجاح"
 msgid "You do not have permission to delete accounts"
 msgstr "ليس لديك صلاحية لحذف الحسابات"
 
-msgid "Cannot delete account because it has transactions"
+msgid "لا يمكن حذف الحساب because it has transactions"
 msgstr "لا يمكن حذف الحساب لوجود حركات عليه"
 
 msgid "Account deleted successfully"
@@ -3200,11 +3198,11 @@ msgstr "يمكن حذف سندات الصرف"
 
 #, python-format
 msgid ""
-"Create payment voucher %(number)s - Beneficiary: %(beneficiary)s - Amount: "
-"%(amount)s - Payment type: %(type)s"
+"Create payment voucher %(number)s - المستفيد: %(beneficiary)s - المبلغ: "
+"%(amount)s - نوع الدفع: %(type)s"
 msgstr ""
-"إنشاء payment voucher %(number)s - Beneficiary: %(beneficiary)s - Amount: "
-"%(amount)s - Payment type: %(type)s"
+"إنشاء سند صرف %(number)s - المستفيد: %(beneficiary)s - المبلغ: "
+"%(amount)s - نوع الدفع: %(type)s"
 
 msgid "Payment voucher created successfully"
 msgstr "تم إنشاء سند صرف بنجاح"
@@ -3468,22 +3466,22 @@ msgid "Tax Amount"
 msgstr "مبلغ الضريبة"
 
 msgid "JoFotara UUID"
-msgstr "معرف JoFotara"
+msgstr "المعرف الفريد لجوفاتورة"
 
 msgid "UUID returned from JoFotara API"
-msgstr "المعرف المُعاد من واجهة JoFotara"
+msgstr "المعرف المُعاد من واجهة برمجة التطبيقات لجوفاتورة"
 
 msgid "QR Code image data URL from JoFotara"
-msgstr "رابط صورة رمز QR من جوفاتورة"
+msgstr "رابط صورة رمز الاستجابة السريعة من جوفاتورة"
 
 msgid "Sent to JoFotara At"
-msgstr "أُرسل إلى JoFotara في"
+msgstr "أُرسل إلى جوفاتورة في"
 
 msgid "Date and time when invoice was sent to JoFotara"
-msgstr "التاريخ والوقت الذي أُرسلت فيه الفاتورة إلى JoFotara"
+msgstr "التاريخ والوقت الذي أُرسلت فيه الفاتورة إلى جوفاتورة"
 
 msgid "JoFotara Verification URL"
-msgstr "رابط التحقق من JoFotara"
+msgstr "رابط التحقق من جوفاتورة"
 
 msgid "URL to verify invoice on JoFotara portal"
 msgstr "رابط التحقق من الفاتورة على بوابة جوفاتورة"
@@ -3508,19 +3506,19 @@ msgstr "تاريخ الشيك مطلوب للدفع بالشيك"
 
 #, python-format
 msgid ""
-"Subtotal does not match calculated value from items. Expected: %(expected)s,"
-" Current: %(current)s"
+"Subtotal لا يتطابق مع القيمة المحسوبة من العناصر. المتوقع: %(expected)s,"
+" الحالي: %(current)s"
 msgstr ""
-"المجموع الفرعي does not match calculated value from items. Expected: "
-"%(expected)s, Current: %(current)s"
+"المجموع الفرعي لا يتطابق مع القيمة المحسوبة من العناصر. المتوقع: "
+"%(expected)s, الحالي: %(current)s"
 
 #, python-format
 msgid ""
-"Tax amount does not match calculated value from items. Expected: "
-"%(expected)s, Current: %(current)s"
+"Tax amount لا يتطابق مع القيمة المحسوبة من العناصر. المتوقع: "
+"%(expected)s, الحالي: %(current)s"
 msgstr ""
-"الضريبة amount does not match calculated value from items. Expected: "
-"%(expected)s, Current: %(current)s"
+"مبلغ الضريبة لا يتطابق مع القيمة المحسوبة من العناصر. المتوقع: "
+"%(expected)s, الحالي: %(current)s"
 
 msgid "Invoice"
 msgstr "فاتورة"
@@ -3607,7 +3605,7 @@ msgid "The debit note number issued by the supplier"
 msgstr "رقم إشعار المدين الصادر من المورد"
 
 msgid "Date and time when debit note was sent to JoFotara"
-msgstr "التاريخ والوقت الذي أُرسل فيه إشعار المدين إلى JoFotara"
+msgstr "التاريخ والوقت الذي أُرسل فيه إشعار المدين إلى جوفاتورة"
 
 msgid "URL to verify debit note on JoFotara portal"
 msgstr "رابط التحقق من إشعار الخصم على بوابة جوفاتورة"
@@ -3616,8 +3614,8 @@ msgid ""
 "Purchase invoice sequence is not configured. Please set up the sequence "
 "first from the document sequences settings page."
 msgstr ""
-"Purchase فاتورة sequence هو ليس configured. يرجى set up the sequence أول من "
-"the document sequences settings page."
+"تسلسل فاتورة الشراء غير مُهيأ. يرجى إعداد التسلسل أولاً من "
+"صفحة إعدادات تسلسلات المستندات."
 
 msgid ""
 "Failed to create purchase invoice: Required fields are missing (supplier "
@@ -3638,18 +3636,17 @@ msgid ""
 "2. Pay outstanding dues to the supplier\n"
 "3. Convert the invoice to cash payment"
 msgstr ""
-"Cannot create the invoice لأن the total amount (%(total)s) exceeds the "
-"available credit limit لـ the supplier (%(available)s). Suggestions: 1. "
-"Increase the supplier's credit limit 2. Pay outstanding dues إلى the "
-"supplier 3. Convert the invoice إلى cash payment"
+"لا يمكن إنشاء الفاتورة لأن إجمالي المبلغ (%(total)s) يتجاوز حد الائتمان "
+"المتاح للمورد (%(available)s). الاقتراحات: 1. زيادة حد ائتمان المورد 2. "
+"دفع المستحقات المعلقة للمورد 3. تحويل الفاتورة إلى دفع نقدي"
 
 #, python-format
 msgid ""
-"Failed to create purchase invoice: Credit limit exceeded - Amount %(total)s "
-"> Available %(available)s"
+"Failed to create purchase invoice: تم تجاوز حد الائتمان - Amount %(total)s "
+"> المتاح %(available)s"
 msgstr ""
-"فشل to create purchase invoice: Credit limit exceeded - Amount %(total)s > "
-"Available %(available)s"
+"فشل في إنشاء فاتورة الشراء: تم تجاوز حد الائتمان - المبلغ %(total)s > "
+"المتاح %(available)s"
 
 msgid "You do not have permission to view debit notes"
 msgstr "ليس لديك صلاحية لعرض اشعارات المدين"
@@ -3661,9 +3658,9 @@ msgid "Please enter the debit note number (source)"
 msgstr "يرجى إدخال رقم إشعار المدين (مصدر)"
 
 msgid ""
-"Debit note sequence must be set up first before creating new debit notes"
+"Debit note يجب إعداد التسلسل first before creating new debit notes"
 msgstr ""
-"Debit note sequence must be set up first before جاري الإنشاء new debit notes"
+"يجب إعداد تسلسل إشعار المدين أولاً قبل إنشاء إشعارات مدين جديدة"
 
 #, python-format
 msgid "Create debit note number %(number)s"
@@ -3690,11 +3687,10 @@ msgid ""
 "Reason for cheque bounce (insufficient funds, signature mismatch, bank stop "
 "payment...)"
 msgstr ""
-"Reason for cheque bounce (insufficient funds, signature mismatch, bank إيقاف"
-" payment...)"
+"سبب ارتداد الشيك (أموال غير كافية، عدم تطابق التوقيع، إيقاف الدفع من البنك...)"
 
-msgid "Value of expected credit loss (ECL)"
-msgstr "قيمة الخسارة الائتمانية المتوقعة (ECL)"
+msgid "Value of expected credit loss (الخسارة الائتمانية المتوقعة)"
+msgstr "قيمة الخسارة الائتمانية المتوقعة (الخسارة الائتمانية المتوقعة)"
 
 msgid "Method used to calculate expected credit loss (reversal, overdue, etc)"
 msgstr "الطريقة المستخدمة لحساب الخسارة الائتمانية المتوقعة (عكس، متأخر، إلخ)"
@@ -3756,7 +3752,7 @@ msgstr "إلغاء السندات"
 msgid "Bounce detected during audit - journal entry created automatically"
 msgstr "تم اكتشاف الارتداد أثناء التدقيق - تم إنشاء القيد اليومي تلقائيًا"
 
-msgid "Automatically created journal entry for bounced check"
+msgid "Automatically created قيد يومية لـ bounced check"
 msgstr "تم إنشاء القيد اليومي تلقائيًا للشيك المرتجع"
 
 msgid "Late collection"
@@ -3765,7 +3761,7 @@ msgstr "التحصيل المتأخر"
 msgid "Warning recorded - please follow up collection risks"
 msgstr "تم تسجيل تحذير - يرجى متابعة مخاطر التحصيل"
 
-msgid "May affect revenue timing under IFRS 9"
+msgid "May affect revenue timing under المعيار الدولي للتقارير المالية 9"
 msgstr ""
 "قد يؤثر على توقيت الإيرادات بموجب المعيار الدولي لإعداد التقارير المالية رقم"
 " 9"
@@ -3776,7 +3772,7 @@ msgstr "المجموعة المبكرة"
 msgid "Check linked with invoice and revenue reviewed"
 msgstr "التحقق المرتبط بالفاتورة والإيرادات التي تمت مراجعتها"
 
-msgid "Revenue reviewed - no IFRS 9 impact"
+msgid "Revenue reviewed - no المعيار الدولي للتقارير المالية 9 impact"
 msgstr ""
 "تمت مراجعة الإيرادات - لا يوجد تأثير للمعيار الدولي لإعداد التقارير المالية "
 "رقم 9"
@@ -3788,7 +3784,7 @@ msgid "Please ensure there is no premature revenue recognition"
 msgstr "يرجى التأكد من عدم وجود اعتراف سابق لأوانه بالإيرادات"
 
 #, python-format
-msgid "Error checking linked invoice for check %(num)s: %(error)s"
+msgid "Error checking linked invoice للشيك رقم %(num)s: %(error)s"
 msgstr "خطأ في التحقق من الفاتورة المرتبطة للشيك %(num)s: %(error)s"
 
 msgid "You do not have permission to view receipt vouchers"
@@ -3811,10 +3807,10 @@ msgstr "من"
 
 #, python-format
 msgid ""
-"Bank transfer for receipt voucher %(number)s - Bank: %(account)s - Amount: "
+"تحويل بنكي لسند القبض %(number)s - Bank: %(account)s - المبلغ: "
 "%(amount)s"
 msgstr ""
-"Bank transfer for receipt voucher %(number)s - Bank: %(account)s - المبلغ: "
+"تحويل بنكي لسند القبض رقم %(number)s - البنك: %(account)s - المبلغ: "
 "%(amount)s"
 
 #, python-format
@@ -3823,11 +3819,11 @@ msgstr "خطأ في تسجيل نشاط التحويل البنكي للإيرا
 
 #, python-format
 msgid ""
-"Create receipt voucher %(number)s - Customer: %(customer)s - Amount: "
-"%(amount)s - Payment type: %(ptype)s"
+"Create receipt voucher %(number)s - العميل: %(customer)s - المبلغ: "
+"%(amount)s - نوع الدفع: %(ptype)s"
 msgstr ""
-"إنشاء receipt voucher %(number)s - Customer: %(customer)s - Amount: "
-"%(amount)s - Payment type: %(ptype)s"
+"إنشاء سند قبض %(number)s - العميل: %(customer)s - المبلغ: "
+"%(amount)s - نوع الدفع: %(ptype)s"
 
 msgid "Receipt voucher {} created successfully"
 msgstr "تم إنشاء سند القبض {} بنجاح"
@@ -3851,9 +3847,9 @@ msgid "Reversal"
 msgstr "العكس"
 
 msgid ""
-"Warning: Insufficient cash box balance, reversal applied to account only"
+"Warning: رصيد الصندوق غير كافٍ, تم تطبيق العكس على الحساب فقط"
 msgstr ""
-"تحذير: Insufficient cash box balance, reversal applied to account only"
+"تحذير: رصيد الصندوق غير كافٍ, تم تطبيق العكس على الحساب فقط"
 
 msgid "has been reversed successfully"
 msgstr "تم العكس بنجاح"
@@ -3879,10 +3875,10 @@ msgstr "الخسارة الائتمانية المتوقعة"
 
 #, python-format
 msgid "💰 ECL calculated: %(amount)s (%(method)s)"
-msgstr "💰 الخسارة الائتمانية المتوقعة calculated: %(amount)s (%(method)s)"
+msgstr "💰 تم حساب الخسارة الائتمانية المتوقعة: %(amount)s (%(method)s)"
 
 #, python-format
-msgid "ECL calculated for check %(num)s: %(amount)s (%(method)s)"
+msgid "ECL calculated للشيك رقم %(num)s: %(amount)s (%(method)s)"
 msgstr "تم حساب الخسارة الائتمانية المتوقعة للشيك %(num)s: %(amount)s (%(method)s)"
 
 msgid "Check collection"
@@ -3893,24 +3889,24 @@ msgstr "سند"
 
 #, python-format
 msgid ""
-"Check %(num)s collected past due date by %(days)s days. Due date: %(due)s, "
-"Collection date: %(coll)s. May affect revenue timing under IFRS 9."
+"Check %(num)s تم التحصيل بعد تاريخ الاستحقاق by %(days)s days. تاريخ الاستحقاق: %(due)s, "
+"تاريخ التحصيل: %(coll)s. May affect revenue timing under المعيار الدولي للتقارير المالية 9."
 msgstr ""
-"Check%(num)scollected past due date بواسطة%(days)sdays. Due date:%(due)s, "
-"Collection date:%(coll)s. قد affect revenue timing تحت IFRS 9."
+"تم تحصيل الشيك رقم %(num)s بعد تاريخ الاستحقاق بعد %(days)s أيام. تاريخ الاستحقاق: %(due)s، "
+"تاريخ التحصيل: %(coll)s. قد يؤثر على توقيت الإيراد بموجب المعايير الدولية للتقارير المالية 9."
 
 #, python-format
-msgid "⚠️ IFRS 9 warning: collected %(days)s days after due date (%(due)s)"
-msgstr "⚠️ تحذير IFRS 9: تم التحصيل بعد %(days)s أيام من تاريخ الاستحقاق (%(due)s)"
+msgid "⚠️ المعيار الدولي للتقارير المالية 9 warning: collected %(days)s days after due date (%(due)s)"
+msgstr "⚠️ تحذير المعيار الدولي للتقارير المالية 9: تم التحصيل بعد %(days)s أيام من تاريخ الاستحقاق (%(due)s)"
 
 msgid "📋 Recommendation: follow up the customer and monitor collection risks"
 msgstr "📋 التوصية: متابعة العميل ومراقبة مخاطر التحصيل"
 
 #, python-format
 msgid ""
-"Error creating early collection journal entry for check %(num)s: %(error)s"
+"Error creating early collection journal entry للشيك رقم %(num)s: %(error)s"
 msgstr ""
-"خطأ creating early collection journal entry for check %(num)s: %(error)s"
+"خطأ في إنشاء قيد يومية للتحصيل المبكر للشيك رقم %(num)s: %(error)s"
 
 #, python-format
 msgid "Recorded check %(num)s as an advance payment due to incomplete invoice"
@@ -3919,10 +3915,10 @@ msgstr "تم تسجيل الشيك %(num)s كدفعة مقدمة بسبب الف
 msgid ""
 "ℹ️ Amount recorded as an advance from customers (invoice not completed)"
 msgstr ""
-"ℹ️ Amount recorded as an advance from customers (invoice not تم الإكمال)"
+"ℹ️ تم تسجيل المبلغ كسلفة من العملاء (الفاتورة غير مكتملة)"
 
-msgid "✅ Revenue reviewed - no IFRS 9 impact (invoice complete)"
-msgstr "✅ تمت مراجعة الإيراد - لا يوجد تأثير على IFRS 9 (الفاتورة مكتملة)"
+msgid "✅ Revenue reviewed - no المعيار الدولي للتقارير المالية 9 impact (الفاتورة مكتملة)"
+msgstr "✅ تمت مراجعة الإيراد - لا يوجد تأثير على المعيار الدولي للتقارير المالية 9 (الفاتورة مكتملة)"
 
 msgid ""
 "⚠️ No related invoice found - please ensure no premature revenue recognition"
@@ -3930,21 +3926,21 @@ msgstr "⚠️ لم يتم العثور على فاتورة مرتبطة - ير�
 
 #, python-format
 msgid ""
-"Error creating bounced check journal entry for check %(num)s: %(error)s"
+"Error creating bounced check journal entry للشيك رقم %(num)s: %(error)s"
 msgstr "خطأ في إنشاء قيد يومية للشيك المرتجع %(num)s: %(error)s"
 
 #, python-format
 msgid ""
-"Check bounce %(num)s - automatic journal entry created to transfer the "
-"amount from checks in collection to accounts receivable under IFRS 9. Bounce"
+"ارتداد الشيك %(num)s - automatic journal entry created to transfer the "
+"amount from checks in collection to accounts receivable under المعيار الدولي للتقارير المالية 9. Bounce"
 " reason: %(reason)s"
 msgstr ""
-"Check bounce%(num)s- تلقائي journal entry تم الإنشاء إلى transfer the amount"
-" من checks في collection إلى accounts receivable تحت IFRS 9. Bounce "
+"ارتداد الشيك رقم %(num)s - تم إنشاء قيد تلقائياً قيد يومية لتحويل المبلغ"
+" من الشيكات قيد التحصيل إلى الذمم المدينة بموجب المعايير الدولية للتقارير المالية 9. Bounce "
 "reason:%(reason)s"
 
-msgid "❌ Bounced check journal entry created under IFRS 9"
-msgstr "❌ تم إنشاء قيد يومية للشيك المرتجع بموجب IFRS 9"
+msgid "❌ الشيك المرتجع journal تم إنشاء قيد بموجب المعيار الدولي للتقارير المالية 9"
+msgstr "❌ تم إنشاء قيد يومية للشيك المرتجع بموجب المعيار الدولي للتقارير المالية 9"
 
 #, python-format
 msgid "📝 Bounce reason: %(reason)s"
@@ -4333,8 +4329,8 @@ msgstr "حالة الموافقة"
 msgid "Creation Date"
 msgstr "تاريخ الإنشاء"
 
-msgid "Export revenue and expense entries to Excel"
-msgstr "تصدير إدخالات الإيرادات والمصروفات إلى Excel"
+msgid "Export revenue and expense entries إلى إكسل"
+msgstr "تصدير إدخالات الإيرادات والمصروفات إلى إكسل"
 
 msgid "You do not have permission to export revenue and expense categories"
 msgstr "ليس لديك صلاحية لتصدير فئات الإيرادات والمصروفات"
@@ -4342,8 +4338,8 @@ msgstr "ليس لديك صلاحية لتصدير فئات الإيرادات و
 msgid "Not specified"
 msgstr "غير محدد"
 
-msgid "Export revenue and expense categories to Excel"
-msgstr "تصدير فئات الإيرادات والمصروفات إلى Excel"
+msgid "Export revenue and expense categories إلى إكسل"
+msgstr "تصدير فئات الإيرادات والمصروفات إلى إكسل"
 
 msgid "You do not have permission to export recent entries"
 msgstr "ليس لديك صلاحية لتصدير الإدخالات الأخيرة"
@@ -4351,8 +4347,8 @@ msgstr "ليس لديك صلاحية لتصدير الإدخالات الأخي�
 msgid "Recent Entries"
 msgstr "الإدخالات الأخيرة"
 
-msgid "Export recent entries from dashboard to Excel"
-msgstr "تصدير الإدخالات الأخيرة من لوحة التحكم إلى Excel"
+msgid "Export recent entries from dashboard إلى إكسل"
+msgstr "تصدير الإدخالات الأخيرة من لوحة التحكم إلى إكسل"
 
 #, python-brace-format
 msgid "Entry created successfully but failed to create journal entry: {error}"
@@ -4363,7 +4359,7 @@ msgid "Add new {type} entry: {num} - {desc}"
 msgstr "إضافة {type} جديد: {num} - {desc}"
 
 #, python-brace-format
-msgid "Entry {num} created successfully. Amount: {amount} {currency}"
+msgid "Entry {num} created successfully. المبلغ: {amount} {currency}"
 msgstr "تم إنشاء الإدخال {num} بنجاح. المبلغ: {amount} {currency}"
 
 msgid "Add Revenue/Expense Entry"
@@ -4382,7 +4378,7 @@ msgid "Inclusive Tax"
 msgstr "ضريبة شاملة"
 
 msgid "QR Code image data from JoFotara (base64 or URL)"
-msgstr "بيانات صورة رمز QR من جوفاتورة (base64 أو URL)"
+msgstr "بيانات صورة رمز الاستجابة السريعة من جوفاتورة (base64 أو URL)"
 
 msgid "Sales Invoices"
 msgstr "فواتير المبيعات"
@@ -4406,7 +4402,7 @@ msgid "Credit Note Number"
 msgstr "رقم إشعار دائن"
 
 msgid "Date and time when credit note was sent to JoFotara"
-msgstr "التاريخ والوقت الذي أُرسل فيه إشعار الدائن إلى JoFotara"
+msgstr "التاريخ والوقت الذي أُرسل فيه إشعار الدائن إلى جوفاتورة"
 
 msgid "URL to verify credit note on JoFotara portal"
 msgstr "رابط التحقق من إشعار الدائن على بوابة جوفاتورة"
@@ -4461,16 +4457,16 @@ msgstr "يرجى إضافة منتج واحد على الأقل"
 
 #, python-format
 msgid ""
-"Warning: Product \"%(product)s\" is not available in the selected warehouse."
+"Warning: Product \"%(product)s\" is not available في المستودع المحدد."
 msgstr "تحذير: المنتج \"%(product)s\" غير متوفر في المستودع المحدد."
 
 #, python-format
 msgid ""
-"Warning: Requested quantity (%(quantity)s) exceeds available stock "
-"(%(available)s) for product \"%(product)s\" in the selected warehouse."
+"Warning: الكمية المطلوبة (%(quantity)s) تتجاوز المخزون المتاح "
+"(%(available)s) للمنتج \"%(product)s\" في المستودع المحدد."
 msgstr ""
-"تحذير: Requested quantity (%(quantity)s) exceeds available stock "
-"(%(available)s) for product \"%(product)s\" in the selected warehouse."
+"تحذير: الكمية المطلوبة (%(quantity)s) تتجاوز المخزون المتاح "
+"(%(available)s) للمنتج \"%(product)s\" في المستودع المحدد."
 
 #, python-format
 msgid ""
@@ -4487,17 +4483,17 @@ msgstr ""
 
 #, python-format
 msgid ""
-"Failed to create sales invoice: Credit limit exceeded - Amount %(total)s > "
-"Available %(available)s"
+"Failed to create sales invoice: تم تجاوز حد الائتمان - Amount %(total)s > "
+"المتاح %(available)s"
 msgstr ""
-"فشل to create sales invoice: Credit limit exceeded - Amount %(total)s > "
-"Available %(available)s"
+"فشل في إنشاء فاتورة المبيعات: تم تجاوز حد الائتمان - المبلغ %(total)s > "
+"المتاح %(available)s"
 
 #, python-format
 msgid ""
-"Warning: Requested quantities exceed available stock in %(count)s products"
+"Warning: الكميات المطلوبة تتجاوز المخزون المتاح في %(count)s products"
 msgstr ""
-"تحذير: Requested quantities exceed available stock in %(count)s products"
+"تحذير: الكميات المطلوبة تتجاوز المخزون المتاح في %(count)s من المنتجات"
 
 #, python-format
 msgid "Invoice creator changed to %(name)s by %(user)s"
@@ -4505,19 +4501,19 @@ msgstr "تم تغيير منشئ الفاتورة إلى %(name)s بواسطة %
 
 #, python-format
 msgid ""
-"Unit price changed for product %(code)s during invoice creation: from "
-"%(old)s to official sale price %(new)s"
+"Unit price changed للمنتج %(code)s أثناء إنشاء الفاتورة: من "
+"%(old)s إلى سعر البيع الرسمي %(new)s"
 msgstr ""
-"الوحدة price changed for product %(code)s during invoice creation: from "
-"%(old)s to official sale price %(new)s"
+"تم تغيير سعر الوحدة للمنتج %(code)s أثناء إنشاء الفاتورة: من "
+"%(old)s إلى سعر البيع الرسمي %(new)s"
 
 #, python-format
 msgid "Default sales warehouse updated from %(old)s to %(new)s"
-msgstr "Default sales warehouse تم التحديث من%(old)sإلى%(new)s"
+msgstr "تم تحديث مستودع المبيعات الافتراضي من %(old)sإلى %(new)s"
 
 #, python-format
 msgid "Default cashbox updated from %(old)s to %(new)s"
-msgstr "Default cashbox تم التحديث من%(old)sإلى%(new)s"
+msgstr "تم تحديث الصندوق الافتراضي من %(old)sإلى %(new)s"
 
 #, python-format
 msgid "Created sales invoice number %(number)s"
@@ -4840,7 +4836,7 @@ msgid "العملة الأساسية"
 msgstr "العملة الأساسية"
 
 msgid "رمز العملة الأساسية للنظام (مثل JOD, USD)"
-msgstr "رمز العملة الأساسية للنظام (مثل JOD, USD)"
+msgstr "رمز العملة الأساسية للنظام (مثل JOD أو USD)"
 
 msgid "إظهار رمز العملة"
 msgstr "إظهار رمز العملة"
@@ -4894,19 +4890,19 @@ msgid "اللون الأساسي"
 msgstr "اللون الأساسي"
 
 msgid "اللون الأساسي للنظام (Hex Code)"
-msgstr "اللون الأساسي للنظام (Hex Code)"
+msgstr "اللون الأساسي للنظام (رمز هيكس)"
 
 msgid "اللون الثانوي"
 msgstr "اللون الثانوي"
 
 msgid "اللون الثانوي للنظام (Hex Code)"
-msgstr "اللون الثانوي للنظام (Hex Code)"
+msgstr "اللون الثانوي للنظام (رمز هيكس)"
 
 msgid "لون التمييز"
 msgstr "لون التمييز"
 
 msgid "لون التمييز للنظام (Hex Code)"
-msgstr "لون التمييز للنظام (Hex Code)"
+msgstr "لون التمييز للنظام (رمز هيكس)"
 
 msgid "عنوان النظام"
 msgstr "عنوان النظام"
@@ -5029,10 +5025,10 @@ msgid "إعدادات طباعة المستندات"
 msgstr "إعدادات طباعة المستندات"
 
 msgid "API URL"
-msgstr "رابط API"
+msgstr "رابط واجهة برمجة التطبيقات"
 
 msgid "رابط API لنظام JoFotara"
-msgstr "رابط API لنظام JoFotara"
+msgstr "رابط واجهة برمجة التطبيقات لنظام جوفاتورة"
 
 msgid "Client ID"
 msgstr "معرف العميل"
@@ -5046,17 +5042,14 @@ msgstr "سر العميل"
 msgid "سر العميل"
 msgstr "سر العميل"
 
-msgid "تفعيل الربط مع JoFotara"
-msgstr "تفعيل الربط مع JoFotara"
+msgid "تفعيل الربط مع جوفاتورة"
+msgstr "تفعيل الربط مع جوفاتورة"
 
-msgid "استخدام Mock API"
-msgstr "استخدام Mock API"
+msgid "استخدام واجهة وهمية للاختبار"
+msgstr "استخدام واجهة وهمية للاختبار"
 
-msgid "استخدام API وهمي للاختبار"
-msgstr "استخدام API وهمي للاختبار"
-
-msgid "إعدادات JoFotara"
-msgstr "إعدادات JoFotara"
+msgid "إعدادات جوفاتورة"
+msgstr "إعدادات جوفاتورة"
 
 msgid "Can access print design settings"
 msgstr "يمكن الوصول إلى إعدادات تصميم الطباعة"
@@ -5142,11 +5135,11 @@ msgstr "ليس لديك صلاحية للوصول لتصميم الطباعة."
 msgid "دخول إلى صفحة تصميم الطباعة"
 msgstr "دخول إلى صفحة تصميم الطباعة"
 
-msgid "ليس لديك صلاحية للوصول لإعدادات JoFotara."
-msgstr "ليس لديك صلاحية للوصول لإعدادات JoFotara."
+msgid "ليس لديك صلاحية للوصول لإعدادات جوفاتورة."
+msgstr "ليس لديك صلاحية للوصول لإعدادات جوفاتورة."
 
-msgid "تم حفظ إعدادات JoFotara بنجاح"
-msgstr "تم حفظ إعدادات JoFotara بنجاح"
+msgid "تم حفظ إعدادات جوفاتورة بنجاح"
+msgstr "تم حفظ إعدادات جوفاتورة بنجاح"
 
 msgid "لم يتم تحديد العملية المطلوبة"
 msgstr "لم يتم تحديد العملية المطلوبة"
@@ -5208,8 +5201,8 @@ msgstr "رقم الدفع"
 msgid "No payment vouchers found"
 msgstr "لم يتم العثور على سندات صرف"
 
-msgid "Login  - Finspilot"
-msgstr "تسجيل الدخول - Finspilot"
+msgid "Login   - فينس بايلوت"
+msgstr "تسجيل الدخول  - فينس بايلوت"
 
 msgid "Integrated Accounting System"
 msgstr "نظام المحاسبة المتكامل"
@@ -5563,8 +5556,8 @@ msgstr "نتائج الحساب"
 msgid "Choose asset and depreciation method to view results"
 msgstr "اختر الأصل وطريقة الإهلاك لعرض النتائج"
 
-msgid "Table will be exported to Excel..."
-msgstr "سيتم تصدير الجدول إلى Excel..."
+msgid "Table will be exported إلى إكسل..."
+msgstr "سيتم تصدير الجدول إلى إكسل..."
 
 msgid "Please fill all required fields"
 msgstr "يرجى ملء جميع الحقول المطلوبة"
@@ -5582,10 +5575,10 @@ msgid "years"
 msgstr "بالسنوات"
 
 msgid ""
-"Choose depreciation method and click 'Calculate Depreciation' to view "
+"اختر طريقة الاستهلاك and click 'حساب الاستهلاك' to view "
 "details"
 msgstr ""
-"Choose depreciation method و click 'Calculate Depreciation' إلى عرض تفاصيل"
+"اختر طريقة الاستهلاك وانقر 'حساب الاستهلاك' لعرض تفاصيل"
 
 msgid "Year"
 msgstr "السنة"
@@ -5667,7 +5660,7 @@ msgid "Complete database backup"
 msgstr "نسخة احتياطية كاملة لقاعدة البيانات"
 
 msgid "Excel Backup"
-msgstr "نسخة احتياطية Excel"
+msgstr "نسخة احتياطية بتنسيق إكسل"
 
 msgid "For data analysis (excludes large tables)"
 msgstr "لتحليل البيانات (يستثني الجداول الكبيرة)"
@@ -5676,7 +5669,7 @@ msgid "Clear Cache"
 msgstr "مسح الذاكرة المؤقتة"
 
 msgid "JSON format for complete system backup, XLSX for data analysis"
-msgstr "تنسيق JSON لنسخة احتياطية كاملة للنظام، XLSX لتحليل البيانات"
+msgstr "تنسيق JSON لنسخة احتياطية كاملة للنظام، صيغة XLSX لتحليل البيانات"
 
 msgid "Restore Backup"
 msgstr "استعادة النسخة الاحتياطية"
@@ -5727,7 +5720,7 @@ msgid "Table Details:"
 msgstr "تفاصيل الجداول:"
 
 msgid "Create Basic IFRS Accounts"
-msgstr "إنشاء الحسابات الأساسية حسب IFRS"
+msgstr "إنشاء الحسابات الأساسية حسب المعايير الدولية لإعداد التقارير المالية"
 
 msgid "Accounts already exist"
 msgstr "الحسابات موجودة بالفعل"
@@ -5848,7 +5841,7 @@ msgid "Initializing backup page"
 msgstr "تهيئة صفحة النسخ الاحتياطي"
 
 msgid "Error finding CSRF protection code. Please reload the page."
-msgstr "خطأ في العثور على رمز الحماية CSRF. يرجى إعادة تحميل الصفحة."
+msgstr "خطأ في العثور على رمز الحماية من التزوير. يرجى إعادة تحميل الصفحة."
 
 msgid "Failed to start restore:"
 msgstr "فشل في بدء الاستعادة:"
@@ -5897,7 +5890,7 @@ msgstr ""
 "عنه."
 
 msgid "CSRF token missing. Please reload the page."
-msgstr "رمز CSRF مفقود. يرجى إعادة تحميل الصفحة."
+msgstr "رمز الحماية من التزوير مفقود. يرجى إعادة تحميل الصفحة."
 
 msgid "Selected tables deleted successfully"
 msgstr "تم حذف الجداول المحددة بنجاح"
@@ -5964,10 +5957,10 @@ msgid "JSON format for general use"
 msgstr "تنسيق JSON للاستخدام العام"
 
 msgid "Create XLSX Backup"
-msgstr "إنشاء نسخة احتياطية XLSX"
+msgstr "إنشاء نسخة احتياطية بصيغة XLSX"
 
 msgid "Excel file for easy handling"
-msgstr "ملف Excel لسهولة التعامل"
+msgstr "ملف إكسل لسهولة التعامل"
 
 msgid "Available Backups"
 msgstr "النسخ الاحتياطية المتوفرة"
@@ -5982,11 +5975,11 @@ msgid "No backups available currently. Create a new backup."
 msgstr "لا توجد نسخ احتياطية متوفرة حالياً. قم بإنشاء نسخة احتياطية جديدة."
 
 msgid ""
-"The restore operation will replace all current data. Make sure to create a "
-"backup before proceeding."
+"The restore operation ستستبدل جميع البيانات الحالية. Make sure to create a "
+"backup قبل المتابعة."
 msgstr ""
-"The restore opeنسبةn will replace all current data. Make sure to create a "
-"backup before proceeding."
+"عملية الاسترجاع ستستبدل جميع البيانات الحالية. Make sure to create a "
+"backup قبل المتابعة."
 
 msgid "Choose backup file"
 msgstr "اختر ملف النسخة الاحتياطية"
@@ -6056,7 +6049,7 @@ msgid "Base currency is defined in company settings"
 msgstr "العملة الأساسية محددة في إعدادات الشركة"
 
 msgid "IFRS Note"
-msgstr "ملاحظة IFRS"
+msgstr "ملاحظة المعايير الدولية"
 
 msgid "Opening balance - recorded as capital contribution"
 msgstr "الرصيد الافتتاحي - مسجل كمساهمة رأسمالية"
@@ -6223,7 +6216,7 @@ msgid ""
 msgstr "يمكنك تعديل الرصيد الحالي مباشرة وسيتم تسجيل الفرق في المعاملات"
 
 msgid "IFRS compliant"
-msgstr "متوافق مع IFRS"
+msgstr "متوافق مع المعايير الدولية لإعداد التقارير المالية"
 
 msgid "اختر نوع التعديل"
 msgstr "اختر نوع التعديل"
@@ -6385,9 +6378,9 @@ msgid "Inactive Accounts"
 msgstr "الحسابات غير النشطة"
 
 msgid "FinsPilot Software"
-msgstr "برنامج FinsPilot"
+msgstr "برنامج فينس بايلوت"
 
-msgid "Cannot delete account"
+msgid "لا يمكن حذف الحساب"
 msgstr "لا يمكن حذف الحساب"
 
 msgid "because its balance is"
@@ -6400,11 +6393,11 @@ msgid "Go to transfers page and transfer all money to another account"
 msgstr "اذهب إلى صفحة التحويلات واحول جميع الأموال إلى حساب آخر"
 
 msgid ""
-"Come back here and click delete again - the account will be deleted even if "
+"عد إلى هنا and click delete again - the account will be deleted even if "
 "it has transactions!"
 msgstr ""
-"Come back here و click حذف again - the حساب سوف يكون تم الحذف even if it "
-"لديه transactions!"
+"عد إلى هنا وانقر حذف again - الحساب سيتم حذفه even if it "
+"لديه معاملات!"
 
 msgid "Or (for Superadmin):"
 msgstr "أو (للمدير الفائق):"
@@ -6453,10 +6446,10 @@ msgstr "وضع حذف الحساب"
 
 #, python-format
 msgid ""
-"To delete the bank account \"%(acc)s\", you must remove all related "
+"To delete the bank account \"%(acc)s\", يجب عليك إزالة all related "
 "financial transactions first."
 msgstr ""
-"إلى delete the bank account \"%(acc)s\", you must remove all related "
+"إلى delete the bank account \"%(acc)s\", يجب عليك إزالة all related "
 "financial transactions first."
 
 msgid "Remaining Transactions"
@@ -6468,8 +6461,8 @@ msgstr "المعاملات المالية"
 msgid "Print Statement"
 msgstr "طباعة الكشف"
 
-msgid "Export to Excel"
-msgstr "تصدير إلى Excel"
+msgid "Export إلى إكسل"
+msgstr "تصدير إلى إكسل"
 
 msgid "View Transfer Details"
 msgstr "عرض تفاصيل التحويل"
@@ -6777,14 +6770,14 @@ msgstr "حدد حساب المرسل"
 msgid "Select Receiver Account"
 msgstr "حدد حساب المتلقي"
 
-msgid "Transfer number sequence not configured"
+msgid "Transfer تسلسل الأرقام غير مُهيأ"
 msgstr "لم يتم إعداد تسلسل رقم التحويل"
 
 msgid ""
 "Reference number for transfer (auto-generated from document sequence system)"
 msgstr "الرقم المرجعي للتحويل (يتم إنشاؤه تلقائيًا من نظام تسلسل المستندات)"
 
-msgid "Transfer number sequence not configured!"
+msgid "Transfer تسلسل الأرقام غير مُهيأ!"
 msgstr "لم يتم تكوين تسلسل أرقام التحويل!"
 
 msgid "Add sequence now"
@@ -6976,10 +6969,10 @@ msgid "Are you sure you want to delete this transfer?"
 msgstr "هل أنت متأكد من أنك تريد حذف هذا التحويل؟"
 
 msgid ""
-"The transfer will be canceled and the affected account balances will be "
+"التحويل will be canceled and the affected account balances will be "
 "updated."
 msgstr ""
-"The transfer سوف يكون canceled و the affected حساب balances سوف يكون تم "
+"التحويل سيتم إلغاؤه و أرصدة الحسابات المتأثرة balances سوف يكون تم "
 "التحديث"
 
 msgid "Bank Transfers Report"
@@ -7215,7 +7208,7 @@ msgid "Print Design"
 msgstr "تصميم الطباعة"
 
 msgid "JoFotara Settings"
-msgstr "إعدادات JoFotara"
+msgstr "إعدادات جوفاتورة"
 
 msgid "Loading..."
 msgstr "جاري التحميل"
@@ -7285,7 +7278,7 @@ msgstr "لا يمكن الحذف"
 msgid ""
 "You must select an adjustment type when changing the balance to ensure IFRS "
 "compliance"
-msgstr "يجب اختيار نوع التعديل عند تغيير الرصيد لضمان الامتثال لمعايير IFRS."
+msgstr "يجب اختيار نوع التعديل عند تغيير الرصيد لضمان الامتثال لالمعايير الدولية لإعداد التقارير المالية."
 
 msgid "Cashbox List"
 msgstr "قائمة الصناديق النقدية"
@@ -7899,10 +7892,10 @@ msgid ""
 "recorded in IFRS-compliant transactions using the selected adjustment type."
 msgstr ""
 "يمكنك تعديل الرصيد الحالي مباشرة وسيتم تسجيل الفرق في معاملات متوافقة مع "
-"معايير IFRS باستخدام نوع التعديل المحدد."
+"المعايير الدولية لإعداد التقارير المالية باستخدام نوع التعديل المحدد."
 
 msgid "IFRS Compliant"
-msgstr "متوافق مع معايير IFRS"
+msgstr "متوافق مع المعايير الدولية لإعداد التقارير المالية"
 
 msgid "Please select adjustment type"
 msgstr "يرجى اختيار نوع التعديل"
@@ -7930,7 +7923,7 @@ msgid "Any notes or additional"
 msgstr "أي ملاحظات أو إضافية"
 
 msgid "Please select the adjustment type for IFRS compliance."
-msgstr "يرجى اختيار نوع التعديل للامتثال لمعايير IFRS."
+msgstr "يرجى اختيار نوع التعديل للامتثال لالمعايير الدولية لإعداد التقارير المالية."
 
 msgid "Customer and Supplier Management System"
 msgstr "نظام إدارة العملاء والموردين"
@@ -8329,7 +8322,7 @@ msgid "Total Debit should equal Total Credit"
 msgstr "إجمالي المدين يجب أن يساوي إجمالي الدائن"
 
 msgid "If unbalanced, review the accounting entries"
-msgstr ""
+msgstr "إذا لم تكن متوازنة، راجع القيود المحاسبية"
 
 msgid "Trial_Balance"
 msgstr "الميزان التجريبي"
@@ -8366,7 +8359,7 @@ msgid "Check-out Time"
 msgstr "وقت الخروج"
 
 msgid "hour"
-msgstr ""
+msgstr "ساعة"
 
 msgid "Created by"
 msgstr "أنشئ بواسطة"
@@ -8425,7 +8418,7 @@ msgid "Record Attendance"
 msgstr "تسجيل الحضور"
 
 msgid "Upload CSV"
-msgstr "تحميل ملف CSV"
+msgstr "تحميل ملف بتنسيق CSV"
 
 msgid "All Employees"
 msgstr "جميع الموظفين"
@@ -8510,7 +8503,7 @@ msgid "A report will be generated with results after upload"
 msgstr "سيتم إنشاء تقرير بالنتائج بعد التحميل"
 
 msgid "Select CSV File"
-msgstr "حدد ملف CSV"
+msgstr "حدد ملف بتنسيق CSV"
 
 msgid "Drag the file here or click to select"
 msgstr "اسحب الملف هنا أو انقر لتحديده"
@@ -8689,7 +8682,7 @@ msgid "Employee Contracts"
 msgstr "مستندات الموظف"
 
 msgid "Open-ended"
-msgstr ""
+msgstr "مفتوح"
 
 msgid "Are you sure you want to delete this contract?"
 msgstr "هل أنت متأكد من أنك تريد حذف هذه المعاملة؟"
@@ -8903,7 +8896,7 @@ msgid "It is recommended to create a backup before deletion"
 msgstr "يوصى بإنشاء نسخة احتياطية قبل الحذف"
 
 msgid "Employee data to be deleted:"
-msgstr "تم تصدير بيانات الموظفين إلى Excel"
+msgstr "تم تصدير بيانات الموظفين إلى إكسل"
 
 msgid "Employee ID:"
 msgstr "رقم الموظف"
@@ -8942,7 +8935,7 @@ msgid "Salary data"
 msgstr "الراتب"
 
 msgid "Performance evaluations"
-msgstr ""
+msgstr "تقييمات الأداء"
 
 msgid "Documents and files"
 msgstr "عنوان المستند"
@@ -9419,14 +9412,14 @@ msgstr "طلبات الإجازات المعلقة"
 msgid "Export Options"
 msgstr "خيارات التصدير"
 
-msgid "Export Employees to Excel"
-msgstr "تم تصدير بيانات الموظفين إلى Excel"
+msgid "Export Employees إلى إكسل"
+msgstr "تم تصدير بيانات الموظفين إلى إكسل"
 
-msgid "Export Attendance to Excel"
-msgstr "تم تصدير بيانات الحضور إلى Excel"
+msgid "Export Attendance إلى إكسل"
+msgstr "تم تصدير بيانات الحضور إلى إكسل"
 
-msgid "Export Payroll to Excel"
-msgstr "تم تصدير بيانات الرواتب إلى Excel"
+msgid "Export Payroll إلى إكسل"
+msgstr "تم تصدير بيانات الرواتب إلى إكسل"
 
 msgid "Back to Reports"
 msgstr "العودة إلى التقارير"
@@ -9923,7 +9916,7 @@ msgid "Available Quantity"
 msgstr "الكمية المتوفرة"
 
 msgid "JOD"
-msgstr ""
+msgstr "دينار"
 
 msgid "Page Navigation"
 msgstr "التنقل بين الصفحات"
@@ -10258,8 +10251,8 @@ msgstr "بحث"
 msgid "Export and Printing Options"
 msgstr "خيارات التصدير والطباعة"
 
-msgid "تصدير إلى Excel"
-msgstr "تصدير إلى Excel"
+msgid "تصدير إلى إكسل"
+msgstr "تصدير إلى إكسل"
 
 msgid "طباعة"
 msgstr "طباعة"
@@ -10610,7 +10603,7 @@ msgstr "هل أنت متأكد من أنك تريد حذف سند  الصرف ر
 msgid "Payment Vouchers Report"
 msgstr "تقرير سندات الصرف"
 
-msgid "Create a new category for products"
+msgid "Create a new category للمنتجs"
 msgstr "إنشاء فئة جديدة للمنتجات"
 
 msgid "Category Information"
@@ -10706,7 +10699,7 @@ msgstr "للضمان"
 msgid "Example: SN123456789"
 msgstr "مثال: SN123456789"
 
-msgid "This field is for products sold by piece and need warranty (optional)"
+msgid "This field is للمنتجs sold by piece and need warranty (optional)"
 msgstr "هذا الحقل مخصص للمنتجات التي تُباع بالقطعة وتحتاج إلى ضمان (اختياري)."
 
 msgid "Type to search categories..."
@@ -10732,19 +10725,19 @@ msgid "Unit of Measurement"
 msgstr "وحدة القياس"
 
 msgid "Kilogram"
-msgstr ""
+msgstr "كيلوغرام"
 
 msgid "Liter"
-msgstr ""
+msgstr "لتر"
 
 msgid "Meter"
-msgstr ""
+msgstr "متر"
 
 msgid "Box"
-msgstr ""
+msgstr "صندوق"
 
 msgid "Pack"
-msgstr ""
+msgstr "علبة"
 
 msgid "Pricing"
 msgstr "التسعير"
@@ -10760,7 +10753,7 @@ msgid "Selling Price"
 msgstr "سعر البيع"
 
 msgid "Example: 15"
-msgstr ""
+msgstr "مثال: 15"
 
 msgid "Will be calculated automatically in invoices"
 msgstr "سيتم احتسابها تلقائيًا في الفواتير."
@@ -10863,7 +10856,7 @@ msgstr "معلومات الأسعار"
 msgid "Including Tax"
 msgstr "شامل الضريبة"
 
-msgid "Tax Amount:"
+msgid "Tax المبلغ:"
 msgstr "مبلغ الضريبة:"
 
 msgid "No Tax"
@@ -10921,7 +10914,7 @@ msgid "للكفالة"
 msgstr "للكفالة"
 
 msgid ""
-"This field is for products sold per piece that need warranty (optional)"
+"This field is للمنتجs sold per piece that need warranty (optional)"
 msgstr ""
 "هذا الحقل مخصص للمنتجات المباعة بالقطعة والتي تحتاج إلى ضمان (اختياري)"
 
@@ -10988,7 +10981,7 @@ msgid "Are you sure you want to delete product"
 msgstr "هل أنت متأكد أنك تريد حذف المنتج؟"
 
 msgid "Price including Tax"
-msgstr ""
+msgstr "السعر شامل الضريبة"
 
 msgid "Sort"
 msgstr "ترتيب"
@@ -11117,9 +11110,9 @@ msgid "Subtotal:"
 msgstr "المجموع الفرعي:"
 
 msgid "Tax:"
-msgstr ""
+msgstr "الضريبة:"
 
-msgid "Total Amount:"
+msgid "Total المبلغ:"
 msgstr "المبلغ الإجمالي:"
 
 msgid "Yes, Delete Debit Note"
@@ -11201,7 +11194,7 @@ msgstr "ملخص الفاتورة"
 msgid "Select Product for Invoice"
 msgstr "اختر منتج لـ فاتورة"
 
-msgid "Search for product by name, code, or description..."
+msgid "Search للمنتج by name, code, or description..."
 msgstr "البحث عن منتج بالاسم أو الرمز أو الوصف..."
 
 msgid "No products available"
@@ -11259,10 +11252,10 @@ msgid "Fill available quantity"
 msgstr "Fill متاح quantity"
 
 msgid "Filling tax rate"
-msgstr ""
+msgstr "تعبئة معدل الضريبة"
 
 msgid "taxRateInput filled"
-msgstr ""
+msgstr "تم ملء حقل معدل الضريبة"
 
 msgid "hiddenTaxRateInput filled"
 msgstr "مخفيTaxRateInput filled"
@@ -11274,7 +11267,7 @@ msgid "Wait a bit to ensure all data is filled then calculate total"
 msgstr "Wait a bit إلى ensure الكل data هو filled then calculate إجمالي"
 
 msgid "Focus on quantity field"
-msgstr ""
+msgstr "التركيز على حقل الكمية"
 
 msgid "Get tax rate from visible or hidden field"
 msgstr "الحصول على معدل الضريبة من الحقل المرئي أو المخفي"
@@ -11286,13 +11279,13 @@ msgid "Tax rate from hidden field"
 msgstr "معدل الضريبة من الحقل المخفي"
 
 msgid "Final tax rate"
-msgstr ""
+msgstr "معدل الضريبة النهائي"
 
 msgid "Calculate subtotal (without tax)"
-msgstr ""
+msgstr "حساب المجموع الفرعي (بدون ضريبة)"
 
 msgid "Check tax inclusive checkbox state"
-msgstr ""
+msgstr "فحص حالة خيار الضريبة الشاملة"
 
 msgid "Total amount"
 msgstr "المبلغ الإجمالي"
@@ -11380,7 +11373,7 @@ msgid "Error adding product row in purchase invoice"
 msgstr "خطأ adding product row in purchase invoice"
 
 msgid "Ensure button styling"
-msgstr ""
+msgstr "التأكد من تنسيق الزر"
 
 msgid "Re-applying purchase invoice button styling"
 msgstr "Re-applying purchase فاتورة button styling"
@@ -11407,13 +11400,13 @@ msgid "- For Warranty"
 msgstr "- لـ Warranty"
 
 msgid "Example: CAT-001"
-msgstr ""
+msgstr "مثال: CAT-001"
 
 msgid "Electronic Link Status with Tax Authority"
 msgstr "Electronic Link حالة مع Tax Authority"
 
 msgid "Sent"
-msgstr ""
+msgstr "مُرسل"
 
 msgid "Not Sent"
 msgstr "ليس Sent"
@@ -11428,7 +11421,7 @@ msgid "Failed to send invoice"
 msgstr "فشل في إرسال الفاتورة"
 
 msgid "Empty"
-msgstr ""
+msgstr "فارغ"
 
 msgid "لا يوجد وصف"
 msgstr "لا يوجد وصف"
@@ -11657,7 +11650,7 @@ msgstr "الرصيد البنكي الحالي"
 msgid "Total Current Balance"
 msgstr "إجمالي الرصيد الحالي"
 
-msgid "IFRS 9 Compliance:"
+msgid "المعيار الدولي للتقارير المالية 9 Compliance:"
 msgstr "الامتثال للمعيار الدولي لإعداد التقارير المالية رقم 9"
 
 msgid ""
@@ -11728,7 +11721,7 @@ msgid "Select Reason"
 msgstr "إختر السبب"
 
 msgid ""
-"IFRS 9: This will create a journal entry transferring the amount from checks"
+"المعيار الدولي للتقارير المالية 9: This will create a journal entry transferring the amount from checks"
 " in transit to accounts receivable"
 msgstr ""
 "المعيار الدولي لإعداد التقارير المالية 9: سيؤدي هذا إلى إنشاء قيد دفتر يومية"
@@ -11737,14 +11730,14 @@ msgstr ""
 msgid "Additional notes about the collection"
 msgstr "ملاحظات إضافية حول التحصيل"
 
-msgid "IFRS 9 Compliance"
+msgid "المعيار الدولي للتقارير المالية 9 Compliance"
 msgstr "الامتثال للمعيار الدولي لإعداد التقارير المالية رقم 9"
 
 msgid "ECL will be calculated automatically"
 msgstr "سيتم احتساب ECL تلقائيًا."
 
-msgid "Journal entries will be created according to IFRS 9"
-msgstr "سيتم إنشاء قيود اليومية وفقًا لمعايير IFRS 9."
+msgid "Journal entries will be created according to المعيار الدولي للتقارير المالية 9"
+msgstr "سيتم إنشاء قيود اليومية وفقًا لالمعايير الدولية لإعداد التقارير المالية 9."
 
 msgid "Late collection warnings will be logged"
 msgstr "سيتم تسجيل تنبيهات التأخر في عملية التحصيل."
@@ -12147,13 +12140,13 @@ msgid "Format amount while typing"
 msgstr "Format مبلغ while typing"
 
 msgid "Formatted value:"
-msgstr ""
+msgstr "القيمة المنسقة:"
 
 msgid "Set current date as default if not specified"
 msgstr "Set حالي تاريخ as default if ليس specified"
 
 msgid "Load today's statistics"
-msgstr ""
+msgstr "تحميل إحصائيات اليوم"
 
 msgid "Update statistics every 30 seconds"
 msgstr "تحديث statistics every 30 seconds"
@@ -12228,7 +12221,7 @@ msgstr "هل أنت متأكد أنك تريد الموافقة على هذا ا
 msgid "Entry:"
 msgstr "دخول:"
 
-msgid "Amount:"
+msgid "المبلغ:"
 msgstr "المبلغ"
 
 msgid "Revenue Entries"
@@ -12247,10 +12240,10 @@ msgid "Automatically create entries when due dates arrive"
 msgstr "Automatically create entries when مستحق dates arrive"
 
 msgid "Unlimited"
-msgstr ""
+msgstr "غير محدود"
 
 msgid "Settings & Actions"
-msgstr ""
+msgstr "الإعدادات والإجراءات"
 
 msgid "this recurring item?"
 msgstr "هذا recurring item?"
@@ -12426,9 +12419,8 @@ msgid ""
 "will automatically calculate the base price. When not enabled: Enter the "
 "base price WITHOUT tax."
 msgstr ""
-"When inclusive tax is مفعّل: Enter the price INCLUDING tax. The system will "
-"automatically calculate the base price. When not مفعّل: Enter the base price"
-" WITHOUT tax."
+"عند احتساب الضريبة شاملة: أدخل السعر شاملاً الضريبة. سيقوم النظام تلقائيًا بحساب "
+"السعر الأساسي. عند عدم احتساب الضريبة شاملة: أدخل السعر الأساسي بدون ضريبة."
 
 #, python-format
 msgid "Tax %%"
@@ -12450,7 +12442,7 @@ msgstr ""
 msgid ""
 "When checked: Prices entered include tax. System extracts base price "
 "automatically"
-msgstr ""
+msgstr "عند التفعيل: الأسعار المدخلة تشمل الضريبة. النظام يستخرج السعر الأساسي تلقائياً"
 
 msgid "Final Total"
 msgstr "المجموع النهائي"
@@ -12461,7 +12453,7 @@ msgstr "حفظ و Send"
 msgid "يرجى إضافة منتج واحد على الأقل"
 msgstr "يرجى إضافة منتج واحد على الأقل"
 
-msgid "Search for product by code or name..."
+msgid "Search للمنتج by code or name..."
 msgstr "بحث لـ منتج by رمز أو اسم"
 
 msgid "Starting addProductRow execution..."
@@ -12488,8 +12480,8 @@ msgstr "خطأ while adding product row"
 msgid "Restore counter in case of error"
 msgstr "Restore counter in case of خطأ"
 
-msgid "POS endpoint returned invalid price for product"
-msgstr "POS endpoint returned inصحيح price for product"
+msgid "POS endpoint returned invalid price للمنتج"
+msgstr "POS endpoint returned inصحيح price للمنتج"
 
 msgid ""
 "POS product endpoint did not return product data, using template values"
@@ -12510,7 +12502,7 @@ msgstr ""
 
 msgid ""
 "Entered price includes tax, so: Base Price = Entered Price ÷ (1 + Tax Rate)"
-msgstr ""
+msgstr "السعر المدخل يتضمن الضريبة، لذلك: السعر الأساسي = السعر المدخل ÷ (1 + معدل الضريبة)"
 
 msgid "Calculate base total (quantity × base price)"
 msgstr "Calculate base إجمالي (quantity × base price)"
@@ -12528,7 +12520,7 @@ msgid "If tax is not inclusive: No tax, price remains as entered"
 msgstr "If tax هو ليس inclusive: لا tax, price remains as entered"
 
 msgid "Display results"
-msgstr ""
+msgstr "عرض النتائج"
 
 msgid ""
 "Store the actual unit price (base price without tax) for backend processing"
@@ -12558,10 +12550,10 @@ msgid "Sending data to server..."
 msgstr "Sending data إلى server..."
 
 msgid "Server response:"
-msgstr ""
+msgstr "استجابة الخادم:"
 
 msgid "Raw response text:"
-msgstr ""
+msgstr "نص الاستجابة الخام:"
 
 msgid "Success: Customer created"
 msgstr "نجح: Customer created"
@@ -12672,7 +12664,7 @@ msgstr "ابدأ بإنشاء فاتورة مبيعات جديدة."
 msgid "Welcome"
 msgstr "مرحباً"
 
-msgid "Search for products by name or barcode..."
+msgid "Search للمنتجs by name or barcode..."
 msgstr "ابحث عن المنتجات بالاسم أو الرمز باركود..."
 
 msgid "Available Products"
@@ -12693,7 +12685,7 @@ msgstr "أضف المنتجات لبدء البيع"
 msgid "Payment method"
 msgstr "طريقة الدفع"
 
-msgid "Customer:"
+msgid "العميل:"
 msgstr "العميل"
 
 msgid "Payment:"
@@ -12742,7 +12734,7 @@ msgid "Item"
 msgstr "صنف"
 
 msgid "Qty"
-msgstr ""
+msgstr "الكمية"
 
 msgid "TOTAL"
 msgstr "الإجمالي"
@@ -12751,7 +12743,7 @@ msgid "Thank you for your Visiting us!"
 msgstr "Thank you لـ your Visiting us!"
 
 msgid "Visit us again"
-msgstr ""
+msgstr "زرنا مجدداً"
 
 msgid "Search by invoice number or customer name..."
 msgstr "بحث by فاتورة رقم أو عميل اسم"
@@ -12769,7 +12761,7 @@ msgid "This return contains"
 msgstr "هذا return contains"
 
 msgid "item(s)"
-msgstr ""
+msgstr "صنف/أصناف"
 
 msgid "Deleting this return may affect"
 msgstr "جاري الحذف this return may affect"
@@ -12778,7 +12770,7 @@ msgid "Financial accounts"
 msgstr "الحسابات المالية"
 
 msgid "UUID"
-msgstr ""
+msgstr "المعرف الفريد"
 
 msgid "Manage All Sales Returns"
 msgstr "إدارة جميع مرتجعات المبيعات"
@@ -12916,10 +12908,10 @@ msgid "Currency Management"
 msgstr "إدارة العملات"
 
 msgid "Symbol"
-msgstr ""
+msgstr "الرمز"
 
 msgid "Set as Base"
-msgstr ""
+msgstr "تعيين كعملة أساسية"
 
 msgid "No currencies found. Add the first currency to get started."
 msgstr "لم يتم العثور على أي عملات. أضف العملة الأولى للبدء."
@@ -12953,7 +12945,7 @@ msgid "You can change the logo from"
 msgstr "You يمكن change the logo من"
 
 msgid "Logo"
-msgstr ""
+msgstr "الشعار"
 
 msgid "Start by adding print settings for your first document"
 msgstr "بدء by adding print settings for your first document"
@@ -12965,25 +12957,25 @@ msgid "Preview Document"
 msgstr "مستند الموظف"
 
 msgid "Header Left"
-msgstr ""
+msgstr "رأس الصفحة الأيسر"
 
 msgid "Header Center"
-msgstr ""
+msgstr "رأس الصفحة المركزي"
 
 msgid "Header Right"
-msgstr ""
+msgstr "رأس الصفحة الأيمن"
 
 msgid "شركة تجريبية"
 msgstr "شركة تجريبية"
 
 msgid "Sample Content"
-msgstr ""
+msgstr "محتوى نموذجي"
 
 msgid "Paper Size"
-msgstr ""
+msgstr "حجم الورق"
 
 msgid "Margins"
-msgstr ""
+msgstr "الهوامش"
 
 msgid "Show Header"
 msgstr "عرض Header"
@@ -13165,7 +13157,7 @@ msgid "أدخل معرف العميل"
 msgstr "أدخل معرف العميل"
 
 msgid "Your registered Client ID from JoFotara"
-msgstr "معرف العميل المسجل الخاص بك من JoFotara"
+msgstr "معرف العميل المسجل الخاص بك من جوفاتورة"
 
 msgid "أدخل سر العميل"
 msgstr "إحصائيات المبيعات"
@@ -13231,7 +13223,7 @@ msgid "Top Margin (mm)"
 msgstr "الهامش العلوي (مم)"
 
 msgid "Bottom Margin (mm)"
-msgstr ""
+msgstr "الهامش السفلي (مم)"
 
 msgid "Right Margin (mm)"
 msgstr "الهامش السفلي (مم)"
@@ -13315,28 +13307,28 @@ msgid "Save Design"
 msgstr "حفظ Design"
 
 msgid "Design Tools"
-msgstr ""
+msgstr "أدوات التصميم"
 
 msgid "Paper Orientation"
-msgstr ""
+msgstr "اتجاه الورق"
 
 msgid "Portrait"
-msgstr ""
+msgstr "عمودي"
 
 msgid "Landscape"
-msgstr ""
+msgstr "أفقي"
 
 msgid "Choose a document to design"
 msgstr "Choose a document إلى design"
 
 msgid "Left Header"
-msgstr ""
+msgstr "رأسية يسرى"
 
 msgid "Center Header"
-msgstr ""
+msgstr "رأسية مركزية"
 
 msgid "Right Header"
-msgstr ""
+msgstr "رأسية يمنى"
 
 msgid ""
 "This content represents the actual document data such as invoices and "
@@ -13346,16 +13338,16 @@ msgstr ""
 "receipts"
 
 msgid "Left Footer"
-msgstr ""
+msgstr "تذييل أيسر"
 
 msgid "Center Footer"
-msgstr ""
+msgstr "تذييل مركزي"
 
 msgid "Right Footer"
-msgstr ""
+msgstr "تذييل أيمن"
 
 msgid "Element Properties"
-msgstr ""
+msgstr "خصائص العنصر"
 
 msgid "Select an element to edit its properties"
 msgstr "اختر an element إلى تعديل its properties"
@@ -13683,10 +13675,10 @@ msgid "User type:"
 msgstr "نوع المستخدم:"
 
 msgid "Super Admin"
-msgstr ""
+msgstr "مدير عام"
 
 msgid "Admin"
-msgstr ""
+msgstr "مسؤول"
 
 msgid "Last login:"
 msgstr "آخر دخول:"
@@ -13695,7 +13687,7 @@ msgid "Never logged in"
 msgstr "لم يتم تسجيل الدخول من قبل"
 
 msgid "Staff member:"
-msgstr ""
+msgstr "عضو فريق العمل:"
 
 msgid "Deletion impact:"
 msgstr "تأثير الحذف:"
@@ -13806,7 +13798,7 @@ msgid "Can edit invoice numbers"
 msgstr "يمكن تعديل أرقام الفواتير"
 
 msgid "User Group"
-msgstr ""
+msgstr "مجموعة المستخدم"
 
 msgid "المستخدم"
 msgstr "المستخدم"
@@ -13868,7 +13860,7 @@ msgid "User \"{}\" created successfully. They can now log in to the system."
 msgstr "تم إنشاء المستخدم \"{}\" بنجاح. يمكنه الآن تسجيل الدخول للنظام."
 
 msgid "Choose a clear, easy-to-remember username"
-msgstr ""
+msgstr "اختر اسم مستخدم واضح وسهل التذكر"
 
 msgid "Use a strong password including letters and numbers"
 msgstr "استخدم كلمة مرور قوية تتضمن أحرفاً وأرقاماً"
@@ -14221,10 +14213,10 @@ msgstr "تم تغيير كلمة المرور بنجاح."
 #~ msgstr "تم إرسال الفاتورة إلى JoFotara بنجاح!"
 
 #~ msgid "Sent to JoFotara"
-#~ msgstr "أُرسل إلى JoFotara"
+#~ msgstr "أُرسل إلى جوفاتورة"
 
 #~ msgid "Verify on JoFotara"
-#~ msgstr "التحقق من JoFotara"
+#~ msgstr "التحقق من جوفاتورة"
 
 #~ msgid "Not sent to JoFotara yet"
 #~ msgstr "لم يتم إرسالها إلى JoFotara بعد"
@@ -14970,8 +14962,3 @@ msgstr "الموظفون في فترة التجربة"
 
 msgid "No Probation Contracts Found"
 msgstr "لم يتم العثور على عقود في فترة التجربة"
-
-
-
-
-

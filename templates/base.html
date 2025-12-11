@@ -1163,14 +1163,21 @@
 
 
                         <!-- Reports -->
+                        {% if user.is_superadmin or user.user_type == 'admin' or perms.reports.can_view_sales_reports or perms.reports.can_view_sales_by_representative_report or perms.reports.can_view_purchase_reports or perms.reports.can_view_tax_report or perms.reports.can_view_profit_loss_report or perms.reports.can_view_customer_statement or perms.reports.can_view_trial_balance or perms.reports.can_view_balance_sheet or perms.reports.can_view_income_statement or perms.reports.can_view_cash_flow_statement or perms.reports.can_view_aging_report or perms.reports.can_view_stock_balance_report or perms.reports.can_view_financial_ratios or perms.reports.can_view_documents_report %}                        
                         <li class="nav-item">
-                            {% if user.is_superadmin or user.user_type == 'admin' or perms.reports.can_view_sales_reports or perms.reports.can_view_sales_by_representative_report or perms.reports.can_view_purchase_reports or perms.reports.can_view_tax_report or perms.reports.can_view_profit_loss_report or perms.reports.can_view_customer_statement or perms.reports.can_view_trial_balance or perms.reports.can_view_balance_sheet or perms.reports.can_view_income_statement or perms.reports.can_view_cash_flow_statement or perms.reports.can_view_aging_report or perms.reports.can_view_stock_balance_report or perms.reports.can_view_financial_ratios or perms.reports.can_view_documents_report %}
-                            <a class="nav-link" data-bs-toggle="collapse" href="#reportsMenu">
-                                <i class="fas fa-chart-bar me-2"></i>
-                                {% trans "Reports" %}
-                                <i class="fas fa-chevron-down small"></i>
-                            </a>
-                            {% endif %}
+                                <a class="nav-link d-flex justify-content-between align-items-center"
+                                    data-bs-toggle="collapse"
+                                    href="#reportsMenu"
+                                    role="button"
+                                    aria-expanded="false"
+                                    aria-controls="reportsMenu">
+                                        <span>
+                                        <i class="fas fa-chart-bar me-2"></i>
+                                            {% trans "Reports" %}
+                                        </span>
+                                    <i class="fas fa-chevron-down small"></i>
+                                </a>
+                            
                             <div class="collapse {% if active_menu == 'reports' %}show{% endif %}" id="reportsMenu">
                                 <ul class="nav flex-column ms-3">
                                     {% if user.is_superadmin or user.user_type == 'admin' or perms.reports.can_view_sales_reports %}
@@ -1261,14 +1268,22 @@
                                     {% endif %}
                                 </ul>
                             </div>
+                            {% endif %}
                         </li>
                                                                   
 <!-- Human Resources ------------------------------------------------------------->
                         {% if perms.hr.view_hr_menu %}
                         <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#hrMenu">
-                                <i class="fas fa-users-cog me-2"></i>
-                                {% trans "Human Resources" %}
+                                <a class="nav-link d-flex justify-content-between align-items-center"
+                                data-bs-toggle="collapse"
+                                href="#hrMenu"
+                                role="button"
+                                aria-expanded="false"
+                                aria-controls="hrMenu">
+                                    <span>
+                                        <i class="fas fa-boxes me-2"></i>
+                                             {% trans "Human Resources" %}
+                                    </span>
                                 <i class="fas fa-chevron-down small"></i>
                             </a>
                             <div class="collapse {% if active_menu == 'hr' %}show{% endif %}" id="hrMenu">
@@ -1321,9 +1336,16 @@
                         <!-- System Management -->
                             <li class="nav-item">
                                 {% if user.is_superuser or perms.users.can_view_users_list or perms.users.can_view_groups_permissions or perms.users.can_view_activity_log or perms.users.can_view_document_number_management or perms.users.can_view_system_settings %}
-                                <a class="nav-link" data-bs-toggle="collapse" href="#systemMenu">
-                                    <i class="fas fa-cogs me-2"></i>
+                                <a class="nav-link d-flex justify-content-between align-items-center"
+                                    data-bs-toggle="collapse"
+                                    href="#systemMenu"
+                                    role="button"
+                                    aria-expanded="false"
+                                    aria-controls="systemMenu">
+                                    <span>
+                                        <i class="fas fa-boxes me-2"></i>
                                     {% trans "System Management" %}
+                                    </span>
                                     <i class="fas fa-chevron-down small"></i>
                                 </a>
                                 <div class="collapse {% if active_menu == 'users' or active_menu == 'audit_log' or active_menu == 'settings' %}show{% endif %}" id="systemMenu">
