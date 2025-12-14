@@ -205,6 +205,96 @@
                             </ul>
                         </div>
                         
+                        <!-- إعدادات ترحيل المستندات -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card border-info">
+                                    <div class="card-header bg-info text-white">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-exchange-alt me-2"></i>
+                                            {% trans "Document Transfer Settings" %}
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="form-check mb-3">
+                                                    <input class="form-check-input" type="checkbox" id="auto_transfer_enabled" name="auto_transfer_enabled"
+                                                           {% if jofotara_settings.auto_transfer_enabled %}checked{% endif %}>
+                                                    <label class="form-check-label" for="auto_transfer_enabled">
+                                                        <i class="fas fa-sync-alt me-2 text-info"></i>
+                                                        <strong>{% trans "Enable Automatic Transfer" %}</strong>
+                                                    </label>
+                                                    <div class="form-text">
+                                                        {% trans "Automatically transfer documents to JoFotara system" %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label for="transfer_day_of_month" class="form-label">
+                                                        <i class="fas fa-calendar-day me-2"></i>
+                                                        {% trans "Monthly Transfer Day" %}
+                                                    </label>
+                                                    <input type="number" class="form-control" id="transfer_day_of_month" 
+                                                           name="transfer_day_of_month" min="1" max="31"
+                                                           value="{{ jofotara_settings.transfer_day_of_month|default:'' }}" 
+                                                           placeholder="{% trans 'يوم من الشهر (1-31)' %}">
+                                                    <div class="form-text">
+                                                        {% trans "Specific day of month to transfer untransferred documents" %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label for="transfer_time" class="form-label">
+                                                        <i class="fas fa-clock me-2"></i>
+                                                        {% trans "Daily Transfer Time" %}
+                                                    </label>
+                                                    <input type="time" class="form-control" id="transfer_time" 
+                                                           name="transfer_time"
+                                                           value="{{ jofotara_settings.transfer_time|time:'H:i'|default:'' }}">
+                                                    <div class="form-text">
+                                                        {% trans "Specific time to automatically transfer documents daily" %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label class="form-label">
+                                                        <i class="fas fa-bolt me-2"></i>
+                                                        {% trans "Immediate Transfer" %}
+                                                    </label>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="immediate_transfer" 
+                                                               name="immediate_transfer"
+                                                               {% if jofotara_settings.immediate_transfer %}checked{% endif %}>
+                                                        <label class="form-check-label" for="immediate_transfer">
+                                                            {% trans "Transfer documents immediately upon creation" %}
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-text">
+                                                        {% trans "Documents will be transferred as soon as they are created" %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="alert alert-info mt-3">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            <strong>{% trans "Note:" %}</strong>
+                                            {% trans "These settings are optional. You can choose one or more transfer methods based on your business needs." %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <!-- أزرار العمل -->
                         <div class="row mt-4">
                             <div class="col-12">

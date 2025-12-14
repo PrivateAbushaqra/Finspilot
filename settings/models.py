@@ -318,6 +318,18 @@ class JoFotaraSettings(models.Model):
     client_secret = models.CharField(_('Client Secret'), max_length=255, blank=True, default='', help_text=_('سر العميل'))
     is_active = models.BooleanField(_('نشط'), default=False, help_text=_('تفعيل الربط مع JoFotara'))
     use_mock_api = models.BooleanField(_('استخدام Mock API'), default=True, help_text=_('استخدام API وهمي للاختبار'))
+    
+    # إعدادات ترحيل المستندات
+    auto_transfer_enabled = models.BooleanField(_('تفعيل الترحيل التلقائي'), default=False, 
+                                               help_text=_('تفعيل ترحيل المستندات تلقائياً'))
+    transfer_day_of_month = models.PositiveIntegerField(_('يوم الترحيل من الشهر'), blank=True, null=True,
+                                                       validators=[MinValueValidator(1), MaxValueValidator(31)],
+                                                       help_text=_('يوم محدد من الشهر لترحيل المستندات (1-31)'))
+    transfer_time = models.TimeField(_('وقت الترحيل التلقائي'), blank=True, null=True,
+                                    help_text=_('الساعة اليومية لترحيل المستندات تلقائياً'))
+    immediate_transfer = models.BooleanField(_('الترحيل الفوري'), default=False,
+                                            help_text=_('ترحيل المستندات فور إنشائها'))
+    
     created_at = models.DateTimeField(_('تاريخ الإنشاء'), auto_now_add=True)
     updated_at = models.DateTimeField(_('تاريخ التحديث'), auto_now=True)
 

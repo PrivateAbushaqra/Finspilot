@@ -446,6 +446,40 @@
             transform: translateY(-1px);
         }
         
+        /* Page Title Logo Style */
+        .page-header-with-logo {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        
+        .page-header-with-logo .d-flex.justify-content-between.align-items-center {
+            margin: 0;
+            flex: 1;
+        }
+        
+        .page-logo {
+            max-height: 50px;
+            width: auto;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+        
+        @media print {
+            .page-logo {
+                max-height: 40px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .page-logo {
+                max-height: 35px;
+            }
+        }
+        
         /* Language Selector Styles */
         #languageDropdown {
             color: #495057;
@@ -1468,6 +1502,58 @@
     
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        
+        // Function to add logo after page titles
+        function addLogoToPageTitles() {
+            const logoPath = '{% static "system/FinsPilottop.png" %}';
+            const pageTitles = document.querySelectorAll('h1, h2.h2, .page-title');
+            
+            pageTitles.forEach(title => {
+                // Skip if already has logo
+                if (title.classList.contains('logo-added') || title.parentNode.classList.contains('page-header-with-logo')) {
+                    return;
+                }
+                
+                // Find the header container (the flex container that holds title and buttons)
+                let headerContainer = title.closest('.d-flex.justify-content-between.align-items-center');
+                if (!headerContainer) {
+                    // Fallback to parent element
+                    headerContainer = title.parentNode;
+                }
+                
+                // Create wrapper around the entire header container
+                const wrapper = document.createElement('div');
+                wrapper.className = 'page-header-with-logo';
+                headerContainer.parentNode.insertBefore(wrapper, headerContainer);
+                wrapper.appendChild(headerContainer);
+                
+                // Create and add logo after the header container
+                const logo = document.createElement('img');
+                logo.src = logoPath;
+                logo.alt = 'Finspilot Logo';
+                logo.className = 'page-logo';
+                wrapper.appendChild(logo);
+                
+                title.classList.add('logo-added');
+            });
+        }
+        
+        // Add logo on page load
+        addLogoToPageTitles();
+        
+        // Re-add logo when content changes (for AJAX loads)
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.addedNodes.length) {
+                    addLogoToPageTitles();
+                }
+            });
+        });
+        
+        const mainContent = document.getElementById('main-content');
+        if (mainContent) {
+            observer.observe(mainContent, { childList: true, subtree: true });
+        }
         
         // وظيفة لمسح جميع الحالات النشطة
         function clearAllActiveStates() {

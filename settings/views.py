@@ -1333,12 +1333,34 @@ class JoFotaraSettingsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
                     defaults={}
                 )
                 
-                # تحديث البيانات
+                # تحديث البيانات الأساسية
                 settings.api_url = request.POST.get('api_url', '')
                 settings.client_id = request.POST.get('client_id', '')
                 settings.client_secret = request.POST.get('client_secret', '')
                 settings.is_active = request.POST.get('is_active') == 'on'
                 settings.use_mock_api = request.POST.get('use_mock_api') == 'on'
+                
+                # تحديث إعدادات ترحيل المستندات
+                settings.auto_transfer_enabled = request.POST.get('auto_transfer_enabled') == 'on'
+                settings.immediate_transfer = request.POST.get('immediate_transfer') == 'on'
+                
+                # تحديث يوم الترحيل الشهري
+                transfer_day = request.POST.get('transfer_day_of_month')
+                if transfer_day and transfer_day.strip():
+                    try:
+                        settings.transfer_day_of_month = int(transfer_day)
+                    except (ValueError, TypeError):
+                        settings.transfer_day_of_month = None
+                else:
+                    settings.transfer_day_of_month = None
+                
+                # تحديث وقت الترحيل
+                transfer_time = request.POST.get('transfer_time')
+                if transfer_time and transfer_time.strip():
+                    settings.transfer_time = transfer_time
+                else:
+                    settings.transfer_time = None
+                
                 settings.save()
                 
                 # تسجيل النشاط
