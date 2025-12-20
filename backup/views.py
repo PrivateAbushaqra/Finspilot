@@ -3665,66 +3665,6 @@ def get_clear_progress(request):
     except Exception as e:
         logger.error(f"خطأ في الحصول على تقدم المسح: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)})
-    """الحصول على حالة تقدم الاستعادة"""
-    try:
-        progress_data = get_restore_progress_data()
-
-        # التحقق من أن progress_data هو dictionary صحيح
-        if not isinstance(progress_data, dict):
-            logger.warning(f"بيانات التقدم تالفة: {type(progress_data)}")
-            progress_data = {
-                'is_running': False,
-                'current_table': '',
-                'processed_tables': 0,
-                'total_tables': 0,
-                'processed_records': 0,
-                'total_records': 0,
-                'percentage': 0,
-                'status': 'idle',
-                'error': 'بيانات التقدم تالفة',
-                'tables_status': [],
-                'estimated_time': ''
-            }
-
-        # التحقق من العمليات المعلقة
-        if progress_data.get('is_running', False):
-            import time
-            current_time = time.time()
-            last_update = cache.get('restore_last_update', current_time)
-            if current_time - last_update > 600:
-                cache.delete('restore_progress')
-                cache.delete('restore_last_update')
-                log_audit(request.user, 'delete', 'تم إلغاء عملية الاستعادة المعلقة تلقائياً')
-                progress_data = {
-                    'is_running': False,
-                    'current_table': '',
-                    'processed_tables': 0,
-                    'total_tables': 0,
-                    'processed_records': 0,
-                    'total_records': 0,
-                    'percentage': 0,
-                    'status': 'idle',
-                    'error': None,
-                    'tables_status': [],
-                    'estimated_time': ''
-                }
-
-        return JsonResponse({
-            'success': True,
-            'progress': progress_data
-        })
-    except Exception as e:
-        logger.error(f"خطأ في جلب تقدم الاستعادة: {str(e)}")
-        # إرجاع response افتراضي في حالة الخطأ
-        return JsonResponse({
-            'success': False,
-            'error': str(e),
-            'progress': {
-                'is_running': False,
-                'status': 'error',
-                'error': str(e)
-            }
-        })
 
 
 @login_required

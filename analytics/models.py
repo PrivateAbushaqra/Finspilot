@@ -7,6 +7,7 @@ class AnalyticsPermissions(models.Model):
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
 
     class Meta:
+        managed = False  # هذا النموذج لا ينشئ جدول - يُستخدم فقط للصلاحيات
         verbose_name = _('Analytics Permissions')
         verbose_name_plural = _('Analytics Permissions')
         default_permissions = []
