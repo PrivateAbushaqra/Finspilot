@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Cash Flow Analytics" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2><i class="fas fa-hand-holding-usd me-2"></i>{% trans "Cash Flow Analytics" %}</h2>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label>{% trans "Period Type" %}</label>
+                        <select name="period_type" class="form-select">
+                            <option value="monthly">{% trans "Monthly" %}</option>
+                            <option value="quarterly">{% trans "Quarterly" %}</option>
+                            <option value="yearly">{% trans "Yearly" %}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary form-control mt-4">
+                            <i class="fas fa-search"></i> {% trans "Analyze" %}
+                        </button>
+                    </div>
+                    {% if perms.analytics.export_analytics_reports %}
+                    <div class="col-md-2">
+                        <div class="btn-group w-100 mt-4">
+                            <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="fas fa-download"></i> {% trans "Export" %}
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'analytics:export_analytics' %}?type=cashflow&format=xlsx">{% trans "Excel" %}</a></li>
+                                <li><a class="dropdown-item" href="{% url 'analytics:export_analytics' %}?type=cashflow&format=pdf">{% trans "PDF" %}</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cash Flow Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">{% trans "Total Inflows" %}</h6>
+                    <h3 class="text-success">{{ overview.total_inflows|floatformat:2 }}</h3>
+                    <small>{% trans "Daily Avg" %}: {{ overview.daily_avg_inflow|floatformat:2 }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-danger">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">{% trans "Total Outflows" %}</h6>
+                    <h3 class="text-danger">{{ overview.total_outflows|floatformat:2 }}</h3>
+                    <small>{% trans "Daily Avg" %}: {{ overview.daily_avg_outflow|floatformat:2 }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-{% if overview.net_cashflow > 0 %}success{% else %}danger{% endif %}">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">{% trans "Net Cash Flow" %}</h6>
+                    <h3 class="text-{% if overview.net_cashflow > 0 %}success{% else %}danger{% endif %}">
+                        {{ overview.net_cashflow|floatformat:2 }}
+                    </h3>
+                    <small>
+                        {% if overview.net_cashflow > 0 %}
+                            {% trans "Surplus" %}
+                        {% else %}
+                            {% trans "Deficit" %}
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Insights -->
+    {% if insights %}
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5><i class="fas fa-lightbulb me-2"></i>{% trans "AI Insights" %}</h5>
+        </div>
+        <div class="card-body">
+            {% for insight in insights %}
+            <div class="alert alert-{{ insight.type|default:'info' }}">
+                {{ insight.message }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Charts -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>{% trans "Cash Flow Overview" %}</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="cashflowChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>{% trans "Source Breakdown" %}</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="sourcesChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bank Accounts Table -->
+    {% if bank_accounts %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>{% trans "Bank Accounts Cash Flow" %}</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Account" %}</th>
+                            <th>{% trans "Inflows" %}</th>
+                            <th>{% trans "Outflows" %}</th>
+                            <th>{% trans "Net" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for account in bank_accounts %}
+                        <tr>
+                            <td>{{ account.account_name }}</td>
+                            <td class="text-success">{{ account.inflows|floatformat:2 }}</td>
+                            <td class="text-danger">{{ account.outflows|floatformat:2 }}</td>
+                            <td class="text-{% if account.net > 0 %}success{% else %}danger{% endif %}">
+                                {{ account.net|floatformat:2 }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Cashboxes Table -->
+    {% if cashboxes %}
+    <div class="card">
+        <div class="card-header">
+            <h5>{% trans "Cashboxes Cash Flow" %}</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Cashbox" %}</th>
+                            <th>{% trans "Inflows" %}</th>
+                            <th>{% trans "Outflows" %}</th>
+                            <th>{% trans "Net" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cashbox in cashboxes %}
+                        <tr>
+                            <td>{{ cashbox.cashbox_name }}</td>
+                            <td class="text-success">{{ cashbox.inflows|floatformat:2 }}</td>
+                            <td class="text-danger">{{ cashbox.outflows|floatformat:2 }}</td>
+                            <td class="text-{% if cashbox.net > 0 %}success{% else %}danger{% endif %}">
+                                {{ cashbox.net|floatformat:2 }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Cash Flow Chart
+new Chart(document.getElementById('cashflowChart'), {
+    type: 'bar',
+    data: {
+        labels: ['{% trans "Inflows" %}', '{% trans "Outflows" %}', '{% trans "Net" %}'],
+        datasets: [{
+            label: '{% trans "Amount" %}',
+            data: [
+                {{ overview.total_inflows }},
+                {{ overview.total_outflows }},
+                {{ overview.net_cashflow }}
+            ],
+            backgroundColor: [
+                'rgba(40, 167, 69, 0.7)',
+                'rgba(220, 53, 69, 0.7)',
+                '{% if overview.net_cashflow > 0 %}rgba(40, 167, 69, 0.7){% else %}rgba(220, 53, 69, 0.7){% endif %}'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false
+    }
+});
+
+// Sources Chart
+new Chart(document.getElementById('sourcesChart'), {
+    type: 'pie',
+    data: {
+        labels: [
+            '{% trans "Banks" %}',
+            '{% trans "Cashboxes" %}',
+            '{% trans "Receipts" %}',
+            '{% trans "Payments" %}'
+        ],
+        datasets: [{
+            data: [
+                {{ overview.bank_inflows }} + {{ overview.bank_outflows }},
+                {{ overview.cashbox_inflows }} + {{ overview.cashbox_outflows }},
+                {{ overview.receipts }},
+                {{ overview.payments }}
+            ],
+            backgroundColor: [
+                'rgba(0, 123, 255, 0.7)',
+                'rgba(40, 167, 69, 0.7)',
+                'rgba(255, 193, 7, 0.7)',
+                'rgba(220, 53, 69, 0.7)'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false
+    }
+});
+</script>
+{% endblock %}

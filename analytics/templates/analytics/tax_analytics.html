@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Tax Analytics" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2><i class="fas fa-percentage me-2"></i>{% trans "Tax Analytics" %}</h2>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label>{% trans "Period Type" %}</label>
+                        <select name="period_type" class="form-select">
+                            <option value="monthly">{% trans "Monthly" %}</option>
+                            <option value="quarterly">{% trans "Quarterly" %}</option>
+                            <option value="yearly">{% trans "Yearly" %}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary form-control mt-4">
+                            <i class="fas fa-search"></i> {% trans "Analyze" %}
+                        </button>
+                    </div>
+                    {% if perms.analytics.export_analytics_reports %}
+                    <div class="col-md-2">
+                        <div class="btn-group w-100 mt-4">
+                            <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="fas fa-download"></i> {% trans "Export" %}
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'analytics:export_analytics' %}?type=tax&format=xlsx">{% trans "Excel" %}</a></li>
+                                <li><a class="dropdown-item" href="{% url 'analytics:export_analytics' %}?type=tax&format=pdf">{% trans "PDF" %}</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tax Overview -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">{% trans "Sales Tax" %}</h6>
+                    <h3 class="text-success">{{ overview.net_sales_tax|floatformat:2 }}</h3>
+                    <small>{% trans "Collected" %}: {{ overview.sales_tax|floatformat:2 }}</small><br>
+                    <small>{% trans "Returns" %}: {{ overview.sales_return_tax|floatformat:2 }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">{% trans "Purchase Tax" %}</h6>
+                    <h3 class="text-primary">{{ overview.net_purchase_tax|floatformat:2 }}</h3>
+                    <small>{% trans "Paid" %}: {{ overview.purchase_tax|floatformat:2 }}</small><br>
+                    <small>{% trans "Returns" %}: {{ overview.purchase_return_tax|floatformat:2 }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-{% if overview.net_tax_payable > 0 %}danger{% else %}success{% endif %}">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">{% trans "Net Tax" %}</h6>
+                    <h3 class="text-{% if overview.net_tax_payable > 0 %}danger{% else %}success{% endif %}">
+                        {{ overview.net_tax_payable|floatformat:2 }}
+                    </h3>
+                    <small>
+                        {% if overview.net_tax_payable > 0 %}
+                            {% trans "Payable" %}
+                        {% else %}
+                            {% trans "Credit" %}
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Insights -->
+    {% if insights %}
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5><i class="fas fa-lightbulb me-2"></i>{% trans "AI Insights" %}</h5>
+        </div>
+        <div class="card-body">
+            {% for insight in insights %}
+            <div class="alert alert-{{ insight.type|default:'info' }}">
+                {{ insight.message }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Tax by Document Type Chart -->
+    <div class="card">
+        <div class="card-header">
+            <h5>{% trans "Tax by Document Type" %}</h5>
+        </div>
+        <div class="card-body">
+            <canvas id="taxChart" height="300"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+const taxData = {{ by_document_type|safe }};
+if (taxData && taxData.length > 0) {
+    new Chart(document.getElementById('taxChart'), {
+        type: 'bar',
+        data: {
+            labels: taxData.map(t => t.type),
+            datasets: [{
+                label: '{% trans "Tax Amount" %}',
+                data: taxData.map(t => parseFloat(t.amount || 0)),
+                backgroundColor: [
+                    'rgba(40, 167, 69, 0.7)',
+                    'rgba(220, 53, 69, 0.7)',
+                    'rgba(0, 123, 255, 0.7)',
+                    'rgba(255, 193, 7, 0.7)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+</script>
+{% endblock %}

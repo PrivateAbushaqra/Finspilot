@@ -620,10 +620,13 @@
                                         <hr class="dropdown-divider">
                                     </li>
                                     <li>
-                                        <a class="dropdown-item" href="{% url 'auth:logout' %}">
-                                            <i class="fas fa-sign-out-alt me-2"></i>
-                                            {% trans "Logout" %}
-                                        </a>
+                                        <form method="post" action="{% url 'auth:logout' %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="dropdown-item" style="background: none; border: none; padding: 0.25rem 1.5rem; width: 100%; text-align: right; cursor: pointer;">
+                                                <i class="fas fa-sign-out-alt me-2"></i>
+                                                {% trans "Logout" %}
+                                            </button>
+                                        </form>
                                     </li>
                             </ul>
                         </div>
@@ -1305,6 +1308,54 @@
                             {% endif %}
                         </li>
                                                                   
+<!-- AI Financial Intelligence (Data Analysis) --------------------------------------->
+                        {% if perms.analytics.view_ai_dashboard or perms.analytics.view_sales_analytics or perms.analytics.view_purchase_analytics or perms.analytics.view_tax_analytics or perms.analytics.view_cashflow_analytics %}
+                        <li class="nav-item">
+                                <a class="nav-link d-flex justify-content-between align-items-center"
+                                data-bs-toggle="collapse"
+                                href="#analyticsMenu"
+                                role="button"
+                                aria-expanded="false"
+                                aria-controls="analyticsMenu">
+                                    <span>
+                                        <i class="fas fa-brain me-2"></i>
+                                             {% trans "Data Analysis" %}
+                                    </span>
+                                <i class="fas fa-chevron-down small"></i>
+                            </a>
+                            <div class="collapse {% if active_menu == 'analytics' %}show{% endif %}" id="analyticsMenu">
+                                <ul class="nav flex-column ms-3">
+                                    {% if perms.analytics.view_ai_dashboard %}
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if active_menu == 'analytics' and 'dashboard' in request.path %}active{% endif %}" href="{% url 'analytics:dashboard' %}">{% trans "AI Dashboard" %}</a>
+                                    </li>
+                                    {% endif %}
+                                    {% if perms.analytics.view_sales_analytics %}
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if active_menu == 'analytics' and 'sales_analytics' in request.path %}active{% endif %}" href="{% url 'analytics:sales_analytics' %}">{% trans "Sales Analytics" %}</a>
+                                    </li>
+                                    {% endif %}
+                                    {% if perms.analytics.view_purchase_analytics %}
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if active_menu == 'analytics' and 'purchase_analytics' in request.path %}active{% endif %}" href="{% url 'analytics:purchase_analytics' %}">{% trans "Purchase Analytics" %}</a>
+                                    </li>
+                                    {% endif %}
+                                    {% if perms.analytics.view_tax_analytics %}
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if active_menu == 'analytics' and 'tax_analytics' in request.path %}active{% endif %}" href="{% url 'analytics:tax_analytics' %}">{% trans "Tax Analytics" %}</a>
+                                    </li>
+                                    {% endif %}
+                                    {% if perms.analytics.view_cashflow_analytics %}
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if active_menu == 'analytics' and 'cashflow_analytics' in request.path %}active{% endif %}" href="{% url 'analytics:cashflow_analytics' %}">{% trans "Cash Flow Analytics" %}</a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </li>
+                        {% endif %}
+<!-- AI Financial Intelligence (Data Analysis) --------------------------------------->
+
 <!-- Human Resources ------------------------------------------------------------->
                         {% if perms.hr.view_hr_menu %}
                         <li class="nav-item">

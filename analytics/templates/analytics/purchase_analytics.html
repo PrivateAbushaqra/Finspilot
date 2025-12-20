@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Purchase Analytics" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2><i class="fas fa-shopping-cart me-2"></i>{% trans "Purchase Analytics" %}</h2>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label>{% trans "Period Type" %}</label>
+                        <select name="period_type" class="form-select">
+                            <option value="monthly">{% trans "Monthly" %}</option>
+                            <option value="quarterly">{% trans "Quarterly" %}</option>
+                            <option value="yearly">{% trans "Yearly" %}</option>
+                            <option value="custom">{% trans "Custom Period" %}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn btn-primary form-control">
+                            <i class="fas fa-search"></i> {% trans "Analyze" %}
+                        </button>
+                    </div>
+                    {% if perms.analytics.export_analytics_reports %}
+                    <div class="col-md-2">
+                        <label>&nbsp;</label>
+                        <div class="btn-group w-100">
+                            <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="fas fa-download"></i> {% trans "Export" %}
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'analytics:export_analytics' %}?type=purchase&format=xlsx">{% trans "Excel" %}</a></li>
+                                <li><a class="dropdown-item" href="{% url 'analytics:export_analytics' %}?type=purchase&format=pdf">{% trans "PDF" %}</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Overview Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">{% trans "Total Purchases" %}</h6>
+                    <h3>{{ overview.total_purchases|floatformat:2 }}</h3>
+                    <small class="text-{% if overview.growth_rate > 0 %}warning{% else %}success{% endif %}">
+                        <i class="fas fa-arrow-{% if overview.growth_rate > 0 %}up{% else %}down{% endif %}"></i>
+                        {{ overview.growth_rate }}%
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">{% trans "Invoice Count" %}</h6>
+                    <h3>{{ overview.invoice_count }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">{% trans "Average Invoice" %}</h6>
+                    <h3>{{ overview.avg_invoice_value|floatformat:2 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted">{% trans "Net Purchases" %}</h6>
+                    <h3>{{ overview.net_purchases|floatformat:2 }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Insights -->
+    {% if insights %}
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5><i class="fas fa-lightbulb me-2"></i>{% trans "AI Insights" %}</h5>
+        </div>
+        <div class="card-body">
+            {% for insight in insights %}
+            <div class="alert alert-{{ insight.type|default:'info' }}">
+                {{ insight.message }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Charts -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>{% trans "Top Purchased Products" %}</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="productsChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>{% trans "Top Suppliers" %}</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="suppliersChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Products Chart
+const productsData = {{ products|safe|slice:":10" }};
+if (productsData && productsData.length > 0) {
+    new Chart(document.getElementById('productsChart'), {
+        type: 'bar',
+        data: {
+            labels: productsData.map(p => p.product__name || '{% trans "Unknown" %}'),
+            datasets: [{
+                label: '{% trans "Purchase Amount" %}',
+                data: productsData.map(p => parseFloat(p.total_amount || 0)),
+                backgroundColor: 'rgba(0, 123, 255, 0.7)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+// Suppliers Chart
+const suppliersData = {{ suppliers|safe|slice:":10" }};
+if (suppliersData && suppliersData.length > 0) {
+    new Chart(document.getElementById('suppliersChart'), {
+        type: 'bar',
+        data: {
+            labels: suppliersData.map(s => s.supplier__name || '{% trans "Unknown" %}'),
+            datasets: [{
+                label: '{% trans "Purchase Amount" %}',
+                data: suppliersData.map(s => parseFloat(s.total_amount || 0)),
+                backgroundColor: 'rgba(255, 193, 7, 0.7)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y'
+        }
+    });
+}
+</script>
+{% endblock %}

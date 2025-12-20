@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'cashboxes',
     'journal',
     'reports',
+    'analytics',
     'documents',
     'users',
     'settings',

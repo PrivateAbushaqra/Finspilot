@@ -52,6 +52,7 @@ urlpatterns += i18n_patterns(
     path('revenues-expenses/', include('revenues_expenses.urls')),
     path('assets-liabilities/', include('assets_liabilities.urls')),
     path('backup/', include('backup.urls')),
+    path('analytics/', include('analytics.urls')),  # AI Financial Intelligence
     path('hr/', include('hr.urls')),  # الموارد البشرية
     path('documents/', include('documents.urls')),
     path('provisions/', include('provisions.urls')),  # المخصصات المحاسبية

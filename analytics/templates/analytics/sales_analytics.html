@@ -1,0 +1,385 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Sales Analytics" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .metric-card {
+        border-left: 4px solid #28a745;
+        transition: all 0.3s;
+    }
+    .metric-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .insight-card {
+        border-left: 4px solid #007bff;
+    }
+    .insight-positive {
+        border-left-color: #28a745;
+    }
+    .insight-warning {
+        border-left-color: #ffc107;
+    }
+    .insight-info {
+        border-left-color: #17a2b8;
+    }
+    .chart-container {
+        position: relative;
+        height: 400px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2><i class="fas fa-chart-line me-2"></i>{% trans "Sales Analytics" %}</h2>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" id="analyticsForm">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label>{% trans "Period Type" %}</label>
+                        <select name="period_type" class="form-select" id="periodType">
+                            <option value="monthly" {% if period_type == 'monthly' %}selected{% endif %}>{% trans "Monthly" %}</option>
+                            <option value="quarterly" {% if period_type == 'quarterly' %}selected{% endif %}>{% trans "Quarterly" %}</option>
+                            <option value="yearly" {% if period_type == 'yearly' %}selected{% endif %}>{% trans "Yearly" %}</option>
+                            <option value="custom" {% if period_type == 'custom' %}selected{% endif %}>{% trans "Custom Period" %}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3" id="customDatesDiv" style="display: none;">
+                        <label>{% trans "Start Date" %}</label>
+                        <input type="date" name="start_date" class="form-control" value="{{ start_date|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-3" id="customDatesDiv2" style="display: none;">
+                        <label>{% trans "End Date" %}</label>
+                        <input type="date" name="end_date" class="form-control" value="{{ end_date|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn btn-primary form-control">
+                            <i class="fas fa-search"></i> {% trans "Analyze" %}
+                        </button>
+                    </div>
+                    {% if perms.analytics.export_analytics_reports %}
+                    <div class="col-md-2">
+                        <label>&nbsp;</label>
+                        <div class="btn-group w-100">
+                            <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="fas fa-download"></i> {% trans "Export" %}
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'analytics:export_analytics' %}?type=sales&format=xlsx&{{ request.GET.urlencode }}">{% trans "Excel" %}</a></li>
+                                <li><a class="dropdown-item" href="{% url 'analytics:export_analytics' %}?type=sales&format=pdf&{{ request.GET.urlencode }}">{% trans "PDF" %}</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Overview Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card metric-card">
+                <div class="card-body">
+                    <h6 class="text-muted">{% trans "Total Sales" %}</h6>
+                    <h3>{{ overview.total_sales|floatformat:2 }}</h3>
+                    <small class="text-{% if overview.growth_rate > 0 %}success{% else %}danger{% endif %}">
+                        <i class="fas fa-arrow-{% if overview.growth_rate > 0 %}up{% else %}down{% endif %}"></i>
+                        {{ overview.growth_rate }}%
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card metric-card">
+                <div class="card-body">
+                    <h6 class="text-muted">{% trans "Invoice Count" %}</h6>
+                    <h3>{{ overview.invoice_count }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card metric-card">
+                <div class="card-body">
+                    <h6 class="text-muted">{% trans "Average Invoice" %}</h6>
+                    <h3>{{ overview.avg_invoice_value|floatformat:2 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card metric-card">
+                <div class="card-body">
+                    <h6 class="text-muted">{% trans "Net Sales" %}</h6>
+                    <h3>{{ overview.net_sales|floatformat:2 }}</h3>
+                    <small class="text-danger">{% trans "Returns" %}: {{ overview.total_returns|floatformat:2 }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Insights -->
+    {% if insights %}
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5><i class="fas fa-lightbulb me-2"></i>{% trans "AI Insights" %}</h5>
+        </div>
+        <div class="card-body">
+            {% for insight in insights %}
+            <div class="alert alert-{{ insight.type|default:'info' }} insight-card insight-{{ insight.type|default:'info' }}">
+                {{ insight.message }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Charts -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>{% trans "Top Products by Sales" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="productsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>{% trans "Sales by Category" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="categoriesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>{% trans "Top Customers" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="customersChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% if representatives %}
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>{% trans "Sales by User" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="representativesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Data Tables -->
+    <div class="card">
+        <div class="card-header">
+            <h5>{% trans "Detailed Product Analysis" %}</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Product" %}</th>
+                            <th>{% trans "Quantity Sold" %}</th>
+                            <th>{% trans "Total Amount" %}</th>
+                            <th>{% trans "Order Count" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td>{{ product.product__name|default:_("Unknown") }}</td>
+                            <td>{{ product.total_quantity|floatformat:2 }}</td>
+                            <td>{{ product.total_amount|floatformat:2 }}</td>
+                            <td>{{ product.order_count }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center">{% trans "No data available" %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Period type selector
+document.getElementById('periodType').addEventListener('change', function() {
+    const customDiv = document.getElementById('customDatesDiv');
+    const customDiv2 = document.getElementById('customDatesDiv2');
+    if (this.value === 'custom') {
+        customDiv.style.display = 'block';
+        customDiv2.style.display = 'block';
+    } else {
+        customDiv.style.display = 'none';
+        customDiv2.style.display = 'none';
+    }
+});
+
+// Initialize on page load
+if (document.getElementById('periodType').value === 'custom') {
+    document.getElementById('customDatesDiv').style.display = 'block';
+    document.getElementById('customDatesDiv2').style.display = 'block';
+}
+
+// Products Chart
+const productsData = {{ products|safe|slice:":10" }};
+if (productsData && productsData.length > 0) {
+    const productsLabels = productsData.map(p => p.product__name || '{% trans "Unknown" %}');
+    const productsValues = productsData.map(p => parseFloat(p.total_amount || 0));
+    
+    new Chart(document.getElementById('productsChart'), {
+        type: 'bar',
+        data: {
+            labels: productsLabels,
+            datasets: [{
+                label: '{% trans "Sales Amount" %}',
+                data: productsValues,
+                backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                borderColor: 'rgba(40, 167, 69, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// Categories Chart
+const categoriesData = {{ categories|safe }};
+if (categoriesData && categoriesData.length > 0) {
+    const categoriesLabels = categoriesData.map(c => c.product__category__name || '{% trans "Uncategorized" %}');
+    const categoriesValues = categoriesData.map(c => parseFloat(c.total_amount || 0));
+    
+    new Chart(document.getElementById('categoriesChart'), {
+        type: 'pie',
+        data: {
+            labels: categoriesLabels,
+            datasets: [{
+                data: categoriesValues,
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(54, 162, 235, 0.7)',
+                    'rgba(255, 206, 86, 0.7)',
+                    'rgba(75, 192, 192, 0.7)',
+                    'rgba(153, 102, 255, 0.7)',
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+// Customers Chart
+const customersData = {{ customers|safe|slice:":10" }};
+if (customersData && customersData.length > 0) {
+    const customersLabels = customersData.map(c => c.customer__name || '{% trans "Unknown" %}');
+    const customersValues = customersData.map(c => parseFloat(c.total_amount || 0));
+    
+    new Chart(document.getElementById('customersChart'), {
+        type: 'bar',
+        data: {
+            labels: customersLabels,
+            datasets: [{
+                label: '{% trans "Sales Amount" %}',
+                data: customersValues,
+                backgroundColor: 'rgba(0, 123, 255, 0.7)',
+                borderColor: 'rgba(0, 123, 255, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            scales: {
+                x: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// Representatives Chart
+{% if representatives %}
+const representativesData = {{ representatives|safe }};
+if (representativesData && representativesData.length > 0) {
+    const repsLabels = representativesData.map(r => 
+        (r.created_by__first_name || '') + ' ' + (r.created_by__last_name || '')
+    );
+    const repsValues = representativesData.map(r => parseFloat(r.total_amount || 0));
+    
+    new Chart(document.getElementById('representativesChart'), {
+        type: 'bar',
+        data: {
+            labels: repsLabels,
+            datasets: [{
+                label: '{% trans "Sales Amount" %}',
+                data: repsValues,
+                backgroundColor: 'rgba(255, 193, 7, 0.7)',
+                borderColor: 'rgba(255, 193, 7, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+{% endif %}
+</script>
+{% endblock %}
