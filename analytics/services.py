@@ -28,9 +28,14 @@ class AnalyticsService:
             start_month = (quarter - 1) * 3 + 1
             start = date(year, start_month, 1)
             end_month = start_month + 2
-            if end_month > 12:
+            if end_month == 12:
+                # Last quarter ends on Dec 31
+                end = date(year, 12, 31)
+            elif end_month > 12:
+                # Should not happen with valid quarters 1-4, but handle it
                 end = date(year + 1, 1, 1) - timedelta(days=1)
             else:
+                # Get last day of end_month
                 end = date(year, end_month + 1, 1) - timedelta(days=1)
             return start, end
         elif period_type == 'yearly' and year:
@@ -576,13 +581,13 @@ class CashFlowAnalyticsService(AnalyticsService):
         
         account_data = {}
         for trans in transactions:
-            account_name = trans.bank_account.account_name
+            account_name = trans.bank.name
             if account_name not in account_data:
                 account_data[account_name] = {'inflows': Decimal('0'), 'outflows': Decimal('0')}
             
-            if trans.transaction_type in ['deposit', 'transfer_in']:
+            if trans.transaction_type == 'deposit':
                 account_data[account_name]['inflows'] += trans.amount
-            else:
+            else:  # withdrawal
                 account_data[account_name]['outflows'] += trans.amount
         
         result = []

@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse, HttpResponse
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_http_methods
@@ -97,14 +98,24 @@ def sales_analytics(request):
             'insights': insights,
         })
     
+    # Convert data to JSON for JavaScript charts
+    products_list = list(products)
+    categories_list = list(categories)
+    customers_list = list(customers)
+    representatives_list = list(representatives) if representatives else []
+    
     context = {
         'title': _('Sales Analytics'),
         'active_menu': 'analytics',
         'overview': overview,
-        'products': products,
-        'categories': categories,
-        'customers': customers,
-        'representatives': representatives,
+        'products': products_list,
+        'categories': categories_list,
+        'customers': customers_list,
+        'representatives': representatives_list,
+        'products_json': json.dumps(products_list, cls=DjangoJSONEncoder),
+        'categories_json': json.dumps(categories_list, cls=DjangoJSONEncoder),
+        'customers_json': json.dumps(customers_list, cls=DjangoJSONEncoder),
+        'representatives_json': json.dumps(representatives_list, cls=DjangoJSONEncoder),
         'insights': insights,
         'start_date': start_date,
         'end_date': end_date,
@@ -166,13 +177,21 @@ def purchase_analytics(request):
             'insights': insights,
         })
     
+    # Convert data to JSON for JavaScript charts
+    products_list = list(products)
+    categories_list = list(categories)
+    suppliers_list = list(suppliers)
+    
     context = {
         'title': _('Purchase Analytics'),
         'active_menu': 'analytics',
         'overview': overview,
-        'products': products,
-        'categories': categories,
-        'suppliers': suppliers,
+        'products': products_list,
+        'categories': categories_list,
+        'suppliers': suppliers_list,
+        'products_json': json.dumps(products_list, cls=DjangoJSONEncoder),
+        'categories_json': json.dumps(categories_list, cls=DjangoJSONEncoder),
+        'suppliers_json': json.dumps(suppliers_list, cls=DjangoJSONEncoder),
         'insights': insights,
         'start_date': start_date,
         'end_date': end_date,
@@ -230,11 +249,15 @@ def tax_analytics(request):
             'insights': insights,
         })
     
+    # Convert data to JSON for JavaScript charts
+    by_document_type_list = list(by_document_type)
+    
     context = {
         'title': _('Tax Analytics'),
         'active_menu': 'analytics',
         'overview': overview,
-        'by_document_type': by_document_type,
+        'by_document_type': by_document_type_list,
+        'by_document_type_json': json.dumps(by_document_type_list, cls=DjangoJSONEncoder),
         'insights': insights,
         'start_date': start_date,
         'end_date': end_date,
@@ -294,12 +317,18 @@ def cashflow_analytics(request):
             'insights': insights,
         })
     
+    # Convert data to JSON for JavaScript charts
+    bank_accounts_list = list(bank_accounts)
+    cashboxes_list = list(cashboxes)
+    
     context = {
         'title': _('Cash Flow Analytics'),
         'active_menu': 'analytics',
         'overview': overview,
-        'bank_accounts': bank_accounts,
-        'cashboxes': cashboxes,
+        'bank_accounts': bank_accounts_list,
+        'cashboxes': cashboxes_list,
+        'bank_accounts_json': json.dumps(bank_accounts_list, cls=DjangoJSONEncoder),
+        'cashboxes_json': json.dumps(cashboxes_list, cls=DjangoJSONEncoder),
         'insights': insights,
         'start_date': start_date,
         'end_date': end_date,

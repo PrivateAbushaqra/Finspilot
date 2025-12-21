@@ -45,7 +45,7 @@
         <div class="card-body">
             <form method="get" id="analyticsForm">
                 <div class="row">
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label>{% trans "Period Type" %}</label>
                         <select name="period_type" class="form-select" id="periodType">
                             <option value="monthly" {% if period_type == 'monthly' %}selected{% endif %}>{% trans "Monthly" %}</option>
@@ -54,14 +54,65 @@
                             <option value="custom" {% if period_type == 'custom' %}selected{% endif %}>{% trans "Custom Period" %}</option>
                         </select>
                     </div>
-                    <div class="col-md-3" id="customDatesDiv" style="display: none;">
+                    
+                    <!-- Year selector (for yearly, quarterly, and monthly) -->
+                    <div class="col-md-2" id="yearDiv">
+                        <label>{% trans "Year" %}</label>
+                        <select name="year" class="form-select" id="yearSelect">
+                            <option value="2020" {% if request.GET.year == "2020" %}selected{% endif %}>2020</option>
+                            <option value="2021" {% if request.GET.year == "2021" %}selected{% endif %}>2021</option>
+                            <option value="2022" {% if request.GET.year == "2022" %}selected{% endif %}>2022</option>
+                            <option value="2023" {% if request.GET.year == "2023" %}selected{% endif %}>2023</option>
+                            <option value="2024" {% if request.GET.year == "2024" %}selected{% endif %}>2024</option>
+                            <option value="2025" {% if request.GET.year == "2025" or not request.GET.year %}selected{% endif %}>2025</option>
+                            <option value="2026" {% if request.GET.year == "2026" %}selected{% endif %}>2026</option>
+                            <option value="2027" {% if request.GET.year == "2027" %}selected{% endif %}>2027</option>
+                            <option value="2028" {% if request.GET.year == "2028" %}selected{% endif %}>2028</option>
+                            <option value="2029" {% if request.GET.year == "2029" %}selected{% endif %}>2029</option>
+                            <option value="2030" {% if request.GET.year == "2030" %}selected{% endif %}>2030</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Month selector (for monthly) -->
+                    <div class="col-md-2" id="monthDiv" style="display: none;">
+                        <label>{% trans "Month" %}</label>
+                        <select name="month" class="form-select" id="monthSelect">
+                            <option value="1" {% if request.GET.month == "1" %}selected{% endif %}>{% trans "January" %}</option>
+                            <option value="2" {% if request.GET.month == "2" %}selected{% endif %}>{% trans "February" %}</option>
+                            <option value="3" {% if request.GET.month == "3" %}selected{% endif %}>{% trans "March" %}</option>
+                            <option value="4" {% if request.GET.month == "4" %}selected{% endif %}>{% trans "April" %}</option>
+                            <option value="5" {% if request.GET.month == "5" %}selected{% endif %}>{% trans "May" %}</option>
+                            <option value="6" {% if request.GET.month == "6" %}selected{% endif %}>{% trans "June" %}</option>
+                            <option value="7" {% if request.GET.month == "7" %}selected{% endif %}>{% trans "July" %}</option>
+                            <option value="8" {% if request.GET.month == "8" %}selected{% endif %}>{% trans "August" %}</option>
+                            <option value="9" {% if request.GET.month == "9" %}selected{% endif %}>{% trans "September" %}</option>
+                            <option value="10" {% if request.GET.month == "10" %}selected{% endif %}>{% trans "October" %}</option>
+                            <option value="11" {% if request.GET.month == "11" %}selected{% endif %}>{% trans "November" %}</option>
+                            <option value="12" {% if request.GET.month == "12" or not request.GET.month %}selected{% endif %}>{% trans "December" %}</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Quarter selector (for quarterly) -->
+                    <div class="col-md-2" id="quarterDiv" style="display: none;">
+                        <label>{% trans "Quarter" %}</label>
+                        <select name="quarter" class="form-select" id="quarterSelect">
+                            <option value="1" {% if request.GET.quarter == "1" or not request.GET.quarter %}selected{% endif %}>{% trans "Q1" %}</option>
+                            <option value="2" {% if request.GET.quarter == "2" %}selected{% endif %}>{% trans "Q2" %}</option>
+                            <option value="3" {% if request.GET.quarter == "3" %}selected{% endif %}>{% trans "Q3" %}</option>
+                            <option value="4" {% if request.GET.quarter == "4" %}selected{% endif %}>{% trans "Q4" %}</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Custom dates -->
+                    <div class="col-md-2" id="customDatesDiv" style="display: none;">
                         <label>{% trans "Start Date" %}</label>
                         <input type="date" name="start_date" class="form-control" value="{{ start_date|date:'Y-m-d' }}">
                     </div>
-                    <div class="col-md-3" id="customDatesDiv2" style="display: none;">
+                    <div class="col-md-2" id="customDatesDiv2" style="display: none;">
                         <label>{% trans "End Date" %}</label>
                         <input type="date" name="end_date" class="form-control" value="{{ end_date|date:'Y-m-d' }}">
                     </div>
+                    
                     <div class="col-md-2">
                         <label>&nbsp;</label>
                         <button type="submit" class="btn btn-primary form-control">
@@ -242,28 +293,64 @@
 <script>
 // Period type selector
 document.getElementById('periodType').addEventListener('change', function() {
+    const periodType = this.value;
+    const yearDiv = document.getElementById('yearDiv');
+    const monthDiv = document.getElementById('monthDiv');
+    const quarterDiv = document.getElementById('quarterDiv');
     const customDiv = document.getElementById('customDatesDiv');
     const customDiv2 = document.getElementById('customDatesDiv2');
-    if (this.value === 'custom') {
+    
+    // Hide all
+    yearDiv.style.display = 'none';
+    monthDiv.style.display = 'none';
+    quarterDiv.style.display = 'none';
+    customDiv.style.display = 'none';
+    customDiv2.style.display = 'none';
+    
+    // Show relevant fields based on selection
+    if (periodType === 'yearly') {
+        yearDiv.style.display = 'block';
+    } else if (periodType === 'monthly') {
+        yearDiv.style.display = 'block';
+        monthDiv.style.display = 'block';
+    } else if (periodType === 'quarterly') {
+        yearDiv.style.display = 'block';
+        quarterDiv.style.display = 'block';
+    } else if (periodType === 'custom') {
         customDiv.style.display = 'block';
         customDiv2.style.display = 'block';
-    } else {
-        customDiv.style.display = 'none';
-        customDiv2.style.display = 'none';
     }
 });
 
 // Initialize on page load
-if (document.getElementById('periodType').value === 'custom') {
-    document.getElementById('customDatesDiv').style.display = 'block';
-    document.getElementById('customDatesDiv2').style.display = 'block';
-}
+(function() {
+    const periodType = document.getElementById('periodType').value;
+    const yearDiv = document.getElementById('yearDiv');
+    const monthDiv = document.getElementById('monthDiv');
+    const quarterDiv = document.getElementById('quarterDiv');
+    const customDiv = document.getElementById('customDatesDiv');
+    const customDiv2 = document.getElementById('customDatesDiv2');
+    
+    // Set initial state
+    if (periodType === 'yearly') {
+        yearDiv.style.display = 'block';
+    } else if (periodType === 'monthly') {
+        yearDiv.style.display = 'block';
+        monthDiv.style.display = 'block';
+    } else if (periodType === 'quarterly') {
+        yearDiv.style.display = 'block';
+        quarterDiv.style.display = 'block';
+    } else if (periodType === 'custom') {
+        customDiv.style.display = 'block';
+        customDiv2.style.display = 'block';
+    }
+})();
 
 // Products Chart
-const productsData = {{ products|safe|slice:":10" }};
+const productsData = {{ products_json|safe }};
 if (productsData && productsData.length > 0) {
-    const productsLabels = productsData.map(p => p.product__name || '{% trans "Unknown" %}');
-    const productsValues = productsData.map(p => parseFloat(p.total_amount || 0));
+    const productsLabels = productsData.slice(0, 10).map(p => p.product__name || '{% trans "Unknown" %}');
+    const productsValues = productsData.slice(0, 10).map(p => parseFloat(p.total_amount || 0));
     
     new Chart(document.getElementById('productsChart'), {
         type: 'bar',
@@ -290,7 +377,7 @@ if (productsData && productsData.length > 0) {
 }
 
 // Categories Chart
-const categoriesData = {{ categories|safe }};
+const categoriesData = {{ categories_json|safe }};
 if (categoriesData && categoriesData.length > 0) {
     const categoriesLabels = categoriesData.map(c => c.product__category__name || '{% trans "Uncategorized" %}');
     const categoriesValues = categoriesData.map(c => parseFloat(c.total_amount || 0));
@@ -318,10 +405,10 @@ if (categoriesData && categoriesData.length > 0) {
 }
 
 // Customers Chart
-const customersData = {{ customers|safe|slice:":10" }};
+const customersData = {{ customers_json|safe }};
 if (customersData && customersData.length > 0) {
-    const customersLabels = customersData.map(c => c.customer__name || '{% trans "Unknown" %}');
-    const customersValues = customersData.map(c => parseFloat(c.total_amount || 0));
+    const customersLabels = customersData.slice(0, 10).map(c => c.customer__name || '{% trans "Unknown" %}');
+    const customersValues = customersData.slice(0, 10).map(c => parseFloat(c.total_amount || 0));
     
     new Chart(document.getElementById('customersChart'), {
         type: 'bar',
@@ -350,7 +437,7 @@ if (customersData && customersData.length > 0) {
 
 // Representatives Chart
 {% if representatives %}
-const representativesData = {{ representatives|safe }};
+const representativesData = {{ representatives_json|safe }};
 if (representativesData && representativesData.length > 0) {
     const repsLabels = representativesData.map(r => 
         (r.created_by__first_name || '') + ' ' + (r.created_by__last_name || '')
