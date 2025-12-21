@@ -17,8 +17,6 @@ import io
 import traceback
 import sys
 
-print("DEBUG: core/views.py loaded!", file=sys.stderr)
-
 # محاولة استيراد openpyxl للتصدير بصيغة Excel
 try:
     from openpyxl import Workbook

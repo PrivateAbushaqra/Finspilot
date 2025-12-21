@@ -4,8 +4,6 @@ from decimal import Decimal
 from datetime import date
 from .models import Account, JournalEntry, JournalLine
 
-print("DEBUG: journal/services.py loaded")
-
 
 class JournalService:
     """خدمة إدارة القيود المحاسبية"""

@@ -956,7 +956,7 @@ class UserGroupCreateView(LoginRequiredMixin, CreateView):
             # الأقسام المسموح بها فقط
             allowed_apps = ['journal', 'sales', 'purchases', 'customers', 'products', 'inventory', 
                           'assets_liabilities', 'revenues_expenses', 'banks', 'cashboxes', 
-                          'payments', 'receipts', 'reports', 'users', 'hr']
+                          'payments', 'receipts', 'reports', 'users', 'hr', 'analytics']
             
             for permission in queryset:
                 app_label = permission.content_type.app_label
@@ -1473,6 +1473,14 @@ class UserGroupCreateView(LoginRequiredMixin, CreateView):
             
             # صلاحيات التحويلات بين الصناديق
             'can_create_cashboxes_transfers': _('Create Cashbox Transfers'),
+            
+            # صلاحيات تحليل البيانات  
+            'view_ai_dashboard': _('Can View AI Dashboard'),
+            'view_sales_analytics': _('Can View Sales Analytics'),
+            'view_purchase_analytics': _('Can View Purchase Analytics'),
+            'view_tax_analytics': _('Can View Tax Analytics'),
+            'view_cashflow_analytics': _('Can View Cash Flow Analytics'),
+            'export_analytics_reports': _('Can Export Analytics Reports'),
         }
         
         # إذا وجدنا الترجمة في القاموس، نستخدمها
@@ -1499,6 +1507,7 @@ class UserGroupCreateView(LoginRequiredMixin, CreateView):
             'reports': _('Reports'),
             'users': _('System Management (Basic)'),
             'hr': _('HR'),
+            'analytics': _('Data Analytics'),
         }
 
 
@@ -1648,7 +1657,7 @@ class UserGroupUpdateView(LoginRequiredMixin, UpdateView):
         # الأقسام المسموح بها فقط
         allowed_apps = ['journal', 'sales', 'purchases', 'customers', 'products', 'inventory', 
                       'assets_liabilities', 'revenues_expenses', 'banks', 'cashboxes', 
-                      'payments', 'receipts', 'reports', 'users', 'hr']
+                      'payments', 'receipts', 'reports', 'users', 'hr', 'analytics']
         
         for permission in queryset:
             app_label = permission.content_type.app_label
@@ -2036,6 +2045,14 @@ class UserGroupUpdateView(LoginRequiredMixin, UpdateView):
             
             # صلاحيات التحويلات بين الصناديق
             'can_create_cashboxes_transfers': _('Create Cashbox Transfers'),
+            
+            # صلاحيات تحليل البيانات  
+            'view_ai_dashboard': _('Can View AI Dashboard'),
+            'view_sales_analytics': _('Can View Sales Analytics'),
+            'view_purchase_analytics': _('Can View Purchase Analytics'),
+            'view_tax_analytics': _('Can View Tax Analytics'),
+            'view_cashflow_analytics': _('Can View Cash Flow Analytics'),
+            'export_analytics_reports': _('Can Export Analytics Reports'),
         }
         
         # إذا وجدنا الترجمة في القاموس، نستخدمها
@@ -2062,6 +2079,7 @@ class UserGroupUpdateView(LoginRequiredMixin, UpdateView):
             'reports': _('Reports'),
             'users': _('System Management (Basic)'),
             'hr': _('HR'),
+            'analytics': _('Data Analytics'),
         }
 
 
