@@ -26,7 +26,7 @@
                     <form method="post" id="groupEditForm">
                         {% csrf_token %}
                         
-                        <!-- Basic Information -->
+                        <!-- المعلومات الأساسية -->
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <div class="card border-primary">
@@ -113,7 +113,7 @@
                             </div>
                         </div>
                         
-                        <!-- Group Permissions -->
+                        <!-- صلاحيات المجموعة -->
                         <div class="card border-success">
                             <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0">
@@ -173,13 +173,14 @@
                             </div>
                         </div>
                         
-                        <!-- Dashboard Sections (First Instance) -->
+                        <!-- أقسام لوحة التحكم -->
+                        <div class="row mb-4">
                             <div class="col-12">
                                 <div class="card border-success">
                                     <div class="card-header bg-success text-white">
                                         <h5 class="mb-0">
                                             <i class="fas fa-tachometer-alt me-2"></i>
-                                            {% trans "أقسام لوحة التحكم" %}
+                                            {% trans "Dashboard Sections" %}
                                         </h5>
                                     </div>
                                     <div class="card-body">
@@ -267,9 +268,9 @@ function toggleAppPermissions(appName) {
     });
 }
 
-// User experience improvements
+// تحسينات تجربة المستخدم
 document.addEventListener('DOMContentLoaded', function() {
-    // Validate group name
+    // التحقق من صحة اسم المجموعة
     const nameInput = document.getElementById('{{ form.name.id_for_label }}');
     if (nameInput) {
         nameInput.addEventListener('input', function() {
@@ -288,9 +289,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Confirm before submit
+    // التأكيد قبل الإرسال
     document.getElementById('groupEditForm').addEventListener('submit', function(e) {
-        // Show loading indicator
+        // عرض مؤشر التحميل
         const submitBtn = document.getElementById('submitBtn');
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>{% trans "Saving..." %}';
         submitBtn.disabled = true;

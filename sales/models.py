@@ -56,17 +56,17 @@ class SalesInvoice(models.Model):
         ordering = ['-date', '-invoice_number']
         default_permissions = []  # No default permissions
         permissions = [
-            ('can_view_sales', 'Can View Sales'),
-            ('can_add_sales', 'Can Add Sales'),
-            ('can_edit_sales', 'Can Edit Sales'),
-            ('can_delete_sales', 'Can Delete Sales'),
-            ('can_post_sales', 'Can Post Sales to Tax Authority'),
-            ('can_view_sales_statement', 'Can View Sales Statement'),
-            ('can_view_sales_returns_statement', 'Can View Sales Returns Statement'),
-            ('can_view_pos', 'Can View POS'),
-            ('can_access_pos', 'Can Access POS'),
-            ('can_edit_pos', 'Can Edit POS'),
-            ('can_delete_pos', 'Can Delete POS'),
+            ('can_view_sales', _('Can View Sales')),
+            ('can_add_sales', _('Can Add Sales')),
+            ('can_edit_sales', _('Can Edit Sales')),
+            ('can_delete_sales', _('Can Delete Sales')),
+            ('can_post_sales', _('Can Post Sales to Tax Authority')),
+            ('can_view_sales_statement', _('Can View Sales Statement')),
+            ('can_view_sales_returns_statement', _('Can View Sales Returns Statement')),
+            ('can_view_pos', _('Can View POS')),
+            ('can_access_pos', _('Can Access POS')),
+            ('can_edit_pos', _('Can Edit POS')),
+            ('can_delete_pos', _('Can Delete POS')),
         ]
 
     def __str__(self):
@@ -179,11 +179,11 @@ class SalesReturn(models.Model):
         ordering = ['-date', '-return_number']
         default_permissions = []  # No default permissions
         permissions = [
-            ('can_view_sales_returns', 'Can View Sales Returns'),
-            ('can_add_sales_returns', 'Can Add Sales Returns'),
-            ('can_edit_sales_returns', 'Can Edit Sales Returns'),
-            ('can_delete_sales_returns', 'Can Delete Sales Returns'),
-            ('can_post_sales_returns', 'Can Post Sales Returns to Tax Authority'),
+            ('can_view_sales_returns', _('Can View Sales Returns')),
+            ('can_add_sales_returns', _('Can Add Sales Returns')),
+            ('can_edit_sales_returns', _('Can Edit Sales Returns')),
+            ('can_delete_sales_returns', _('Can Delete Sales Returns')),
+            ('can_post_sales_returns', _('Can Post Sales Returns to Tax Authority')),
         ]
 
     def __str__(self):
@@ -252,11 +252,11 @@ class SalesCreditNote(models.Model):
         ordering = ['-date', '-note_number']
         default_permissions = []  # No default permissions
         permissions = [
-            ('can_view_credit_notes', 'Can View Credit Notes'),
-            ('can_add_credit_notes', 'Can Add Credit Notes'),
-            ('can_edit_credit_notes', 'Can Edit Credit Notes'),
-            ('can_delete_credit_notes', 'Can Delete Credit Notes'),
-            ('can_post_credit_notes', 'Can Post Credit Notes to Tax Authority'),
+            ('can_view_credit_notes', _('Can View Credit Notes')),
+            ('can_add_credit_notes', _('Can Add Credit Notes')),
+            ('can_edit_credit_notes', _('Can Edit Credit Notes')),
+            ('can_delete_credit_notes', _('Can Delete Credit Notes')),
+            ('can_post_credit_notes', _('Can Post Credit Notes to Tax Authority')),
         ]
 
     def save(self, *args, **kwargs):
