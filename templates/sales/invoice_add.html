@@ -835,6 +835,224 @@ let currentRow = null;
 let buttonClickCount = 0; // لتتبع عدد النقرات على الزر
 let isPageReady = false;
 
+// ========== دوال حفظ واستعادة بيانات الفاتورة ==========
+
+// دالة حفظ بيانات الفاتورة في sessionStorage
+function saveSalesInvoiceDataToSession() {
+    try {
+        const invoiceData = {
+            // بيانات الفاتورة الأساسية
+            customer_id: document.getElementById('id_customer')?.value || '',
+            customer_search: document.getElementById('customer_search')?.value || '',
+            invoice_number: document.querySelector('input[name="invoice_number"]')?.value || '',
+            date: document.querySelector('input[name="date"]')?.value || '',
+            warehouse_id: document.querySelector('select[name="warehouse"]')?.value || '',
+            payment_method: document.querySelector('select[name="payment_method"]')?.value || '',
+            cashbox_id: document.querySelector('select[name="cashbox"]')?.value || '',
+            bank_account_id: document.querySelector('select[name="bank_account"]')?.value || '',
+            check_number: document.querySelector('input[name="check_number"]')?.value || '',
+            check_date: document.querySelector('input[name="check_date"]')?.value || '',
+            is_tax_inclusive: document.getElementById('is_tax_inclusive')?.checked || false,
+            discount_type: document.querySelector('select[name="discount_type"]')?.value || 'percentage',
+            discount_value: document.querySelector('input[name="discount_value"]')?.value || '0',
+            notes: document.querySelector('textarea[name="notes"]')?.value || '',
+            
+            // المنتجات
+            products: []
+        };
+        
+        // حفظ بيانات المنتجات
+        const rows = document.querySelectorAll('#productsTableBody tr');
+        rows.forEach(row => {
+            const productId = row.querySelector('input[name$="[product_id]"]')?.value;
+            if (productId) {
+                const rowData = {
+                    product_id: productId,
+                    product_name: row.querySelector('.product-search-input')?.value || '',
+                    product_code: row.querySelector('.product-code-input')?.value || '',
+                    quantity: row.querySelector('input[name$="[quantity]"]')?.value || '',
+                    unit_price: row.querySelector('input[name$="[unit_price]"]')?.value || '',
+                    tax_rate: row.querySelector('select[name$="[tax_rate]"]')?.value || '',
+                    discount_percent: row.querySelector('input[name$="[discount_percent]"]')?.value || '',
+                    total_before_tax: row.querySelector('.total-before-tax')?.textContent || '',
+                    total_after_tax: row.querySelector('.total-after-tax')?.textContent || ''
+                };
+                invoiceData.products.push(rowData);
+            }
+        });
+        
+        sessionStorage.setItem('salesInvoiceData', JSON.stringify(invoiceData));
+        console.log('✅ تم حفظ بيانات فاتورة المبيعات في sessionStorage');
+    } catch (error) {
+        console.error('❌ خطأ في حفظ بيانات الفاتورة:', error);
+    }
+}
+
+// دالة استعادة بيانات الفاتورة من sessionStorage
+function restoreSalesInvoiceDataFromSession() {
+    try {
+        const savedData = sessionStorage.getItem('salesInvoiceData');
+        if (!savedData) {
+            console.log('ℹ️ لا توجد بيانات محفوظة للاستعادة');
+            return;
+        }
+        
+        const invoiceData = JSON.parse(savedData);
+        console.log('🔄 استعادة بيانات فاتورة المبيعات...', invoiceData);
+        
+        // استعادة البيانات الأساسية
+        if (invoiceData.customer_id) {
+            const customerIdInput = document.getElementById('id_customer');
+            const customerSearchInput = document.getElementById('customer_search');
+            if (customerIdInput) customerIdInput.value = invoiceData.customer_id;
+            if (customerSearchInput) customerSearchInput.value = invoiceData.customer_search;
+            
+            // Trigger change event to update balance
+            if (customerIdInput) {
+                customerIdInput.dispatchEvent(new Event('change'));
+            }
+        }
+        
+        if (invoiceData.date) {
+            const dateInput = document.querySelector('input[name="date"]');
+            if (dateInput) dateInput.value = invoiceData.date;
+        }
+        
+        if (invoiceData.warehouse_id) {
+            const warehouseSelect = document.querySelector('select[name="warehouse"]');
+            if (warehouseSelect) warehouseSelect.value = invoiceData.warehouse_id;
+        }
+        
+        if (invoiceData.payment_method) {
+            const paymentMethodSelect = document.querySelector('select[name="payment_method"]');
+            if (paymentMethodSelect) {
+                paymentMethodSelect.value = invoiceData.payment_method;
+                paymentMethodSelect.dispatchEvent(new Event('change'));
+            }
+        }
+        
+        if (invoiceData.cashbox_id) {
+            const cashboxSelect = document.querySelector('select[name="cashbox"]');
+            if (cashboxSelect) cashboxSelect.value = invoiceData.cashbox_id;
+        }
+        
+        if (invoiceData.bank_account_id) {
+            const bankAccountSelect = document.querySelector('select[name="bank_account"]');
+            if (bankAccountSelect) bankAccountSelect.value = invoiceData.bank_account_id;
+        }
+        
+        if (invoiceData.check_number) {
+            const checkNumberInput = document.querySelector('input[name="check_number"]');
+            if (checkNumberInput) checkNumberInput.value = invoiceData.check_number;
+        }
+        
+        if (invoiceData.check_date) {
+            const checkDateInput = document.querySelector('input[name="check_date"]');
+            if (checkDateInput) checkDateInput.value = invoiceData.check_date;
+        }
+        
+        if (invoiceData.is_tax_inclusive !== undefined) {
+            const taxInclusiveCheckbox = document.getElementById('is_tax_inclusive');
+            if (taxInclusiveCheckbox) taxInclusiveCheckbox.checked = invoiceData.is_tax_inclusive;
+        }
+        
+        if (invoiceData.discount_type) {
+            const discountTypeSelect = document.querySelector('select[name="discount_type"]');
+            if (discountTypeSelect) discountTypeSelect.value = invoiceData.discount_type;
+        }
+        
+        if (invoiceData.discount_value) {
+            const discountValueInput = document.querySelector('input[name="discount_value"]');
+            if (discountValueInput) discountValueInput.value = invoiceData.discount_value;
+        }
+        
+        if (invoiceData.notes) {
+            const notesTextarea = document.querySelector('textarea[name="notes"]');
+            if (notesTextarea) notesTextarea.value = invoiceData.notes;
+        }
+        
+        // استعادة المنتجات
+        if (invoiceData.products && invoiceData.products.length > 0) {
+            const tbody = document.getElementById('productsTableBody');
+            if (tbody) {
+                tbody.innerHTML = '';
+                productRowCounter = 0;
+                
+                invoiceData.products.forEach(productData => {
+                    addProductRow();
+                    const lastRow = tbody.lastElementChild;
+                    
+                    if (lastRow && productData.product_id) {
+                        const productIdInput = lastRow.querySelector('input[name$="[product_id]"]');
+                        const productSearchInput = lastRow.querySelector('.product-search-input');
+                        const productCodeInput = lastRow.querySelector('.product-code-input');
+                        const quantityInput = lastRow.querySelector('input[name$="[quantity]"]');
+                        const unitPriceInput = lastRow.querySelector('input[name$="[unit_price]"]');
+                        const taxRateSelect = lastRow.querySelector('select[name$="[tax_rate]"]');
+                        const discountInput = lastRow.querySelector('input[name$="[discount_percent]"]');
+                        
+                        if (productIdInput) productIdInput.value = productData.product_id;
+                        if (productSearchInput) productSearchInput.value = productData.product_name;
+                        if (productCodeInput) productCodeInput.value = productData.product_code;
+                        if (quantityInput) quantityInput.value = productData.quantity;
+                        if (unitPriceInput) unitPriceInput.value = productData.unit_price;
+                        if (taxRateSelect) taxRateSelect.value = productData.tax_rate;
+                        if (discountInput) discountInput.value = productData.discount_percent;
+                        
+                        // إعادة حساب المجموع
+                        const rowId = lastRow.id.replace('productRow', '');
+                        if (rowId) {
+                            calculateRowTotal(parseInt(rowId));
+                        }
+                    }
+                });
+            }
+        }
+        
+        // حذف البيانات المحفوظة بعد الاستعادة
+        sessionStorage.removeItem('salesInvoiceData');
+        console.log('✅ تم استعادة بيانات الفاتورة بنجاح');
+        
+        // إظهار رسالة النجاح إن وجدت
+        const successMessage = sessionStorage.getItem('customer_created_message');
+        if (successMessage) {
+            showSuccessToast(successMessage);
+            sessionStorage.removeItem('customer_created_message');
+        }
+        
+    } catch (error) {
+        console.error('❌ خطأ في استعادة بيانات الفاتورة:', error);
+        sessionStorage.removeItem('salesInvoiceData');
+    }
+}
+
+// دالة لإظهار رسالة نجاح
+function showSuccessToast(message) {
+    const toastHTML = `
+        <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 11000;">
+            <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header bg-success text-white">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong class="me-auto">{% trans "Success" %}</strong>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    ${message}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', toastHTML);
+    
+    setTimeout(() => {
+        const toastContainer = document.querySelector('.toast-container');
+        if (toastContainer) toastContainer.remove();
+    }, 5000);
+}
+
+// ========== نهاية دوال حفظ واستعادة البيانات ==========
+
 // Enhanced Page Load Management
 function ensurePageReady() {
     console.log('🔄 Ensuring page readiness...');
@@ -869,20 +1087,24 @@ function ensurePageReady() {
 function initializePage() {
     console.log('🚀 Initializing invoice page...');
     
-    // Strategy 1: Immediate initialization
+    // Strategy 1: استعادة بيانات الفاتورة من sessionStorage (إن وجدت)
+    restoreSalesInvoiceDataFromSession();
+    
+    // Strategy 2: Immediate initialization
     ensurePageReady();
     
-    // Strategy 2: Add first product row
+    // Strategy 3: Add first product row (إذا لم يتم استعادة منتجات)
     setTimeout(() => {
-        if (document.getElementById('productsTableBody')) {
+        const tbody = document.getElementById('productsTableBody');
+        if (tbody && tbody.children.length === 0) {
             addProductRow();
         }
     }, 100);
     
-    // Strategy 3: Setup button event listeners
+    // Strategy 4: Setup button event listeners
     setupAddProductButton();
     
-    // Strategy 4: Set focus on customer field
+    // Strategy 5: Set focus on customer field
     setTimeout(() => {
         const customerSearch = document.getElementById('customer_search');
         if (customerSearch) {
@@ -1561,6 +1783,9 @@ function saveNewCustomer() {
     
     console.log('{% trans "Sending data to server..." %}');
     
+    // حفظ بيانات الفاتورة الحالية قبل إعادة التحميل
+    saveSalesInvoiceDataToSession();
+    
     fetch('{% url "customers:ajax_add_customer" %}', {
         method: 'POST',
         body: formData,
@@ -1587,51 +1812,12 @@ function saveNewCustomer() {
         console.log('{% trans "Parsed data:" %}', data);
         if (data.success) {
             console.log('{% trans "Success: Customer created" %}', data.customer);
-            try {
-                // {% trans "Add new customer to list" %}
-                const customerSelect = document.getElementById('id_customer');
-                const customerSearch = document.getElementById('customer_search');
-                
-                if (!customerSelect) {
-                    console.error('{% trans "Customer select not found" %}');
-                    return;
-                }
-                
-                // Add to select dropdown
-                const newOption = new Option(data.customer.name, data.customer.id, true, true);
-                customerSelect.add(newOption);
-                customerSelect.value = data.customer.id;
-                
-                // Add to customers array for search functionality
-                if (typeof customers !== 'undefined') {
-                    customers.push({
-                        id: data.customer.id,
-                        name: data.customer.name
-                    });
-                    console.log('{% trans "Customer added to search array" %}', customers.length, 'customers');
-                }
-                
-                // Update search input
-                if (customerSearch) {
-                    customerSearch.value = data.customer.name;
-                }
-                
-                // Trigger change event for balance update
-                customerSelect.dispatchEvent(new Event('change'));
-                
-                // {% trans "Close window and reset form" %}
-                const modal = bootstrap.Modal.getInstance(document.getElementById('newCustomerModal'));
-                if (modal) {
-                    modal.hide();
-                }
-                form.reset();
-                
-                alert("{% trans 'Customer created successfully!' %}");
-                console.log("{% trans 'Customer saved successfully' %}");
-            } catch (jsError) {
-                console.error('{% trans "JavaScript error after success:" %}', jsError);
-                alert("{% trans 'Customer created but there was an error updating the form. Please refresh the page.' %}");
-            }
+            
+            // حفظ رسالة النجاح
+            sessionStorage.setItem('customer_created_message', data.message || '{% trans "Customer created successfully!" %}');
+            
+            // إعادة تحميل الصفحة لتحديث قائمة العملاء
+            window.location.reload();
         } else {
             console.error('{% trans "Server error:" %}', data.message);
             alert('{% trans "Error" %}: ' + (data.message || '{% trans "An error occurred while creating the customer" %}'));
@@ -1639,15 +1825,7 @@ function saveNewCustomer() {
     })
     .catch(error => {
         console.error('{% trans "Network error:" %}', error);
-        // Try to parse error response if it's JSON
-        if (error.response && error.response.json) {
-            error.response.json().then(errData => {
-                alert('{% trans "Error" %}: ' + (errData.message || '{% trans "An error occurred while creating the customer" %}'));
-            }).catch(() => {
-                alert('{% trans "An error occurred while creating the customer. Please try again." %}');
-            });
-        } else {
-            alert('{% trans "An error occurred while creating the customer. Please try again." %}');
+        alert('{% trans "An error occurred while creating the customer. Please try again." %}');
         }
     });
     }
@@ -1745,13 +1923,41 @@ document.getElementById('id_customer').addEventListener('change', updateCustomer
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title" id="newCustomerModalLabel">
-                    <i class="fas fa-user-plus me-2"></i>{% trans "Add" %} {% trans "Customer" %} {% trans "New" %}
+                    <i class="fas fa-user-plus me-2"></i>{% trans "Add" %} {% trans "Customer" %}/{% trans "Supplier" %} {% trans "New" %}
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="newCustomerForm">
                     {% csrf_token %}
+                    
+                    <!-- Type Selection -->
+                    <div class="type-selector mb-4" style="background: #fff; border: 2px solid #e9ecef; border-radius: 10px; padding: 1rem; text-align: center;">
+                        <h6 class="mb-3"><i class="fas fa-tag me-2"></i>{% trans "Choose Account Type" %}:</h6>
+                        <div class="d-flex justify-content-center gap-3">
+                            <div class="type-option">
+                                <input type="radio" id="modal_type_customer" name="type" value="customer" checked style="display: none;">
+                                <label for="modal_type_customer" style="display: block; padding: 1rem 2rem; border: 2px solid #e9ecef; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; background: #fff;">
+                                    <i class="fas fa-user fa-2x d-block mb-2"></i>
+                                    {% trans "Customer" %}
+                                </label>
+                            </div>
+                            <div class="type-option">
+                                <input type="radio" id="modal_type_supplier" name="type" value="supplier" style="display: none;">
+                                <label for="modal_type_supplier" style="display: block; padding: 1rem 2rem; border: 2px solid #e9ecef; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; background: #fff;">
+                                    <i class="fas fa-truck fa-2x d-block mb-2"></i>
+                                    {% trans "Supplier" %}
+                                </label>
+                            </div>
+                            <div class="type-option">
+                                <input type="radio" id="modal_type_both" name="type" value="both" style="display: none;">
+                                <label for="modal_type_both" style="display: block; padding: 1rem 2rem; border: 2px solid #e9ecef; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; background: #fff;">
+                                    <i class="fas fa-handshake fa-2x d-block mb-2"></i>
+                                    {% trans "Customer" %} و{% trans "Supplier" %}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
                     
                     <!-- Basic Information -->
                     <div class="form-section mb-4" style="border: 1px solid #e9ecef; border-radius: 8px; padding: 1.5rem; background: #f8f9fa;">
@@ -1841,8 +2047,6 @@ document.getElementById('id_customer').addEventListener('change', updateCustomer
                             </div>
                         </div>
                     </div>
-                    
-                    <input type="hidden" name="type" value="customer">
                 </form>
             </div>
             <div class="modal-footer">
@@ -1859,6 +2063,56 @@ document.getElementById('id_customer').addEventListener('change', updateCustomer
 
 <!-- Critical JavaScript - Load After Content -->
 <script>
+// JavaScript لدعم اختيار نوع الحساب في modal
+document.addEventListener('DOMContentLoaded', function() {
+    // Type selection styling for modal
+    document.querySelectorAll('#newCustomerModal input[name="type"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            // Update styling for selected option
+            document.querySelectorAll('#newCustomerModal .type-option label').forEach(label => {
+                label.style.borderColor = '#e9ecef';
+                label.style.background = '#fff';
+                label.style.color = '#000';
+            });
+            
+            // Highlight selected
+            const selectedLabel = this.nextElementSibling;
+            if (selectedLabel) {
+                selectedLabel.style.borderColor = '#007bff';
+                selectedLabel.style.background = '#007bff';
+                selectedLabel.style.color = 'white';
+            }
+            
+            // Update modal title based on type
+            const modalTitle = document.querySelector('#newCustomerModalLabel');
+            const icon = modalTitle.querySelector('i');
+            
+            switch(this.value) {
+                case 'customer':
+                    icon.className = 'fas fa-user me-2';
+                    break;
+                case 'supplier':
+                    icon.className = 'fas fa-truck me-2';
+                    break;
+                case 'both':
+                    icon.className = 'fas fa-handshake me-2';
+                    break;
+            }
+        });
+    });
+    
+    // Set initial styling
+    const checkedRadio = document.querySelector('#newCustomerModal input[name="type"]:checked');
+    if (checkedRadio) {
+        const selectedLabel = checkedRadio.nextElementSibling;
+        if (selectedLabel) {
+            selectedLabel.style.borderColor = '#007bff';
+            selectedLabel.style.background = '#007bff';
+            selectedLabel.style.color = 'white';
+        }
+    }
+});
+
 // Final styling enforcement - runs after everything else
 function enforceButtonStyling() {
     const addBtn = document.getElementById('addProductBtn');

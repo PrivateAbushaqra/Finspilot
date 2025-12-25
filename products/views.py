@@ -3,6 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView, View
 from django.db.models import Q
+from django.db import models
 from django.http import JsonResponse
 from django.contrib import messages
 from django.urls import reverse_lazy
@@ -1587,8 +1588,10 @@ def category_add_ajax(request):
             name = request.POST.get('name', '').strip()
             name_en = request.POST.get('name_en', '').strip()
             code = request.POST.get('code', '').strip()
+            sequence_number = request.POST.get('sequence_number', '').strip()
             parent_id = request.POST.get('parent', '')
             description = request.POST.get('description', '').strip()
+            sort_order = request.POST.get('sort_order', '0')
             is_active = request.POST.get('is_active') == 'on'
             
             # التحقق من صحة البيانات
@@ -1617,14 +1620,21 @@ def category_add_ajax(request):
                     })
             
             # إنشاء التصنيف الجديد
-            category = Category.objects.create(
-                name=name,
-                name_en=name_en,
-                code=code,
-                parent=parent,
-                description=description,
-                is_active=is_active
-            )
+            category_data = {
+                'name': name,
+                'name_en': name_en,
+                'code': code,
+                'parent': parent,
+                'description': description,
+                'is_active': is_active,
+                'sort_order': int(sort_order) if sort_order else 0
+            }
+            
+            # إضافة sequence_number إذا تم توفيره
+            if sequence_number:
+                category_data['sequence_number'] = int(sequence_number)
+            
+            category = Category.objects.create(**category_data)
             
             # تسجيل النشاط في سجل الأنشطة
             AuditLog.objects.create(
@@ -1644,8 +1654,10 @@ def category_add_ajax(request):
                     'name': category.name,
                     'name_en': category.name_en,
                     'code': category.code,
+                    'sequence_number': category.sequence_number,
                     'parent_name': category.parent.name if category.parent else None,
-                    'is_active': category.is_active
+                    'is_active': category.is_active,
+                    'sort_order': category.sort_order
                 }
             })
             
@@ -1668,8 +1680,13 @@ def category_add_ajax(request):
     else:
         # إرسال قائمة الفئات الأساسية للاختيار كأب
         categories = Category.objects.filter(parent__isnull=True).values('id', 'name')
+        # الحصول على رقم التسلسل التالي
+        next_sequence = Category.objects.aggregate(models.Max('sequence_number'))['sequence_number__max'] or 0
+        next_sequence += 1
+        
         return JsonResponse({
-            'categories': list(categories)
+            'categories': list(categories),
+            'next_sequence_number': next_sequence
         })
 
 def product_add_ajax(request):
@@ -1681,10 +1698,12 @@ def product_add_ajax(request):
             name_en = request.POST.get('name_en', '').strip()
             product_type = request.POST.get('product_type', 'physical')
             sku = request.POST.get('sku', '').strip()
+            sequence_number = request.POST.get('sequence_number', '0')
             barcode = request.POST.get('barcode', '').strip()
             serial_number = request.POST.get('serial_number', '').strip()
             category_id = request.POST.get('category', '')
             unit = request.POST.get('unit', 'piece')
+            is_service = request.POST.get('is_service') == '1'
             cost_price = request.POST.get('cost_price', '0')
             selling_price = request.POST.get('selling_price', '0')
             wholesale_price = request.POST.get('wholesale_price', '0')
@@ -1697,6 +1716,11 @@ def product_add_ajax(request):
             is_active = request.POST.get('is_active') == 'on'
             track_stock = request.POST.get('track_stock') == 'on'
             opening_balance_warehouse_id = request.POST.get('opening_balance_warehouse')
+            
+            # حقول الوحدات المرتبطة
+            unit_type = request.POST.get('unit_type', '')
+            linked_product_id = request.POST.get('linked_product', '')
+            conversion_factor = request.POST.get('conversion_factor', '0')
             
             # التحقق من صحة البيانات
             if not name:
@@ -1763,8 +1787,13 @@ def product_add_ajax(request):
                 wholesale_price = float(wholesale_price) if wholesale_price else 0
                 tax_rate = float(tax_rate) if tax_rate else 0
                 min_stock = float(min_stock) if min_stock else 0
+                max_stock = float(max_stock) if max_stock else 0
                 opening_balance = float(opening_balance) if opening_balance else 0
                 opening_balance_cost = float(opening_balance_cost) if opening_balance_cost else 0
+                conversion_factor = float(conversion_factor) if conversion_factor else 0
+                
+                # حساب sequence_number - للمستخدمين العاديين سيتم حسابه تلقائياً في model save
+                sequence_number_int = int(sequence_number) if sequence_number and request.user.is_superuser else None
                 
                 # التحقق من صحة نسبة الضريبة
                 if tax_rate < 0 or tax_rate > 100:
@@ -1779,6 +1808,18 @@ def product_add_ajax(request):
                         'success': False,
                         'error': 'رصيد بداية المدة يجب أن يكون صفر أو أكبر!'
                     })
+                
+                # التحقق من opening_balance_cost إذا كان هناك opening_balance
+                if opening_balance > 0 and opening_balance_cost <= 0:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'يجب إدخال تكلفة الرصيد الافتتاحي عند وجود رصيد افتتاحي!'
+                    })
+                
+                # حساب sequence_number تلقائياً للمستخدمين العاديين
+                if not request.user.is_superuser:
+                    # سيتم حسابه من خلال signal أو model
+                    sequence_number = 0
                     
             except ValueError:
                 return JsonResponse({
@@ -1787,20 +1828,35 @@ def product_add_ajax(request):
                 })
             
             # إنشاء المنتج
+            linked_product_obj = None
+            if linked_product_id:
+                try:
+                    linked_product_obj = Product.objects.get(id=linked_product_id)
+                except Product.DoesNotExist:
+                    pass
+            
             product = Product.objects.create(
                 code=sku,
                 name=name,
                 name_en=name_en,
                 product_type=product_type,
+                sequence_number=sequence_number_int,
                 barcode=barcode,
                 serial_number=serial_number,
                 category=category,
                 description=description,
                 cost_price=cost_price,
                 minimum_quantity=float(min_stock) if min_stock else 0,
+                maximum_quantity=float(max_stock) if max_stock else 0,
                 sale_price=selling_price,
                 wholesale_price=wholesale_price,
                 tax_rate=tax_rate,
+                opening_balance_quantity=opening_balance,
+                opening_balance_cost=opening_balance_cost,
+                opening_balance_warehouse_id=opening_balance_warehouse_id if opening_balance_warehouse_id else None,
+                unit_type=unit_type if unit_type else 'standalone',
+                linked_product=linked_product_obj,
+                conversion_factor=conversion_factor,
                 is_active=is_active
             )
             

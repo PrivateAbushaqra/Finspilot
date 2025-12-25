@@ -430,22 +430,52 @@
                 <form id="customerForm">
                     {% csrf_token %}
                     
+                    <!-- Type Selection -->
+                    <div class="type-selector mb-4" style="background: #fff; border: 2px solid #e9ecef; border-radius: 10px; padding: 1rem; text-align: center;">
+                        <h6 class="mb-3">{% trans "Choose Account Type" %}:</h6>
+                        <div class="d-flex justify-content-center gap-3">
+                            <div class="type-option">
+                                <input type="radio" id="modal_type_customer" name="type" value="customer" checked style="display: none;">
+                                <label for="modal_type_customer" style="display: block; padding: 1rem 2rem; border: 2px solid #e9ecef; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; background: #fff;">
+                                    <i class="fas fa-user fa-2x d-block mb-2"></i>
+                                    {% trans "Customer" %}
+                                </label>
+                            </div>
+                            <div class="type-option">
+                                <input type="radio" id="modal_type_supplier" name="type" value="supplier" style="display: none;">
+                                <label for="modal_type_supplier" style="display: block; padding: 1rem 2rem; border: 2px solid #e9ecef; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; background: #fff;">
+                                    <i class="fas fa-truck fa-2x d-block mb-2"></i>
+                                    {% trans "Supplier" %}
+                                </label>
+                            </div>
+                            <div class="type-option">
+                                <input type="radio" id="modal_type_both" name="type" value="both" style="display: none;">
+                                <label for="modal_type_both" style="display: block; padding: 1rem 2rem; border: 2px solid #e9ecef; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; background: #fff;">
+                                    <i class="fas fa-handshake fa-2x d-block mb-2"></i>
+                                    {% trans "Customer" %} و{% trans "Supplier" %}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- Basic Information -->
                     <div class="mb-4">
                         <h6 class="text-success border-bottom pb-2 mb-3">
-                            <i class="fas fa-user me-2"></i>{% trans "Basic Information" %}
+                            <i class="fas fa-info-circle me-2"></i>{% trans "Basic Information" %}
                         </h6>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">{% trans "Customer Name" %} *</label>
-                                    <input type="text" class="form-control" name="name" required>
+                                    <label class="form-label">{% trans "Full Name" %} *</label>
+                                    <input type="text" class="form-control" id="modal_name" name="name" required>
+                                    <div class="form-text">{% trans "Customer Name or Supplier Name as it appears in invoices" %}</div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">{% trans "Phone Number" %}</label>
-                                    <input type="text" class="form-control" name="phone">
+                                    <input type="tel" class="form-control" id="modal_phone" name="phone">
+                                    <div class="form-text">{% trans "Primary phone number for communication" %}</div>
                                 </div>
                             </div>
                         </div>
@@ -453,23 +483,27 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">{% trans "Email" %}</label>
-                                    <input type="email" class="form-control" name="email">
+                                    <input type="email" class="form-control" id="modal_email" name="email">
+                                    <div class="form-text">{% trans "Email for sending invoices and reports" %}</div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">{% trans "Tax Number" %}</label>
-                                    <input type="text" class="form-control" name="tax_number">
+                                    <input type="text" class="form-control" id="modal_tax_number" name="tax_number">
+                                    <div class="form-text">{% trans "Registered tax number for company or individual" %}</div>
                                 </div>
                             </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">{% trans "Address" %}</label>
-                            <textarea class="form-control" name="address" rows="2"></textarea>
+                            <textarea class="form-control" id="modal_address" name="address" rows="3"></textarea>
+                            <div class="form-text">{% trans "Complete address for customer or supplier" %}</div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">{% trans "City" %} <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="city" required>
+                            <input type="text" class="form-control" id="modal_city" name="city" required>
+                            <div class="form-text">{% trans "City where the customer or supplier is located" %}</div>
                         </div>
                     </div>
                     
@@ -483,22 +517,22 @@
                                 <div class="mb-3">
                                     <label class="form-label">{% trans "Credit Limit" %}</label>
                                     <div class="input-group">
-                                        <input type="number" class="form-control" name="credit_limit" 
-                                               value="0" step="0.001" min="0">
                                         <span class="input-group-text">{% get_currency_symbol %}</span>
+                                        <input type="number" class="form-control" id="modal_credit_limit" name="credit_limit" 
+                                               value="0" step="0.001" min="0">
                                     </div>
                                     <div class="form-text">{% trans "Maximum amount the customer can owe" %}</div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">{% trans "Opening Balance" %}</label>
+                                    <label class="form-label">{% trans "Initial Balance" %}</label>
                                     <div class="input-group">
-                                        <input type="number" class="form-control" name="balance" 
-                                               value="0" step="0.001">
                                         <span class="input-group-text">{% get_currency_symbol %}</span>
+                                        <input type="number" class="form-control" id="modal_balance" name="balance" 
+                                               value="0" step="0.001">
                                     </div>
-                                    <div class="form-text">{% trans "Current balance (positive: owed to us, negative: we owe)" %}</div>
+                                    <div class="form-text">{% trans "الرصيد الافتتاحي (موجب: العميل مدين للشركة، سالب: الشركة مدينة للعميل)" %}</div>
                                 </div>
                             </div>
                         </div>
@@ -522,8 +556,6 @@
                             <div class="form-text">{% trans "Deactivating hides the customer from lists" %}</div>
                         </div>
                     </div>
-                    
-                    <input type="hidden" name="type" value="customer">
                 </form>
             </div>
             <div class="modal-footer">
@@ -708,6 +740,81 @@
         if (searchInput && !searchInput.value) {
             setTimeout(() => searchInput.focus(), 100);
         }
+        
+        // Type selector styling in modal
+        const typeRadios = document.querySelectorAll('input[name="type"]');
+        typeRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                // Reset all labels
+                document.querySelectorAll('.type-option label').forEach(label => {
+                    label.style.borderColor = '#e9ecef';
+                    label.style.background = '#fff';
+                    label.style.color = '#212529';
+                });
+                
+                // Highlight selected label
+                const selectedLabel = document.querySelector(`label[for="${this.id}"]`);
+                selectedLabel.style.borderColor = '#007bff';
+                selectedLabel.style.background = '#007bff';
+                selectedLabel.style.color = 'white';
+                
+                // Update modal header based on selection
+                const modalTitle = document.querySelector('#addCustomerModalLabel');
+                const icon = modalTitle.querySelector('i');
+                
+                switch(this.value) {
+                    case 'customer':
+                        icon.className = 'fas fa-user me-2';
+                        modalTitle.innerHTML = '<i class="fas fa-user me-2"></i>{% trans "Add New Customer" %}';
+                        break;
+                    case 'supplier':
+                        icon.className = 'fas fa-truck me-2';
+                        modalTitle.innerHTML = '<i class="fas fa-truck me-2"></i>{% trans "Add" %} {% trans "Supplier" %} {% trans "New" %}';
+                        break;
+                    case 'both':
+                        icon.className = 'fas fa-handshake me-2';
+                        modalTitle.innerHTML = '<i class="fas fa-handshake me-2"></i>{% trans "Add" %} {% trans "Customer" %} و{% trans "Supplier" %}';
+                        break;
+                }
+            });
+        });
+        
+        // Initialize first radio button styling
+        const checkedRadio = document.querySelector('input[name="type"]:checked');
+        if (checkedRadio) {
+            const selectedLabel = document.querySelector(`label[for="${checkedRadio.id}"]`);
+            if (selectedLabel) {
+                selectedLabel.style.borderColor = '#007bff';
+                selectedLabel.style.background = '#007bff';
+                selectedLabel.style.color = 'white';
+            }
+        }
+        
+        // Auto-format phone number in modal
+        const modalPhone = document.getElementById('modal_phone');
+        if (modalPhone) {
+            modalPhone.addEventListener('input', function() {
+                let value = this.value.replace(/\D/g, '');
+                if (value.length > 0) {
+                    if (value.startsWith('966')) {
+                        value = '+' + value;
+                    } else if (value.startsWith('05')) {
+                        value = '+966' + value.substring(1);
+                    }
+                }
+                this.value = value;
+            });
+        }
+        
+        // Balance formatting in modal
+        const modalNumberInputs = document.querySelectorAll('#customerForm input[type="number"]');
+        modalNumberInputs.forEach(input => {
+            input.addEventListener('blur', function() {
+                if (this.value) {
+                    this.value = parseFloat(this.value).toFixed(3);
+                }
+            });
+        });
     });
 
     // Translated strings for print function
