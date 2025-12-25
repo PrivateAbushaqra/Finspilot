@@ -453,7 +453,8 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
             'products_json': json.dumps(products_data),
             'categories': Category.objects.filter(is_active=True).order_by('name'),
             'next_invoice_number': next_invoice_number,
-            'today': timezone.now().date()
+            'today': timezone.now().date(),
+            'can_toggle_invoice_tax': True  # تفعيل خيار التحكم بالضريبة في فواتير المشتريات
         }
         
         # إضافة البيانات المُدخلة إذا كانت موجودة
