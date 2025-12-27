@@ -285,5 +285,5 @@ def create_account_transactions_for_existing_invoices(request):
 
 
 class LogoutView(auth_views.LogoutView):
-    """صفحة تسجيل الخروج - يدعم GET فقط لتجنب مشاكل CSRF"""
-    http_method_names = ['get']
+    """صفحة تسجيل الخروج - يدعم GET و POST للتوافق مع النماذج"""
+    http_method_names = ['get', 'post']

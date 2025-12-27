@@ -13,6 +13,7 @@ class Category(models.Model):
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, 
                               verbose_name=_('Parent Category'), related_name='subcategories')
     description = models.TextField(_('Description'), blank=True)
+    sort_order = models.IntegerField(_('Sort Order'), default=0)
     is_active = models.BooleanField(_('Active'), default=True)
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)

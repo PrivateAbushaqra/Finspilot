@@ -1730,6 +1730,7 @@ def product_add_ajax(request):
             wholesale_price = request.POST.get('wholesale_price', '0')
             tax_rate = request.POST.get('tax_rate', '0')
             opening_balance = request.POST.get('opening_balance', '0')
+            opening_balance_unit_cost = request.POST.get('opening_balance_unit_cost', '0')
             opening_balance_cost = request.POST.get('opening_balance_cost', '0')
             min_stock = request.POST.get('min_stock', '0')
             max_stock = request.POST.get('max_stock', '0')
@@ -1810,7 +1811,8 @@ def product_add_ajax(request):
                 min_stock = float(min_stock) if min_stock else 0
                 max_stock = float(max_stock) if max_stock else 0
                 opening_balance = float(opening_balance) if opening_balance else 0
-                opening_balance_cost = float(opening_balance_cost) if opening_balance_cost else 0
+                opening_balance_unit_cost = float(opening_balance_unit_cost) if opening_balance_unit_cost else 0
+                opening_balance_cost = opening_balance * opening_balance_unit_cost if opening_balance > 0 and opening_balance_unit_cost > 0 else 0
                 conversion_factor = float(conversion_factor) if conversion_factor else 0
                 
                 # حساب sequence_number - للمستخدمين العاديين سيتم حسابه تلقائياً في model save
@@ -1873,6 +1875,7 @@ def product_add_ajax(request):
                 wholesale_price=wholesale_price,
                 tax_rate=tax_rate,
                 opening_balance_quantity=opening_balance,
+                opening_balance_unit_cost=opening_balance_unit_cost,
                 opening_balance_cost=opening_balance_cost,
                 opening_balance_warehouse_id=opening_balance_warehouse_id if opening_balance_warehouse_id else None,
                 unit_type=unit_type if unit_type else 'standalone',
@@ -2039,9 +2042,11 @@ class CategoryAddAjaxView(LoginRequiredMixin, View):
             code = request.POST.get('code', '').strip()
             parent_id = request.POST.get('parent', '')
             description = request.POST.get('description', '').strip()
+            sequence_number = request.POST.get('sequence_number', '')
+            sort_order = request.POST.get('sort_order', '0')
             is_active = request.POST.get('is_active') == 'on'
             
-            logger.info(f"Received data: name={name}, code={code}, parent_id={parent_id}")
+            logger.info(f"Received data: name={name}, code={code}, parent_id={parent_id}, sequence_number={sequence_number}")
             
             # التحقق من صحة البيانات
             if not name:
@@ -2076,6 +2081,14 @@ class CategoryAddAjaxView(LoginRequiredMixin, View):
                     logger.warning(f"Parent category {parent_id} not found")
                     parent = None
             
+            # معالجة الأرقام
+            try:
+                sequence_number_int = int(sequence_number) if sequence_number and request.user.is_superuser else None
+                sort_order_int = int(sort_order) if sort_order else 0
+            except ValueError:
+                sequence_number_int = None
+                sort_order_int = 0
+            
             # إنشاء الفئة
             logger.info("Creating category...")
             category = Category.objects.create(
@@ -2084,6 +2097,8 @@ class CategoryAddAjaxView(LoginRequiredMixin, View):
                 code=code if code else None,
                 parent=parent,
                 description=description,
+                sequence_number=sequence_number_int,
+                sort_order=sort_order_int,
                 is_active=is_active
             )
             logger.info(f"Category created successfully: {category.id} - {category.name}")
@@ -2168,7 +2183,8 @@ class ProductAddAjaxView(LoginRequiredMixin, View):
             unit = request.POST.get('unit', 'piece')
             description = request.POST.get('description', '').strip()
             cost_price = request.POST.get('cost_price', '0')
-            sale_price = request.POST.get('sale_price', '0')  # Changed from selling_price
+            # Support both sale_price and selling_price for compatibility
+            sale_price = request.POST.get('selling_price', request.POST.get('sale_price', '0'))
             wholesale_price = request.POST.get('wholesale_price', '0')
             tax_rate = request.POST.get('tax_rate', '0')
             min_stock = request.POST.get('min_stock', '0')

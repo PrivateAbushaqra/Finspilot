@@ -336,20 +336,23 @@
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6><i class="fas fa-box me-2"></i> {% trans "Invoice Products" %}</h6>
                                 <div>
-                                    <!--<button type="button" class="btn btn-warning me-2" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                                    {% if user.is_superuser or perms.products.can_add_product_categories %} 
+                                    <button type="button" class="btn btn-warning me-2" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
                                         <i class="fas fa-folder-plus me-2"></i>
-                                        {% trans "أضف فئة" %}-->
+                                        {% trans "Create New Category" %}
                                     </button>
+                                    {% endif %}
+                                    {% if user.is_superuser or perms.products.can_add_products %}
                                     <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#addProductModal">
                                         <i class="fas fa-plus me-2"></i>
                                         {% trans "Create Product" %}
                                     </button>
+                                    {% endif %}
                                     <button type="button" class="btn btn-add-product text-white" id="addProductBtn" tabindex="-1"
                                             title="{% trans "Click here to add a new product" %}" data-action="add-product">
-                                        <i class="fas fa-plus me-1"></i>
-                                        {% trans "Add Product " %}
-                                        <small class="ms-1 text-muted">(Shift+A)</small>
-                                    </button>
+                                            <i class="fas fa-plus me-1"></i>
+                                            {% trans "Add Product " %}
+                                            <small class="ms-1 text-muted">(Shift+A)</small>
                                 </div>
                             </div>
                             
@@ -2480,6 +2483,9 @@ if (addProductModal) {
         // إخفاء حساب الضريبة
         document.getElementById('productTaxCalculation').style.display = 'none';
         document.getElementById('productSerialNumberRow').style.display = 'none';
+        // إخفاء الوحدات المرتبطة
+        document.getElementById('productLinkedProductContainer').style.display = 'none';
+        document.getElementById('productConversionFactorContainer').style.display = 'none';
         // إزالة رسائل الخطأ
         const errorElements = addProductForm.querySelectorAll('.is-invalid');
         errorElements.forEach(element => {
@@ -2491,6 +2497,36 @@ if (addProductModal) {
         });
     });
 }
+
+// إضافة event listeners للحقول الجديدة
+document.addEventListener('DOMContentLoaded', function() {
+    // Event listeners للنموذج المنبثق
+    const productUnitType = document.getElementById('productUnitType');
+    const productOpeningBalance = document.getElementById('productOpeningBalance');
+    const productOpeningBalanceUnitCost = document.getElementById('productOpeningBalanceUnitCost');
+    const productSellingPrice = document.getElementById('productSellingPrice');
+    const productTaxRate = document.getElementById('productTaxRate');
+    
+    if (productUnitType) {
+        productUnitType.addEventListener('change', toggleProductLinkedUnits);
+    }
+    
+    if (productOpeningBalance) {
+        productOpeningBalance.addEventListener('input', calculateProductOpeningBalanceCost);
+    }
+    
+    if (productOpeningBalanceUnitCost) {
+        productOpeningBalanceUnitCost.addEventListener('input', calculateProductOpeningBalanceCost);
+    }
+    
+    if (productSellingPrice) {
+        productSellingPrice.addEventListener('input', calculateProductTax);
+    }
+    
+    if (productTaxRate) {
+        productTaxRate.addEventListener('input', calculateProductTax);
+    }
+});
 
 // معالجة إرسال نموذج المنتج
 if (addProductForm) {
@@ -2562,16 +2598,102 @@ if (addProductForm) {
 
 // تحكم في عرض حقل الرقم التسلسلي
 function toggleProductSerialNumberField() {
-    const productType = document.getElementById('productType').value;
+    const productUnit = document.getElementById('productUnit').value;
     const serialNumberRow = document.getElementById('productSerialNumberRow');
-
-    if (productType === 'physical') {
+    
+    if (productUnit === 'piece') {
         serialNumberRow.style.display = 'block';
     } else {
         serialNumberRow.style.display = 'none';
         document.getElementById('productSerialNumber').value = '';
     }
 }
+
+// تحكم في عرض حقول المخزون للخدمات
+function toggleProductInventoryFields(isService) {
+    // البحث عن قسم المخزون
+    const modalBody = document.querySelector('#addProductModal .modal-body');
+    const headings = modalBody.querySelectorAll('h6');
+    let inventorySection = null;
+    
+    headings.forEach(heading => {
+        if (heading.textContent.includes('المخزون')) {
+            inventorySection = heading.parentElement;
+        }
+    });
+    
+    if (!inventorySection) return;
+    
+    const inventoryRows = inventorySection.querySelectorAll('.row');
+    
+    if (isService) {
+        inventoryRows.forEach(row => {
+            if (!row.querySelector('h6')) { // لا نخفي العنوان
+                row.style.display = 'none';
+            }
+        });
+        // تعيين القيم إلى صفر للخدمات
+        document.getElementById('productOpeningBalance').value = '0';
+        document.getElementById('productMinStock').value = '0';
+        document.getElementById('productMaxStock').value = '0';
+        document.getElementById('productTrackStock').checked = false;
+    } else {
+        inventoryRows.forEach(row => {
+            row.style.display = 'block';
+        });
+        document.getElementById('productTrackStock').checked = true;
+    }
+    
+    // تحديث حقل الرقم التسلسلي
+    toggleProductSerialNumberField();
+}
+
+// حساب تكلفة الرصيد الافتتاحي تلقائياً
+function calculateProductOpeningBalanceCost() {
+    const openingBalance = parseFloat(document.getElementById('productOpeningBalance').value) || 0;
+    const unitCost = parseFloat(document.getElementById('productOpeningBalanceUnitCost').value) || 0;
+    const costField = document.getElementById('productOpeningBalanceCost');
+    
+    if (openingBalance > 0 && unitCost > 0) {
+        const totalCost = openingBalance * unitCost;
+        costField.value = totalCost.toFixed(3);
+    } else {
+        costField.value = '0';
+    }
+}
+
+// تحكم في عرض الوحدات المرتبطة
+function toggleProductLinkedUnits() {
+    const unitType = document.getElementById('productUnitType').value;
+    const linkedProductContainer = document.getElementById('productLinkedProductContainer');
+    const conversionFactorContainer = document.getElementById('productConversionFactorContainer');
+    
+    if (unitType === 'single' || unitType === 'package') {
+        linkedProductContainer.style.display = 'block';
+        conversionFactorContainer.style.display = 'block';
+    } else {
+        linkedProductContainer.style.display = 'none';
+        conversionFactorContainer.style.display = 'none';
+        document.getElementById('productLinkedProduct').value = '';
+        document.getElementById('productConversionFactor').value = '0';
+    }
+}
+
+// حساب الضريبة
+function calculateProductTax() {
+    const sellingPrice = parseFloat(document.getElementById('productSellingPrice').value) || 0;
+    const taxRate = parseFloat(document.getElementById('productTaxRate').value) || 0;
+    
+    if (sellingPrice > 0 && taxRate > 0) {
+        const taxAmount = sellingPrice * (taxRate / 100);
+        const priceWithTax = sellingPrice + taxAmount;
+        
+        document.getElementById('productBasePrice').textContent = sellingPrice.toFixed(3);
+        document.getElementById('productTaxAmount').textContent = taxAmount.toFixed(3);
+        document.getElementById('productPriceWithTax').textContent = priceWithTax.toFixed(3);
+        document.getElementById('productTaxCalculation').style.display = 'block';
+    } else {
+        document.getElementById('productTaxCalculation').style.display = 'none';
 
 // دالة تحديث قائمة المنتجات المتاحة
 function loadAvailableProducts(newProduct = null) {
@@ -2628,9 +2750,33 @@ function calculateProductTax() {
 // إضافة مستمعي الأحداث
 document.addEventListener('DOMContentLoaded', function() {
     // تحكم في حقل الرقم التسلسلي
-    const productTypeSelect = document.getElementById('productType');
-    if (productTypeSelect) {
-        productTypeSelect.addEventListener('change', toggleProductSerialNumberField);
+    const productUnitSelect = document.getElementById('productUnit');
+    if (productUnitSelect) {
+        productUnitSelect.addEventListener('change', toggleProductSerialNumberField);
+    }
+
+    // تحكم في حقول المخزون للخدمات
+    const productIsServiceCheckbox = document.getElementById('productIsService');
+    if (productIsServiceCheckbox) {
+        productIsServiceCheckbox.addEventListener('change', function() {
+            toggleProductInventoryFields(this.checked);
+        });
+    }
+
+    // حساب تكلفة الرصيد الافتتاحي
+    const openingBalanceInput = document.getElementById('productOpeningBalance');
+    const openingBalanceUnitCostInput = document.getElementById('productOpeningBalanceUnitCost');
+    if (openingBalanceInput) {
+        openingBalanceInput.addEventListener('input', calculateProductOpeningBalanceCost);
+    }
+    if (openingBalanceUnitCostInput) {
+        openingBalanceUnitCostInput.addEventListener('input', calculateProductOpeningBalanceCost);
+    }
+
+    // تحكم في الوحدات المرتبطة
+    const productUnitTypeSelect = document.getElementById('productUnitType');
+    if (productUnitTypeSelect) {
+        productUnitTypeSelect.addEventListener('change', toggleProductLinkedUnits);
     }
 
     // حساب الضريبة
@@ -2646,6 +2792,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // تطبيق التحكم عند تحميل الصفحة
     toggleProductSerialNumberField();
+    toggleProductLinkedUnits();
+    calculateProductOpeningBalanceCost();
 });
 
 // Category search functionality for product modal
@@ -2861,7 +3009,7 @@ $(document).ready(function() {
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="addProductForm">
+            <form id="addProductForm" enctype="multipart/form-data">
                 <div class="modal-body">
                     {% csrf_token %}
 
@@ -2905,6 +3053,36 @@ $(document).ready(function() {
                             <div class="mb-3">
                                 <label for="productBarcode" class="form-label">{% trans "Barcode" %}</label>
                                 <input type="text" class="form-control" id="productBarcode" name="barcode">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productSequenceNumber" class="form-label">{% trans "Sequence Number" %}</label>
+                                <input type="number" class="form-control" id="productSequenceNumber" name="sequence_number" 
+                                       value="" placeholder="{% trans "Will be auto-generated" %}" 
+                                       {% if not user.is_superuser and not perms.products.can_edit_product_sequence_number %}readonly{% endif %}>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    {% trans "Auto-calculated based on category (Category Number + 100, 101, ...)" %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check mt-4">
+                                    <input class="form-check-input" type="checkbox" id="productIsService" name="is_service" onchange="toggleProductInventoryFields(this.checked)">
+                                    <label class="form-check-label" for="productIsService">
+                                        <i class="fas fa-concierge-bell text-primary me-2"></i>
+                                        <strong>{% trans "Service Product (Non-countable)" %}</strong>
+                                    </label>
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        {% trans "Service products do not affect inventory. Service products do not need quantities" %}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2956,13 +3134,14 @@ $(document).ready(function() {
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="productUnit" class="form-label">وحدة القياس <span class="text-danger">*</span></label>
-                                <select class="form-select" id="productUnit" name="unit" required>
+                                <select class="form-select" id="productUnit" name="unit" required onchange="toggleProductSerialNumberField()">
                                     <option value="piece">قطعة</option>
                                     <option value="kg">كيلوغرام</option>
                                     <option value="liter">لتر</option>
                                     <option value="meter">متر</option>
                                     <option value="box">صندوق</option>
                                     <option value="pack">حزمة</option>
+                                    <option value="service">خدمة</option>
                                 </select>
                             </div>
                         </div>
@@ -2974,7 +3153,8 @@ $(document).ready(function() {
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="productCostPrice" class="form-label">سعر الشراء</label>
-                                <input type="number" class="form-control" id="productCostPrice" name="cost_price" step="0.001" min="0">
+                                <input type="text" class="form-control" value="{% trans 'Calculated automatically from purchases' %}" readonly disabled>
+                                <small class="form-text text-muted">{% trans "Cost is calculated from purchase invoices using weighted average method" %}</small>
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -3032,42 +3212,160 @@ $(document).ready(function() {
                         </div>
                     </div>
 
+                    <!-- Linked Units Section -->
+                    <h6 class="mt-4 mb-3">
+                        <i class="fas fa-link text-primary me-2"></i>
+                        {% trans "Linked Units Settings" %}
+                    </h6>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        {% trans "Link this product with another unit (single/package) for flexible sales" %}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="productUnitType" class="form-label">
+                                    <i class="fas fa-boxes text-primary me-1"></i>
+                                    {% trans "Unit Type" %}
+                                </label>
+                                <select class="form-select" id="productUnitType" name="unit_type">
+                                    <option value="standalone">{% trans "Standalone" %}</option>
+                                    <option value="single">{% trans "Single Unit" %}</option>
+                                    <option value="package">{% trans "Package" %}</option>
+                                </select>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    {% trans "Select unit type for linking" %}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-4" id="productLinkedProductContainer" style="display: none;">
+                            <div class="mb-3">
+                                <label for="productLinkedProduct" class="form-label">
+                                    <i class="fas fa-exchange-alt text-success me-1"></i>
+                                    {% trans "Linked Product" %}
+                                </label>
+                                <select class="form-select" id="productLinkedProduct" name="linked_product">
+                                    <option value="">-- {% trans "Select Product" %} --</option>
+                                    {% for prod in products %}
+                                        <option value="{{ prod.id }}">{{ prod.name }} ({{ prod.code }})</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    {% trans "The linked product (single or package)" %}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-4" id="productConversionFactorContainer" style="display: none;">
+                            <div class="mb-3">
+                                <label for="productConversionFactor" class="form-label">
+                                    <i class="fas fa-calculator text-warning me-1"></i>
+                                    {% trans "Conversion Factor" %}
+                                </label>
+                                <input type="number" class="form-control" id="productConversionFactor" name="conversion_factor" 
+                                       step="0.001" min="0" value="0">
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    {% trans "Number of single units in one package" %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Inventory -->
                     <h6 class="mt-4 mb-3"><i class="fas fa-warehouse me-2"></i>المخزون</h6>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        {% trans "This section is for countable products only. Service products do not need inventory management." %}
+                    </div>
                     <div class="row">
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="productOpeningBalance" class="form-label">
                                     <i class="fas fa-balance-scale text-success me-1"></i>
-                                    الرصيد الافتتاحي
+                                    {% trans "Opening Balance Quantity" %}
                                 </label>
                                 <input type="number" class="form-control" id="productOpeningBalance" name="opening_balance" step="0.001" min="0" value="0">
-                                <small class="form-text text-muted">المخزون الأولي عند بدء استخدام النظام</small>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    {% trans "Initial stock quantity when starting to use the system" %}
+                                </small>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="productMinStock" class="form-label">الحد الأدنى للمخزون</label>
+                                <label for="productOpeningBalanceUnitCost" class="form-label">
+                                    <i class="fas fa-coins text-primary me-1"></i>
+                                    {% trans "Opening Balance Unit Cost" %}
+                                </label>
+                                <input type="number" class="form-control" id="productOpeningBalanceUnitCost" name="opening_balance_unit_cost" step="0.001" min="0" value="0">
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    {% trans "Cost per unit for opening balance (exclusive of VAT)" %}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="productOpeningBalanceCost" class="form-label">
+                                    <i class="fas fa-dollar-sign text-warning me-1"></i>
+                                    {% trans "Opening Balance Total Cost" %} <span class="text-danger">*</span>
+                                </label>
+                                <input type="number" class="form-control" id="productOpeningBalanceCost" name="opening_balance_cost" step="0.001" min="0" value="0" required disabled>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-calculator me-1"></i>
+                                    {% trans "Auto-calculated: Quantity × Unit Cost" %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="productOpeningBalanceWarehouse" class="form-label">
+                                    <i class="fas fa-warehouse text-info me-1"></i>
+                                    {% trans "Opening Balance Warehouse" %}
+                                </label>
+                                <select class="form-control" id="productOpeningBalanceWarehouse" name="opening_balance_warehouse">
+                                    <option value="">{% trans "Select Warehouse" %}</option>
+                                    {% for warehouse in warehouses %}
+                                    <option value="{{ warehouse.id }}">{{ warehouse.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    {% trans "Warehouse where the opening balance will be placed" %}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="productMinStock" class="form-label">{% trans "Minimum Stock Level" %}</label>
                                 <input type="number" class="form-control" id="productMinStock" name="min_stock" min="0" value="0">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="productMaxStock" class="form-label">الحد الأقصى للمخزون</label>
+                                <label for="productMaxStock" class="form-label">{% trans "Maximum Stock Level" %}</label>
                                 <input type="number" class="form-control" id="productMaxStock" name="max_stock" min="0">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Description and Settings -->
+                    <!-- Description and Image -->
                     <div class="row">
                         <div class="col-md-8">
                             <div class="mb-3">
-                                <label for="productDescription" class="form-label">الوصف</label>
-                                <textarea class="form-control" id="productDescription" name="description" rows="3"></textarea>
+                                <label for="productDescription" class="form-label">{% trans "Description" %}</label>
+                                <textarea class="form-control" id="productDescription" name="description" rows="4"></textarea>
                             </div>
                         </div>
                         <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="productImage" class="form-label">{% trans "Product Image" %}</label>
+                                <input type="file" class="form-control" id="productImage" name="image" accept="image/*">
+                            </div>
                             <div class="mb-3">
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="productIsActive" name="is_active" checked>
@@ -3080,7 +3378,7 @@ $(document).ready(function() {
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="productTrackStock" name="track_stock" checked>
                                     <label class="form-check-label" for="productTrackStock">
-                                        {% trans "Track Stock" %}
+                                        {% trans "Track Inventory" %}
                                     </label>
                                 </div>
                             </div>
@@ -3145,11 +3443,29 @@ $(document).ready(function() {
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
+                                <label for="categorySequenceNumber" class="form-label">{% trans "Sequence Number" %}</label>
+                                <input type="number" class="form-control" id="categorySequenceNumber" name="sequence_number" 
+                                       value="" placeholder="{% trans 'Auto-generated if left empty' %}"
+                                       {% if not user.is_superuser and not perms.products.can_edit_category_sequence_number %}readonly{% endif %}>
+                                <div class="form-text">{% trans "Auto-generated if left empty" %}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
                                 <label for="categoryParent" class="form-label">{% trans "Parent Category" %}</label>
                                 <select class="form-select" id="categoryParent" name="parent">
                                     <option value="">{% trans "Choose Parent Category (Optional)" %}</option>
                                     <!-- Options will be loaded dynamically -->
                                 </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="categorySortOrder" class="form-label">{% trans "Sort Order" %}</label>
+                                <input type="number" class="form-control" id="categorySortOrder" name="sort_order" value="0">
                             </div>
                         </div>
                     </div>

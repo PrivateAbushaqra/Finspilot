@@ -420,12 +420,20 @@
                         <i class="fas fa-box me-1"></i>
                         {% trans "Products" %}
                     </h5>
-                    <button type="button" class="btn btn-add-product" id="addProductBtn" tabindex="-1"
-                            title="{% trans "Click to add a new product" %}" data-action="add-product">
-                        <i class="fas fa-plus me-1"></i>
-                        {% trans "Add Product  " %}
-                        <small class="ms-1 text-muted">(Shift+A)</small>
-                    </button>
+                    <div>
+                        {% if user.is_superuser or perms.products.can_add_products %}
+                        <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                            <i class="fas fa-plus me-2"></i>
+                            {% trans "Create Product" %}
+                        </button>
+                        {% endif %}                        
+                        <button type="button" class="btn btn-add-product" id="addProductBtn" tabindex="-1"
+                                title="{% trans "Click to add a new product" %}" data-action="add-product">
+                                <i class="fas fa-plus me-1"></i>
+                                {% trans "Add Product  " %}
+                                <small class="ms-1 text-muted">(Shift+A)</small>
+                        </button>
+                    </div>
                     <div id="warehouseRequiredMessage" class="text-danger mt-2" style="display: none;">
                         <i class="fas fa-exclamation-triangle me-1"></i>
                         {% trans "Please select the warehouse first before adding products." %}
@@ -2784,6 +2792,794 @@ document.addEventListener('DOMContentLoaded', function() {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 });
+</script>
+
+<!-- نافذة إضافة منتج منبثقة -->
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addProductModalLabel">
+                    <i class="fas fa-plus text-primary me-2"></i>
+                    {% trans "Create New Product" %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addProductForm" enctype="multipart/form-data">
+                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                    {% csrf_token %}
+
+                    <!-- Basic Information -->
+                    <h6 class="mb-3"><i class="fas fa-info-circle me-2"></i>{% trans "Basic Information" %}</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productName" class="form-label">{% trans "Product Name" %} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="productName" name="name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productNameEn" class="form-label">{% trans "English Name" %}</label>
+                                <input type="text" class="form-control" id="productNameEn" name="name_en">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productType" class="form-label">{% trans "Product Type" %} <span class="text-danger">*</span></label>
+                                <select class="form-control" id="productType" name="product_type" required>
+                                    <option value="physical">{% trans "Physical Product" %}</option>
+                                    <option value="service">{% trans "Service" %}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productSku" class="form-label">{% trans "Product Code (SKU)" %} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="productSku" name="sku" placeholder="{% trans 'Example: PROD-001' %}" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productBarcode" class="form-label">{% trans "Barcode" %}</label>
+                                <input type="text" class="form-control" id="productBarcode" name="barcode">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Serial Number field for pieces only -->
+                    <div class="row" id="productSerialNumberRow" style="display: none;">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label for="productSerialNumber" class="form-label">
+                                    {% trans "Serial Number" %}
+                                    <small class="text-muted">- {% trans "For Warranty" %}</small>
+                                </label>
+                                <input type="text" class="form-control" id="productSerialNumber" name="serial_number"
+                                       placeholder="{% trans 'Example: SN123456789' %}">
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    {% trans "This field is for products sold per piece that need warranty (optional)" %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productCategory" class="form-label">{% trans "Category" %} <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <div class="position-relative flex-grow-1">
+                                        <input type="text" class="form-control" id="productCategorySearch" placeholder="{% trans 'Type to search categories...' %}" autocomplete="off"
+                                               data-categories="{% for category in categories %}{{ category.id }}|{{ category.name|escapejs }}|{{ category.code|escapejs }}{% if not forloop.last %}||{% endif %}{% endfor %}">
+                                        <div id="productCategoryDropdown" class="dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto;">
+                                            <!-- Category options will be populated here -->
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary" id="productSearchCategoryBtn" title="{% trans 'Search categories' %}">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                    <input type="hidden" id="productCategory" name="category" required>
+                                    <button type="button" class="btn btn-outline-primary" id="productAddCategoryBtn" title="{% trans 'Add new category' %}"
+                                            data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                                        <i class="fas fa-plus"></i>
+                                        {% trans "Add Category" %}
+                                    </button>
+                                </div>
+                                <div class="form-text">
+                                    <small class="text-muted">{% trans "Start typing to search categories or click search button" %}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check mt-4">
+                                    <input class="form-check-input" type="checkbox" id="productIsService" name="is_service">
+                                    <label class="form-check-label" for="productIsService">
+                                        <i class="fas fa-concierge-bell text-primary me-2"></i>
+                                        <strong>{% trans "Service Product (Non-countable)" %}</strong>
+                                    </label>
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        {% trans "Service products do not affect inventory Service products do not need quantities" %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productUnit" class="form-label">{% trans "Unit of Measurement" %} <span class="text-danger">*</span></label>
+                                <select class="form-select" id="productUnit" name="unit" required>
+                                    <option value="piece">{% trans "Piece" %}</option>
+                                    <option value="service">{% trans "Service" %}</option>
+                                    <option value="kg">{% trans "Kilogram" %}</option>
+                                    <option value="liter">{% trans "Liter" %}</option>
+                                    <option value="meter">{% trans "Meter" %}</option>
+                                    <option value="box">{% trans "Box" %}</option>
+                                    <option value="pack">{% trans "Pack" %}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pricing -->
+                    <h6 class="mt-4 mb-3"><i class="fas fa-dollar-sign me-2"></i>{% trans "Pricing" %}</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">{% trans "Cost Price" %}</label>
+                                <input type="text" class="form-control" value="{% trans 'Calculated automatically from purchases' %}" readonly disabled>
+                                <small class="form-text text-muted">{% trans "Cost is calculated from purchase invoices using weighted average method" %}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="productSellingPrice" class="form-label">{% trans "Selling Price" %} <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="productSellingPrice" name="selling_price" step="0.001" min="0" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="productWholesalePrice" class="form-label">{% trans "Wholesale Price" %}</label>
+                                <input type="number" class="form-control" id="productWholesalePrice" name="wholesale_price" step="0.001" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productTaxRate" class="form-label">
+                                    <i class="fas fa-percentage text-primary me-1"></i>
+                                    {% trans "Tax Rate" %} % <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="productTaxRate" name="tax_rate"
+                                           step="0.01" min="0" max="100" value="0" placeholder="{% trans 'Example: 15' %}" required>
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    {% trans "It will be calculated automatically in invoices" %}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="alert alert-info" style="display: none;" id="productTaxCalculation">
+                                <h6 class="alert-heading">
+                                    <i class="fas fa-calculator me-2"></i>
+                                    {% trans "Tax Calculation" %}
+                                </h6>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>{% trans "Selling Price" %}:</span>
+                                    <span id="productBasePrice">0.00</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>{% trans "Tax Amount" %}:</span>
+                                    <span id="productTaxAmount">0.00</span>
+                                </div>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between fw-bold">
+                                    <span>{% trans "Price Including Tax" %}:</span>
+                                    <span id="productPriceWithTax">0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Inventory -->
+                    <div id="productInventorySection">
+                        <h6 class="mt-4 mb-3"><i class="fas fa-warehouse me-2"></i>{% trans "Inventory" %}</h6>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            {% trans "This section is for countable products only. Service products do not need inventory management." %}
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="productOpeningBalance" class="form-label">
+                                        <i class="fas fa-balance-scale text-success me-1"></i>
+                                        {% trans "Opening Balance Quantity" %}
+                                    </label>
+                                    <input type="number" class="form-control" id="productOpeningBalance" name="opening_balance" step="0.001" min="0" value="0">
+                                    <small class="form-text text-muted">{% trans "Initial stock when starting to use the system" %}</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="productOpeningBalanceUnitCost" class="form-label">
+                                        <i class="fas fa-coins text-primary me-1"></i>
+                                        {% trans "Opening Balance Unit Cost" %}
+                                    </label>
+                                    <input type="number" class="form-control" id="productOpeningBalanceUnitCost" name="opening_balance_unit_cost" step="0.001" min="0" value="0">
+                                    <small class="form-text text-muted">{% trans "Cost per unit for opening balance (exclusive of VAT)" %}</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="productOpeningBalanceCost" class="form-label">
+                                        <i class="fas fa-dollar-sign text-warning me-1"></i>
+                                        {% trans "Opening Balance Total Cost" %}
+                                    </label>
+                                    <input type="number" class="form-control" id="productOpeningBalanceCost" name="opening_balance_cost" step="0.001" min="0" value="0" readonly>
+                                    <small class="form-text text-muted">{% trans "Auto-calculated: Quantity × Unit Cost" %}</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="productOpeningBalanceWarehouse" class="form-label">
+                                        <i class="fas fa-warehouse text-info me-1"></i>
+                                        {% trans "Opening Balance Warehouse" %}
+                                    </label>
+                                    <select class="form-control" id="productOpeningBalanceWarehouse" name="opening_balance_warehouse">
+                                        <option value="">{% trans "Select Warehouse" %}</option>
+                                        {% for warehouse in warehouses %}
+                                        <option value="{{ warehouse.id }}">{{ warehouse.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <small class="form-text text-muted">{% trans "Warehouse where the opening balance will be placed" %}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="productMinStock" class="form-label">{% trans "Minimum Stock Level" %}</label>
+                                    <input type="number" class="form-control" id="productMinStock" name="min_stock" min="0" value="0">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="productMaxStock" class="form-label">{% trans "Maximum Stock Level" %}</label>
+                                    <input type="number" class="form-control" id="productMaxStock" name="max_stock" min="0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description, Image and Settings -->
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="productDescription" class="form-label">{% trans "Description" %}</label>
+                                <textarea class="form-control" id="productDescription" name="description" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="productImage" class="form-label">{% trans "Product Image" %}</label>
+                                <input type="file" class="form-control" id="productImage" name="image" accept="image/*">
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="productIsActive" name="is_active" checked>
+                                    <label class="form-check-label" for="productIsActive">
+                                        {% trans "Active" %}
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="productTrackStock" name="track_stock" checked>
+                                    <label class="form-check-label" for="productTrackStock">
+                                        {% trans "Track Stock" %}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>
+                        {% trans "Cancel" %}
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="saveProductBtn">
+                        <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
+                        <i class="fas fa-save me-2"></i>
+                        <span class="btn-text">{% trans "Save Product" %}</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة إضافة فئة منبثقة -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCategoryModalLabel">
+                    <i class="fas fa-folder-plus text-warning me-2"></i>
+                    {% trans "Add Category" %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addCategoryForm">
+                <div class="modal-body">
+                    {% csrf_token %}
+
+                    <!-- Basic Information -->
+                    <h6 class="mb-3"><i class="fas fa-info-circle me-2"></i>{% trans "Basic Information" %}</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="categoryName" class="form-label">{% trans "Category Name" %} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="categoryName" name="name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="categoryNameEn" class="form-label">{% trans "English Name" %} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="categoryNameEn" name="name_en" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="categoryCode" class="form-label">{% trans "Category Code" %}</label>
+                                <input type="text" class="form-control" id="categoryCode" name="code" placeholder="{% trans 'Example: CAT-001' %}">
+                                <div class="form-text">{% trans "Unique code for the category (optional)" %}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="categoryParent" class="form-label">{% trans "Parent Category" %}</label>
+                                <select class="form-select" id="categoryParent" name="parent">
+                                    <option value="">{% trans "Choose Parent Category (Optional)" %}</option>
+                                    <!-- Options will be loaded dynamically -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="categoryDescription" class="form-label">{% trans "Description" %}</label>
+                                <textarea class="form-control" id="categoryDescription" name="description" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="categoryIsActive" name="is_active" checked>
+                                    <label class="form-check-label" for="categoryIsActive">
+                                        {% trans "Active" %}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>
+                        {% trans "Cancel" %}
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="saveCategoryBtn">
+                        <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
+                        <i class="fas fa-save me-2"></i>
+                        <span class="btn-text">{% trans "Save Category" %}</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// JavaScript للتعامل مع نافذة إضافة المنتج
+const addProductModal = document.getElementById('addProductModal');
+const addProductForm = document.getElementById('addProductForm');
+const saveProductBtn = document.getElementById('saveProductBtn');
+
+// معالجة إرسال نموذج المنتج
+if (addProductForm) {
+    addProductForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(addProductForm);
+        const spinner = saveProductBtn.querySelector('.spinner-border');
+        const btnText = saveProductBtn.querySelector('.btn-text');
+        const icon = saveProductBtn.querySelector('.fa-save');
+        
+        // Disable button and show spinner
+        saveProductBtn.disabled = true;
+        spinner.classList.remove('d-none');
+        btnText.textContent = '{% trans "Saving..." %}';
+        icon.style.display = 'none';
+
+        // Send data
+        fetch('{% url "products:product_add_ajax" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    <i class="fas fa-check-circle me-2"></i>
+                    ${data.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+
+                // Insert message at the top of the page
+                const container = document.querySelector('.container-fluid');
+                container.insertBefore(alertDiv, container.firstChild);
+
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(addProductModal);
+                modal.hide();
+
+                // Reset form
+                addProductForm.reset();
+
+                // Update available products list if function exists
+                if (typeof loadAvailableProducts === 'function') {
+                    loadAvailableProducts(data.product);
+                }
+                
+                // Auto-dismiss after 3 seconds
+                setTimeout(() => alertDiv.remove(), 3000);
+
+            } else {
+                alert('{% trans "Error" %}: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('{% trans "Error" %}:', error);
+            alert('{% trans "An error occurred while saving the product. Please try again." %}');
+        })
+        .finally(() => {
+            // Re-enable button
+            saveProductBtn.disabled = false;
+            spinner.classList.add('d-none');
+            btnText.textContent = '{% trans "Save Product" %}';
+            icon.style.display = 'inline';
+        });
+    });
+}
+
+// تحكم في عرض حقل الرقم التسلسلي
+function toggleProductSerialNumberField() {
+    const unitSelect = document.getElementById('productUnit');
+    const serialNumberRow = document.getElementById('productSerialNumberRow');
+    
+    if (unitSelect && serialNumberRow) {
+        if (unitSelect.value === 'piece') {
+            serialNumberRow.style.display = 'block';
+        } else {
+            serialNumberRow.style.display = 'none';
+        }
+    }
+}
+
+// تحكم في إخفاء/إظهار حقول المخزون للخدمات
+function toggleProductInventorySection() {
+    const isServiceCheckbox = document.getElementById('productIsService');
+    const inventorySection = document.getElementById('productInventorySection');
+    const unitSelect = document.getElementById('productUnit');
+    const productType = document.getElementById('productType');
+    
+    if (isServiceCheckbox && inventorySection) {
+        if (isServiceCheckbox.checked) {
+            inventorySection.style.display = 'none';
+            if (unitSelect) unitSelect.value = 'service';
+            if (productType) productType.value = 'service';
+        } else {
+            inventorySection.style.display = 'block';
+            if (productType) productType.value = 'physical';
+        }
+    }
+}
+
+// حساب تكلفة الرصيد الافتتاحي
+function calculateProductOpeningBalanceCost() {
+    const quantity = parseFloat(document.getElementById('productOpeningBalance').value) || 0;
+    const unitCost = parseFloat(document.getElementById('productOpeningBalanceUnitCost').value) || 0;
+    const totalCostInput = document.getElementById('productOpeningBalanceCost');
+    
+    if (totalCostInput) {
+        const totalCost = quantity * unitCost;
+        totalCostInput.value = totalCost.toFixed(3);
+    }
+}
+
+// حساب الضريبة
+function calculateProductTax() {
+    var sellingPrice = parseFloat($('#productSellingPrice').val()) || 0;
+    var taxRate = parseFloat($('#productTaxRate').val()) || 0;
+    
+    if (sellingPrice > 0 && taxRate > 0) {
+        var taxAmount = sellingPrice * (taxRate / 100);
+        var priceWithTax = sellingPrice + taxAmount;
+        
+        $('#productBasePrice').text(sellingPrice.toFixed(3));
+        $('#productTaxAmount').text(taxAmount.toFixed(3));
+        $('#productPriceWithTax').text(priceWithTax.toFixed(3));
+        $('#productTaxCalculation').show();
+    } else {
+        $('#productTaxCalculation').hide();
+    }
+}
+
+// إضافة مستمعي الأحداث
+document.addEventListener('DOMContentLoaded', function() {
+    const productUnitSelect = document.getElementById('productUnit');
+    if (productUnitSelect) {
+        productUnitSelect.addEventListener('change', function() {
+            toggleProductSerialNumberField();
+            // If "service" is selected as unit, activate service product
+            if (this.value === 'service') {
+                const isServiceCheckbox = document.getElementById('productIsService');
+                if (isServiceCheckbox) {
+                    isServiceCheckbox.checked = true;
+                    toggleProductInventorySection();
+                }
+            }
+        });
+        toggleProductSerialNumberField();
+    }
+    
+    // Bind is_service checkbox change event
+    const isServiceCheckbox = document.getElementById('productIsService');
+    if (isServiceCheckbox) {
+        isServiceCheckbox.addEventListener('change', toggleProductInventorySection);
+        toggleProductInventorySection();
+    }
+    
+    // Bind opening balance calculation events
+    const openingBalanceQty = document.getElementById('productOpeningBalance');
+    const openingBalanceUnitCost = document.getElementById('productOpeningBalanceUnitCost');
+    if (openingBalanceQty) {
+        openingBalanceQty.addEventListener('input', calculateProductOpeningBalanceCost);
+    }
+    if (openingBalanceUnitCost) {
+        openingBalanceUnitCost.addEventListener('input', calculateProductOpeningBalanceCost);
+    }
+    
+    // Bind events for tax calculation
+    $('#productSellingPrice, #productTaxRate').on('input', calculateProductTax);
+});
+
+// Category search functionality for product modal
+$(document).ready(function() {
+    var categoriesData = $('#productCategorySearch').data('categories') || '';
+    var categories = [];
+    
+    if (categoriesData) {
+        var categoryPairs = categoriesData.split('||');
+        categoryPairs.forEach(function(pair) {
+            var parts = pair.split('|');
+            if (parts.length >= 2) {
+                categories.push({
+                    id: parts[0],
+                    name: parts[1],
+                    code: parts[2] || ''
+                });
+            }
+        });
+    }
+
+    var categorySearch = $('#productCategorySearch');
+    var categoryDropdown = $('#productCategoryDropdown');
+    var categoryHidden = $('#productCategory');
+    var selectedIndex = -1;
+    
+    function filterCategories() {
+        var searchTerm = categorySearch.val().toLowerCase();
+        categoryDropdown.empty();
+        selectedIndex = -1;
+        
+        if (!searchTerm) {
+            categoryDropdown.hide();
+            return;
+        }
+        
+        var filteredCategories = categories.filter(function(cat) {
+            return cat.name.toLowerCase().includes(searchTerm) || 
+                   (cat.code && cat.code.toLowerCase().includes(searchTerm));
+        });
+        
+        if (filteredCategories.length === 0) {
+            categoryDropdown.hide();
+            return;
+        }
+        
+        filteredCategories.forEach(function(cat, index) {
+            var item = $('<button type="button" class="dropdown-item"></button>')
+                .text(cat.name + (cat.code ? ' (' + cat.code + ')' : ''))
+                .attr('data-id', cat.id)
+                .attr('data-index', index);
+            
+            item.on('click', function() {
+                categorySearch.val(cat.name);
+                categoryHidden.val(cat.id);
+                categoryDropdown.hide();
+            });
+            
+            categoryDropdown.append(item);
+        });
+        
+        categoryDropdown.show();
+    }
+    
+    function highlightSelectedItem() {
+        categoryDropdown.find('.dropdown-item').removeClass('active');
+        if (selectedIndex >= 0) {
+            categoryDropdown.find('.dropdown-item[data-index="' + selectedIndex + '"]').addClass('active');
+        }
+    }
+    
+    categorySearch.on('input', filterCategories);
+    
+    categorySearch.on('keydown', function(e) {
+        var items = categoryDropdown.find('.dropdown-item');
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (selectedIndex < items.length - 1) {
+                selectedIndex++;
+                highlightSelectedItem();
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (selectedIndex > 0) {
+                selectedIndex--;
+                highlightSelectedItem();
+            }
+        } else if (e.key === 'Enter' && selectedIndex >= 0) {
+            e.preventDefault();
+            items.eq(selectedIndex).click();
+        }
+    });
+    
+    $(document).on('click', function(e) {
+        if (!categorySearch.is(e.target) && !categoryDropdown.is(e.target) && categoryDropdown.has(e.target).length === 0) {
+            categoryDropdown.hide();
+        }
+    });
+});
+
+// JavaScript للتعامل مع نافذة إضافة الفئة
+const addCategoryModal = document.getElementById('addCategoryModal');
+const addCategoryForm = document.getElementById('addCategoryForm');
+const saveCategoryBtn = document.getElementById('saveCategoryBtn');
+const categoryParentSelect = document.getElementById('categoryParent');
+
+// تحميل قائمة الفئات الأساسية عند فتح النافذة
+if (addCategoryModal) {
+    addCategoryModal.addEventListener('shown.bs.modal', function() {
+        // Load parent categories
+        fetch('{% url "products:category_add_ajax" %}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.categories) {
+                    categoryParentSelect.innerHTML = '<option value="">{% trans "Choose Parent Category (Optional)" %}</option>';
+                    data.categories.forEach(function(category) {
+                        const option = document.createElement('option');
+                        option.value = category.id;
+                        option.textContent = category.name;
+                        categoryParentSelect.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => console.error('{% trans "Error loading categories" %}:', error));
+    });
+}
+
+// معالجة إرسال نموذج الفئة
+if (addCategoryForm) {
+    addCategoryForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(addCategoryForm);
+        const spinner = saveCategoryBtn.querySelector('.spinner-border');
+        const btnText = saveCategoryBtn.querySelector('.btn-text');
+        const icon = saveCategoryBtn.querySelector('.fa-save');
+        
+        // Disable button and show spinner
+        saveCategoryBtn.disabled = true;
+        spinner.classList.remove('d-none');
+        btnText.textContent = '{% trans "Saving..." %}';
+        icon.style.display = 'none';
+
+        fetch('{% url "products:category_add_ajax" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    <i class="fas fa-check-circle me-2"></i>
+                    ${data.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+
+                const container = document.querySelector('.container-fluid');
+                container.insertBefore(alertDiv, container.firstChild);
+
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(addCategoryModal);
+                modal.hide();
+
+                // Reset form
+                addCategoryForm.reset();
+                
+                // Update category search if in product modal
+                if (data.category) {
+                    $('#productCategorySearch').val(data.category.name);
+                    $('#productCategory').val(data.category.id);
+                }
+                
+                // Auto-dismiss after 3 seconds
+                setTimeout(() => alertDiv.remove(), 3000);
+
+            } else {
+                alert('{% trans "Error" %}: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('{% trans "Error" %}:', error);
+            alert('{% trans "An error occurred while saving the category. Please try again." %}');
+        })
+        .finally(() => {
+            // Re-enable button
+            saveCategoryBtn.disabled = false;
+            spinner.classList.add('d-none');
+            btnText.textContent = '{% trans "Save Category" %}';
+            icon.style.display = 'inline';
+        });
+    });
+}
 </script>
 
 {% endblock %}

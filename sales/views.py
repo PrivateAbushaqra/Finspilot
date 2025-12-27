@@ -523,6 +523,13 @@ def sales_invoice_create(request):
 
         context['products_json'] = json.dumps(products_data)
         context['products'] = products  # إضافة المنتجات للـ modal
+        
+        # إضافة الفئات للـ modal
+        try:
+            from products.models import Category
+            context['categories'] = Category.objects.filter(is_active=True).order_by('name')
+        except ImportError:
+            context['categories'] = []
 
         # التحقق من صلاحيات المستخدم
         context['can_edit_invoice_number'] = user.is_superuser or user.is_staff

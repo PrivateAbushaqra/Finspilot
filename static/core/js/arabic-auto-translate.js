@@ -86,7 +86,6 @@ document.addEventListener('DOMContentLoaded', function() {
         'Positions': 'المناصب',
         'Salary': 'الراتب', 
         'Attendance': 'الحضور', 
-        'Leave': 'إجازة',
         'Leave Requests': 'طلبات الإجازة',
         'Overtime': 'العمل الإضافي', 
         'Products': 'المنتجات',
