@@ -337,9 +337,29 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="mb-3">
+                                        <label for="opening_balance_unit_cost" class="form-label">
+                                            <i class="fas fa-coins text-primary me-1"></i>
+                                            {% trans "Opening Balance Unit Cost" %}
+                                            {% if has_movements %}
+                                                <span class="badge bg-warning text-dark ms-2">
+                                                    <i class="fas fa-lock me-1"></i>{% trans "Locked" %}
+                                                </span>
+                                            {% endif %}
+                                        </label>
+                                        <input type="number" class="form-control" id="opening_balance_unit_cost" name="opening_balance_unit_cost" 
+                                               step="0.001" min="0" value="{{ product.opening_balance_unit_cost|default:0|unlocalize }}"
+                                               {% if has_movements %}readonly style="background-color: #f8f9fa; cursor: not-allowed;"{% endif %}>
+                                        <small class="form-text text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            {% trans "Cost per unit for opening balance (exclusive of VAT)" %}
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
                                         <label for="opening_balance_cost" class="form-label">
                                             <i class="fas fa-dollar-sign text-warning me-1"></i>
-                                            {% trans "Opening Balance Cost" %} <span class="text-danger">*</span>
+                                            {% trans "Opening Balance Total Cost" %} <span class="text-danger">*</span>
                                             {% if has_movements %}
                                                 <span class="badge bg-warning text-dark ms-2">
                                                     <i class="fas fa-lock me-1"></i>{% trans "Locked" %}
@@ -348,19 +368,12 @@
                                         </label>
                                         <input type="number" class="form-control" id="opening_balance_cost" name="opening_balance_cost" 
                                                step="0.001" min="0" value="{{ product.opening_balance_cost|unlocalize }}" 
-                                               {% if has_movements %}readonly style="background-color: #f8f9fa; cursor: not-allowed;"{% endif %}
+                                               readonly style="background-color: #f8f9fa; cursor: not-allowed;"
                                                 required>
-                                        {% if has_movements %}
-                                            <small class="form-text text-muted">
-                                                <i class="fas fa-info-circle me-1"></i>
-                                                {% trans "Total cost of the opening balance for FIFO inventory calculation" %}
-                                            </small>
-                                        {% else %}
-                                            <small class="form-text text-muted">
-                                                <i class="fas fa-info-circle me-1"></i>
-                                                {% trans "Total cost of the opening balance for FIFO inventory calculation" %}
-                                            </small>
-                                        {% endif %}
+                                        <small class="form-text text-muted">
+                                            <i class="fas fa-calculator me-1"></i>
+                                            {% trans "Auto-calculated: Quantity × Unit Cost" %}
+                                        </small>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -527,17 +540,15 @@ $(document).ready(function() {
     
     // حساب تكلفة الرصيد الافتتاحي تلقائياً
     function calculateOpeningBalanceCost() {
-        var openingBalance = parseFloat($('#opening_balance_quantity').val()) || 0;
-        var costPrice = parseFloat($('#cost_price').val()) || 0;
+        var openingBalance = parseFloat($('#opening_balance').val()) || 0;
+        var unitCost = parseFloat($('#opening_balance_unit_cost').val()) || 0;
         var costField = $('#opening_balance_cost');
-        var currentCostValue = parseFloat(costField.val()) || 0;
         
-        // لا نعيد الحساب إلا إذا كانت القيمة الحالية فارغة أو صفر (للحفاظ على القيمة المحفوظة في قاعدة البيانات)
-        if (currentCostValue === 0 && openingBalance > 0 && costPrice > 0) {
-            var totalCost = openingBalance * costPrice;
+        if (openingBalance > 0 && unitCost > 0) {
+            var totalCost = openingBalance * unitCost;
             costField.val(totalCost.toFixed(3));
-        } else if (openingBalance === 0) {
-            costField.val(0);
+        } else {
+            costField.val('0');
         }
     }
     
@@ -546,19 +557,10 @@ $(document).ready(function() {
         var costField = $('#opening_balance_cost');
         var hasMovements = $('#has_movements').val() === 'true';
         
-        if (hasMovements) {
-            // إذا كان هناك حركات، الحقل معطل وغير قابل للتعديل
-            costField.prop('disabled', true);
-            costField.prop('readonly', true);
-            costField.css('background-color', '#f8f9fa');
-            costField.css('cursor', 'not-allowed');
-        } else {
-            // إذا لم يكن هناك حركات، الحقل قابل للتعديل دائماً
-            costField.prop('disabled', false);
-            costField.prop('readonly', false);
-            costField.css('background-color', '');
-            costField.css('cursor', '');
-        }
+        // الحقل readonly دائماً لأنه محسوب تلقائياً
+        costField.prop('readonly', true);
+        costField.css('background-color', '#f8f9fa');
+        costField.css('cursor', 'not-allowed');
     }
     
     // تطبيق التحكم عند تحميل الصفحة وعند تغيير وحدة القياس
@@ -587,15 +589,15 @@ $(document).ready(function() {
     
     // ربط الأحداث
     $('#sale_price, #tax_rate').on('input keyup', calculateTax);
-    $('#opening_balance_quantity, #cost_price').on('input change', calculateOpeningBalanceCost);
+    $('#opening_balance, #opening_balance_unit_cost').on('input change', calculateOpeningBalanceCost);
     
     // ربط حدث تغيير الرصيد الافتتاحي لمتطلب المستودع
-    $('#opening_balance_quantity').on('input change', toggleOpeningBalanceWarehouse);
-    $('#opening_balance_quantity').on('input change', toggleOpeningBalanceCostField);
+    $('#opening_balance').on('input change', toggleOpeningBalanceWarehouse);
+    $('#opening_balance').on('input change', toggleOpeningBalanceCostField);
     
     // حساب مبدئي عند تحميل الصفحة
     calculateTax();
-    // لا نستدعي calculateOpeningBalanceCost() عند تحميل الصفحة للحفاظ على القيمة من قاعدة البيانات
+    calculateOpeningBalanceCost();
     
     // تحسين تجربة المستخدم
     $('#tax_rate').on('input', function() {
@@ -631,7 +633,7 @@ $(document).ready(function() {
     });
     
     // تحسين تجربة المستخدم لحقل الرصيد الافتتاحي
-    $('#opening_balance_quantity').on('input', function() {
+    $('#opening_balance').on('input', function() {
         var value = parseFloat($(this).val());
         if (value < 0) {
             $(this).val(0);
@@ -645,10 +647,8 @@ $(document).ready(function() {
     });
     
     $('#opening_balance_cost').on('input', function() {
-        var value = parseFloat($(this).val());
-        if (value < 0) {
-            $(this).val(0);
-        }
+        // منع التعديل اليدوي - الحقل للقراءة فقط
+        calculateOpeningBalanceCost();
     });
     
     // تحسين التحقق من الأسعار

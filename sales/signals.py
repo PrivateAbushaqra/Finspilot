@@ -857,16 +857,31 @@ def create_journal_entry_for_sales_invoice(sender, instance, created, **kwargs):
         
         # التحقق من وجود عناصر ومبلغ
         if invoice.items.count() > 0 and invoice.total_amount > 0:
-            # حذف القيد القديم إذا كان موجوداً
-            existing_entry = JournalEntry.objects.filter(sales_invoice=invoice).first()
-            if existing_entry:
-                existing_entry.delete()
+            # حذف القيود القديمة إذا كانت موجودة
+            existing_sales_entry = JournalEntry.objects.filter(sales_invoice=invoice).first()
+            if existing_sales_entry:
+                existing_sales_entry.delete()
             
-            # إنشاء قيد جديد
-            def _create_entry():
-                JournalService.create_sales_invoice_entry(invoice, invoice.created_by)
+            existing_cogs_entry = JournalEntry.objects.filter(
+                reference_type='sales_invoice_cogs',
+                reference_id=invoice.id
+            ).first()
+            if existing_cogs_entry:
+                existing_cogs_entry.delete()
             
-            db_transaction.on_commit(_create_entry)
+            # إنشاء القيود الجديدة
+            def _create_entries():
+                # قيد الإيراد (المبيعات)
+                sales_entry = JournalService.create_sales_invoice_entry(invoice, invoice.created_by)
+                if sales_entry:
+                    print(f"✅ تم إنشاء قيد المبيعات {sales_entry.entry_number}")
+                
+                # قيد تكلفة البضاعة المباعة (COGS)
+                cogs_entry = JournalService.create_cogs_entry(invoice, invoice.created_by)
+                if cogs_entry:
+                    print(f"✅ تم إنشاء قيد COGS {cogs_entry.entry_number}")
+            
+            db_transaction.on_commit(_create_entries)
     except Exception as e:
         print(f"خطأ في إنشاء القيد المحاسبي لفاتورة المبيعات: {e}")
 

@@ -354,6 +354,16 @@ class ProductCreateView(CanAddProductsMixin, LoginRequiredMixin, View):
         }
         return render(request, self.template_name, context)
     
+    def render_form_with_data(self, request, form_data=None):
+        """إعادة عرض النموذج مع البيانات المدخلة"""
+        context = {
+            'categories': Category.objects.filter(is_active=True).order_by('name'),
+            'warehouses': Warehouse.objects.filter(is_active=True).exclude(code='MAIN'),
+            'products': Product.objects.filter(is_active=True).order_by('name'),
+            'form_data': form_data or {}
+        }
+        return render(request, self.template_name, context)
+    
     def post(self, request, *args, **kwargs):
         try:
             # استلام البيانات من النموذج
@@ -369,7 +379,7 @@ class ProductCreateView(CanAddProductsMixin, LoginRequiredMixin, View):
             wholesale_price = request.POST.get('wholesale_price', '0')
             tax_rate = request.POST.get('tax_rate', '0')
             opening_balance = request.POST.get('opening_balance', '0')
-            opening_balance_cost = request.POST.get('opening_balance_cost', '0')
+            opening_balance_unit_cost = request.POST.get('opening_balance_unit_cost', '0')
             min_stock = request.POST.get('min_stock', '0')
             max_stock = request.POST.get('max_stock', '0')
             description = request.POST.get('description', '').strip()
@@ -386,37 +396,42 @@ class ProductCreateView(CanAddProductsMixin, LoginRequiredMixin, View):
             # التحقق من صحة البيانات
             if not name:
                 messages.error(request, _('Product name is required!'))
-                return self.get(request)
+                return self.render_form_with_data(request, request.POST)
             
             if not sale_price or float(sale_price) <= 0:
                 messages.error(request, _('Sale price is required and must be greater than zero!'))
-                return self.get(request)
+                return self.render_form_with_data(request, request.POST)
+            
+            # التحقق من نسبة الضريبة - مطلوبة حتى لو كانت صفر
+            if tax_rate == '' or tax_rate is None:
+                messages.error(request, _('Tax rate is required! Please specify a tax rate (can be 0).'))
+                return self.render_form_with_data(request, request.POST)
             
             # التحقق من التصنيف
             if not category_id:
                 messages.error(request, _('Category is required!'))
-                return self.get(request)
+                return self.render_form_with_data(request, request.POST)
             
             try:
                 category = Category.objects.get(id=category_id)
             except Category.DoesNotExist:
                 messages.error(request, _('Selected category does not exist!'))
-                return self.get(request)
+                return self.render_form_with_data(request, request.POST)
             
             # التحقق من عدم تكرار رمز المنتج
             if sku and Product.objects.filter(code=sku).exists():
                 messages.error(request, _('Product code already exists!'))
-                return self.get(request)
+                return self.render_form_with_data(request, request.POST)
             
             # التحقق من عدم تكرار الباركود
             if barcode and Product.objects.filter(barcode=barcode).exists():
                 messages.error(request, _('Barcode already exists!'))
-                return self.get(request)
+                return self.render_form_with_data(request, request.POST)
             
             # التحقق من عدم تكرار الرقم التسلسلي
             if serial_number and Product.objects.filter(serial_number=serial_number).exists():
                 messages.error(request, _('Serial number already exists!'))
-                return self.get(request)
+                return self.render_form_with_data(request, request.POST)
             
             # إنشاء رمز تلقائي إذا لم يُدخل
             if not sku:
@@ -436,26 +451,28 @@ class ProductCreateView(CanAddProductsMixin, LoginRequiredMixin, View):
                 wholesale_price = float(wholesale_price) if wholesale_price else 0
                 tax_rate = float(tax_rate) if tax_rate else 0
                 opening_balance = float(opening_balance) if opening_balance else 0
-                opening_balance_cost = float(opening_balance_cost) if opening_balance_cost else 0
+                opening_balance_unit_cost = float(opening_balance_unit_cost) if opening_balance_unit_cost else 0
+                # حساب تكلفة الرصيد الافتتاحي تلقائياً
+                opening_balance_cost = opening_balance * opening_balance_unit_cost
                 
                 # التحقق من صحة نسبة الضريبة
                 if tax_rate < 0 or tax_rate > 100:
                     messages.error(request, _('Tax rate must be between 0 and 100!'))
-                    return self.get(request)
+                    return self.render_form_with_data(request, request.POST)
                 
                 # التحقق من صحة رصيد بداية المدة
                 if opening_balance < 0:
                     messages.error(request, _('Opening balance must be zero or greater!'))
-                    return self.get(request)
+                    return self.render_form_with_data(request, request.POST)
                 
                 # التحقق من تكلفة الرصيد الافتتاحي إذا كان الرصيد أكبر من صفر
                 if opening_balance > 0 and not opening_balance_warehouse_id:
                     messages.error(request, _('Opening balance warehouse is required when there is an opening balance!'))
-                    return self.get(request)
+                    return self.render_form_with_data(request, request.POST)
                 
             except ValueError:
                 messages.error(request, _('Please enter valid prices and tax rate!'))
-                return self.get(request)
+                return self.render_form_with_data(request, request.POST)
             
             # الحصول على مستودع الرصيد الافتتاحي
             opening_balance_warehouse = None
@@ -464,7 +481,7 @@ class ProductCreateView(CanAddProductsMixin, LoginRequiredMixin, View):
                     opening_balance_warehouse = Warehouse.objects.get(id=opening_balance_warehouse_id, is_active=True)
                 except Warehouse.DoesNotExist:
                     messages.error(request, _('Selected opening balance warehouse does not exist!'))
-                    return self.get(request)
+                    return self.render_form_with_data(request, request.POST)
             
             # معالجة رقم التسلسل
             final_sequence_number = None
@@ -475,17 +492,17 @@ class ProductCreateView(CanAddProductsMixin, LoginRequiredMixin, View):
                     # التحقق من الصلاحية - يجب أن يكون المستخدم مسؤول أو لديه صلاحية تعديل رقم التسلسل
                     if not request.user.is_superuser and not request.user.has_perm('products.can_edit_product_sequence_number'):
                         messages.error(request, _('You do not have permission to edit the sequence number!'))
-                        return self.get(request)
+                        return self.render_form_with_data(request, request.POST)
                     
                     # التحقق من أن رقم التسلسل فريد
                     existing_product = Product.objects.filter(sequence_number=final_sequence_number).first()
                     if existing_product:
                         messages.error(request, _(f'Sequence number {final_sequence_number} is already used by product "{existing_product.name}"!'))
-                        return self.get(request)
+                        return self.render_form_with_data(request, request.POST)
                     
                 except ValueError:
                     messages.error(request, _('Invalid sequence number!'))
-                    return self.get(request)
+                    return self.render_form_with_data(request, request.POST)
             
             # معالجة المنتج المرتبط
             linked_product = None
@@ -494,7 +511,7 @@ class ProductCreateView(CanAddProductsMixin, LoginRequiredMixin, View):
                     linked_product = Product.objects.get(id=linked_product_id, is_active=True)
                 except Product.DoesNotExist:
                     messages.error(request, _('Linked product not found!'))
-                    return self.get(request)
+                    return self.render_form_with_data(request, request.POST)
             
             # التحقق من معامل التحويل للبكج
             conversion_factor_value = 0
@@ -503,10 +520,10 @@ class ProductCreateView(CanAddProductsMixin, LoginRequiredMixin, View):
                     conversion_factor_value = float(conversion_factor)
                     if conversion_factor_value <= 0:
                         messages.error(request, _('Conversion factor must be greater than zero for package products!'))
-                        return self.get(request)
+                        return self.render_form_with_data(request, request.POST)
                 except ValueError:
                     messages.error(request, _('Invalid conversion factor!'))
-                    return self.get(request)
+                    return self.render_form_with_data(request, request.POST)
             
             # إنشاء المنتج
             product = Product.objects.create(
@@ -524,6 +541,7 @@ class ProductCreateView(CanAddProductsMixin, LoginRequiredMixin, View):
                 wholesale_price=wholesale_price,  # إضافة سعر الجملة
                 tax_rate=tax_rate,
                 opening_balance_quantity=opening_balance,
+                opening_balance_unit_cost=opening_balance_unit_cost,
                 opening_balance_cost=opening_balance_cost,
                 opening_balance_warehouse=opening_balance_warehouse,
                 is_active=is_active,
@@ -771,6 +789,7 @@ class ProductUpdateView(CanEditProductsMixin, LoginRequiredMixin, View):
             wholesale_price = request.POST.get('wholesale_price', '0')
             tax_rate = request.POST.get('tax_rate', '0')
             opening_balance = request.POST.get('opening_balance_quantity', '0')
+            opening_balance_unit_cost = request.POST.get('opening_balance_unit_cost', '0')
             opening_balance_cost = request.POST.get('opening_balance_cost', '0')
             minimum_quantity = request.POST.get('minimum_quantity', '0')
             maximum_quantity = request.POST.get('maximum_quantity', '0')
@@ -854,6 +873,7 @@ class ProductUpdateView(CanEditProductsMixin, LoginRequiredMixin, View):
                 wholesale_price = float(wholesale_price) if wholesale_price else 0
                 tax_rate = float(tax_rate) if tax_rate else 0
                 opening_balance = float(opening_balance) if opening_balance else 0
+                opening_balance_unit_cost = float(opening_balance_unit_cost) if opening_balance_unit_cost else 0
                 opening_balance_cost = float(opening_balance_cost) if opening_balance_cost else 0
                 
                 minimum_quantity = float(minimum_quantity) if minimum_quantity else 0
@@ -943,6 +963,7 @@ class ProductUpdateView(CanEditProductsMixin, LoginRequiredMixin, View):
             product.wholesale_price = wholesale_price
             product.tax_rate = tax_rate
             product.opening_balance_quantity = opening_balance
+            product.opening_balance_unit_cost = opening_balance_unit_cost
             product.opening_balance_cost = opening_balance_cost
             product.is_active = is_active
             product.opening_balance_warehouse = opening_balance_warehouse

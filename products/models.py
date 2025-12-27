@@ -167,8 +167,12 @@ class Product(models.Model):
                                  validators=[MinValueValidator(0), MaxValueValidator(100)], default=0)
     opening_balance_quantity = models.DecimalField(_('Opening Balance Quantity'), max_digits=10, decimal_places=3, 
                                                  validators=[MinValueValidator(0)], default=0, blank=True)
+    opening_balance_unit_cost = models.DecimalField(_('Opening Balance Unit Cost'), max_digits=15, decimal_places=3, 
+                                                   validators=[MinValueValidator(0)], default=0, blank=True,
+                                                   help_text=_('Cost per unit for opening balance'))
     opening_balance_cost = models.DecimalField(_('Opening Balance Cost'), max_digits=15, decimal_places=3, 
-                                             validators=[MinValueValidator(0)], default=0, blank=True)
+                                             validators=[MinValueValidator(0)], default=0, blank=True,
+                                             help_text=_('Total opening balance cost (auto-calculated)'))
     opening_balance_warehouse = models.ForeignKey('inventory.Warehouse', on_delete=models.SET_NULL, 
                                                 verbose_name=_('Opening Balance Warehouse'), null=True, blank=True)
     

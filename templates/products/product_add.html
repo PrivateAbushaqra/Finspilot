@@ -28,6 +28,12 @@
         position: absolute;
         z-index: 1050;
     }
+    
+    /* تمييز الحقول التي بها أخطاء */
+    .is-invalid {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
 </style>
 {% endblock %}
 
@@ -67,6 +73,17 @@
                 </div>
             </div>
 
+            <!-- عرض رسائل الأخطاء والنجاح -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{% if message.tags == 'error' %}exclamation-triangle{% elif message.tags == 'success' %}check-circle{% else %}info-circle{% endif %} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
             <!-- Form Card -->
             <div class="card">
                 <div class="card-header">
@@ -86,14 +103,14 @@
                                 <div class="mb-3">
                                     <label for="name" class="form-label">{% trans "Product Name" %} <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="name" name="name" autocomplete="off" 
-                                           data-form-type="other" spellcheck="false" required>
+                                           data-form-type="other" spellcheck="false" required value="{{ form_data.name|default:'' }}">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="name_en" class="form-label">{% trans "Name in English" %}</label>
                                     <input type="text" class="form-control" id="name_en" name="name_en" autocomplete="off" 
-                                           data-form-type="other" spellcheck="false">
+                                           data-form-type="other" spellcheck="false" value="{{ form_data.name_en|default:'' }}">
                                 </div>
                             </div>
                         </div>
@@ -103,8 +120,8 @@
                                 <div class="mb-3">
                                     <label for="product_type" class="form-label">{% trans "Product Type" %} <span class="text-danger">*</span></label>
                                     <select class="form-control" id="product_type" name="product_type" required>
-                                        <option value="physical">{% trans "Physical Product" %}</option>
-                                        <option value="service">{% trans "Service" %}</option>
+                                        <option value="physical" {% if form_data.product_type == 'physical' or not form_data.product_type %}selected{% endif %}>{% trans "Physical Product" %}</option>
+                                        <option value="service" {% if form_data.product_type == 'service' %}selected{% endif %}>{% trans "Service" %}</option>
                                     </select>
                                 </div>
                             </div>
@@ -112,7 +129,7 @@
                                 <div class="mb-3">
                                     <label for="sku" class="form-label">{% trans "Product Code (SKU)" %} <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="sku" name="sku" placeholder="{% trans "Example: PROD-001" %}" 
-                                           autocomplete="off" data-form-type="other" spellcheck="false" required>
+                                           autocomplete="off" data-form-type="other" spellcheck="false" required value="{{ form_data.sku|default:'' }}">
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -134,7 +151,7 @@
                                 <div class="mb-3">
                                     <label for="barcode" class="form-label">{% trans "Barcode" %}</label>
                                     <input type="text" class="form-control" id="barcode" name="barcode" 
-                                           autocomplete="off" data-form-type="other" spellcheck="false">
+                                           autocomplete="off" data-form-type="other" spellcheck="false" value="{{ form_data.barcode|default:'' }}">
                                 </div>
                             </div>
                         </div>
@@ -173,7 +190,7 @@
                                         <button type="button" class="btn btn-outline-primary" id="searchCategoryBtn" title="{% trans "Search categories" %}">
                                             <i class="fas fa-search"></i>
                                         </button>
-                                        <input type="hidden" id="category" name="category" required>
+                                        <input type="hidden" id="category" name="category" required value="{{ form_data.category|default:'' }}">
                                         <button type="button" class="btn btn-outline-primary" id="addCategoryBtn" title="{% trans "Add New Category" %}" 
                                                 data-has-permission="{% if user.is_superuser or user.user_type == 'superadmin' or perms.products.can_add_categories_inline %}true{% else %}false{% endif %}">
                                             <i class="fas fa-plus"></i>
@@ -232,13 +249,13 @@
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="sale_price" class="form-label">{% trans "Selling Price" %} <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control" id="sale_price" name="sale_price" step="0.001" min="0" required>
+                                    <input type="number" class="form-control" id="sale_price" name="sale_price" step="0.001" min="0" required value="{{ form_data.sale_price|default:'' }}">
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="wholesale_price" class="form-label">{% trans "Wholesale Price" %}</label>
-                                    <input type="number" class="form-control" id="wholesale_price" name="wholesale_price" step="0.001" min="0">
+                                    <input type="number" class="form-control" id="wholesale_price" name="wholesale_price" step="0.001" min="0" value="{{ form_data.wholesale_price|default:'' }}">
                                 </div>
                             </div>
                         </div>
@@ -252,7 +269,7 @@
                                     </label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="tax_rate" name="tax_rate" 
-                                               step="0.01" min="0" max="100" value="0" 
+                                               step="0.01" min="0" max="100" value="{{ form_data.tax_rate|default:'' }}" 
                                                placeholder="{% trans "Example: 15" %}" required>
                                         <span class="input-group-text">%</span>
                                     </div>
@@ -365,13 +382,27 @@
                                     <div class="mb-3">
                                         <label for="opening_balance" class="form-label">
                                             <i class="fas fa-balance-scale text-success me-1"></i>
-                                            {% trans "Opening Balance" %}
+                                            {% trans "Opening Balance Quantity" %}
                                         </label>
                                         <input type="number" class="form-control" id="opening_balance" name="opening_balance" 
-                                               step="0.001" min="0" value="0">
+                                               step="0.001" min="0" value="{{ form_data.opening_balance|default:'0' }}">
                                         <small class="form-text text-muted">
                                             <i class="fas fa-info-circle me-1"></i>
-                                            {% trans "Initial stock when starting to use the system" %}
+                                            {% trans "Initial stock quantity when starting to use the system" %}
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="opening_balance_unit_cost" class="form-label">
+                                            <i class="fas fa-coins text-primary me-1"></i>
+                                            {% trans "Opening Balance Unit Cost" %}
+                                        </label>
+                                        <input type="number" class="form-control" id="opening_balance_unit_cost" name="opening_balance_unit_cost" 
+                                               step="0.001" min="0" value="{{ form_data.opening_balance_unit_cost|default:'0' }}">
+                                        <small class="form-text text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            {% trans "Cost per unit for opening balance (exclusive of VAT)" %}
                                         </small>
                                     </div>
                                 </div>
@@ -379,16 +410,18 @@
                                     <div class="mb-3">
                                         <label for="opening_balance_cost" class="form-label">
                                             <i class="fas fa-dollar-sign text-warning me-1"></i>
-                                            {% trans "Opening Balance Cost" %} <span class="text-danger">*</span>
+                                            {% trans "Opening Balance Total Cost" %} <span class="text-danger">*</span>
                                         </label>
                                         <input type="number" class="form-control" id="opening_balance_cost" name="opening_balance_cost" 
-                                               step="0.001" min="0" value="0" required>
+                                               step="0.001" min="0" value="0" required disabled>
                                         <small class="form-text text-muted">
-                                            <i class="fas fa-info-circle me-1"></i>
-                                            {% trans "Total cost of the opening balance for FIFO inventory calculation" %}
+                                            <i class="fas fa-calculator me-1"></i>
+                                            {% trans "Auto-calculated: Quantity × Unit Cost" %}
                                         </small>
                                     </div>
                                 </div>
+                            </div>
+                            <div class="row">
                                 <div class="col-md-4">
                                     <div class="mb-3">
                                         <label for="opening_balance_warehouse" class="form-label">
@@ -398,7 +431,7 @@
                                         <select class="form-control" id="opening_balance_warehouse" name="opening_balance_warehouse">
                                             <option value="">{% trans "Select Warehouse" %}</option>
                                             {% for warehouse in warehouses %}
-                                            <option value="{{ warehouse.id }}">{{ warehouse.name }}</option>
+                                            <option value="{{ warehouse.id }}" {% if form_data.opening_balance_warehouse == warehouse.id|stringformat:"s" %}selected{% endif %}>{{ warehouse.name }}</option>
                                             {% endfor %}
                                         </select>
                                         <small class="form-text text-muted">
@@ -427,7 +460,7 @@
                                 <div class="mb-3">
                                     <label for="description" class="form-label">{% trans "Description" %}</label>
                                     <textarea class="form-control" id="description" name="description" rows="4" 
-                                              autocomplete="off" data-form-type="other" spellcheck="false"></textarea>
+                                              autocomplete="off" data-form-type="other" spellcheck="false">{{ form_data.description|default:'' }}</textarea>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -590,14 +623,14 @@ $(document).ready(function() {
     // Calculate opening balance cost automatically
     function calculateOpeningBalanceCost() {
         var openingBalance = parseFloat($('#opening_balance').val()) || 0;
-        var costPrice = parseFloat($('#cost_price').val()) || 0;
+        var unitCost = parseFloat($('#opening_balance_unit_cost').val()) || 0;
         var costField = $('#opening_balance_cost');
         
-        if (openingBalance > 0 && costPrice > 0) {
-            var totalCost = openingBalance * costPrice;
+        if (openingBalance > 0 && unitCost > 0) {
+            var totalCost = openingBalance * unitCost;
             costField.val(totalCost.toFixed(3));
-        } else if (openingBalance === 0) {
-            costField.val(0);
+        } else {
+            costField.val('0');
         }
     }
     
@@ -626,8 +659,8 @@ $(document).ready(function() {
         }
     });
     
-    // Bind opening balance and cost price change events
-    $('#opening_balance, #cost_price').on('input change', calculateOpeningBalanceCost);
+    // Bind opening balance and unit cost change events
+    $('#opening_balance, #opening_balance_unit_cost').on('input change', calculateOpeningBalanceCost);
     
     // Bind opening balance change event for warehouse requirement
     $('#opening_balance').on('input change', toggleOpeningBalanceWarehouse);
@@ -797,6 +830,16 @@ $(document).ready(function() {
 
     // Variable to track currently selected index in dropdown
     var selectedIndex = -1;
+    
+    // إذا كانت هناك قيمة محفوظة للفئة، عرضها
+    {% if form_data.category %}
+        var savedCategoryId = '{{ form_data.category }}';
+        var savedCategory = categories.find(function(cat) { return cat.id == savedCategoryId; });
+        if (savedCategory) {
+            categorySearch.val(savedCategory.name);
+            categoryHidden.val(savedCategory.id);
+        }
+    {% endif %}
 
     // Function to filter and show categories
     function filterCategories() {
@@ -1166,6 +1209,32 @@ function filterCategoriesInModal() {
     
     // Initialize unit type visibility
     $('#unit_type').trigger('change');
+    
+    // تمييز الحقول المطلوبة عند وجود أخطاء
+    $(document).ready(function() {
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == 'error' %}
+                    // التركيز على حقل التصنيف إذا كانت الرسالة عن التصنيف
+                    {% if 'Category' in message.message or 'التصنيف' in message.message or 'الفئة' in message.message %}
+                        $('#categorySearch').addClass('is-invalid');
+                        $('#categorySearch').focus();
+                        // التمرير إلى الحقل
+                        $('html, body').animate({
+                            scrollTop: $('#categorySearch').offset().top - 100
+                        }, 500);
+                    {% elif 'Tax rate' in message.message or 'نسبة الضريبة' in message.message %}
+                        $('#tax_rate').addClass('is-invalid');
+                        $('#tax_rate').focus();
+                        // التمرير إلى الحقل
+                        $('html, body').animate({
+                            scrollTop: $('#tax_rate').offset().top - 100
+                        }, 500);
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    });
 </script>
 
 <!-- Category Search Modal -->

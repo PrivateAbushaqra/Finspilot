@@ -292,6 +292,109 @@
             min-height: 100vh;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            position: fixed;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        /* Sidebar auto-hide styles */
+        .sidebar.sidebar-hidden {
+            margin-left: -250px;
+        }
+        
+        html[dir="rtl"] .sidebar.sidebar-hidden {
+            margin-right: -250px;
+            margin-left: 0;
+        }
+        
+        /* Sidebar toggle trigger strip */
+        .sidebar-toggle-strip {
+            position: fixed;
+            top: 0;
+            width: 10px;
+            height: 100vh;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+            cursor: pointer;
+            z-index: 999;
+            transition: all 0.3s ease;
+            left: 0;
+        }
+        
+        html[dir="rtl"] .sidebar-toggle-strip {
+            left: auto;
+            right: 0;
+        }
+        
+        .sidebar-toggle-strip:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.6) 0%, rgba(118, 75, 162, 0.6) 100%);
+            width: 15px;
+        }
+        
+        /* Pin button in sidebar */
+        .sidebar-pin-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 35px;
+            height: 35px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 15px;
+            z-index: 1001;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        html[dir="rtl"] .sidebar-pin-btn {
+            right: auto;
+            left: 10px;
+        }
+        
+        .sidebar-pin-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            color: #fff;
+            transform: scale(1.15) rotate(5deg);
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .sidebar-pin-btn.pinned {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.8);
+            transform: rotate(45deg);
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.5);
+        }
+        
+        .sidebar-pin-btn.pinned:hover {
+            transform: rotate(45deg) scale(1.15);
+            background: linear-gradient(135deg, #20c997 0%, #28a745 100%);
+        }
+        
+        .sidebar-pin-btn i {
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar-pin-btn.pinned i {
+            transform: rotate(-45deg);
+        }
+        
+        /* Adjust main content when sidebar is hidden */
+        main.content-expanded {
+            margin-left: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+        
+        html[dir="rtl"] main.content-expanded {
+            margin-right: 0 !important;
         }
         
         .sidebar .nav-link {
@@ -641,7 +744,15 @@
             {# إظهار القائمة الجانبية للمستخدمين المصادق عليهم، ما عدا pos_user الذين ليسوا في مجموعات #}
             {% should_show_sidebar user as show_sidebar %}
             {% if show_sidebar %}
+            <!-- Sidebar Toggle Strip -->
+            <div class="sidebar-toggle-strip" id="sidebarToggleStrip"></div>
+            
             <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <!-- Pin Button -->
+                <div class="sidebar-pin-btn" id="sidebarPinBtn" title="{% trans 'Pin/Unpin Sidebar' %}">
+                    <i class="fas fa-thumbtack"></i>
+                </div>
+                
                 <div class="position-sticky pt-3">
                     <ul class="nav flex-column">
 
@@ -3743,6 +3854,98 @@
     <!-- Responsive JavaScript -->
     <script src="{% static 'core/js/responsive.js' %}"></script>
     <script src="{% static 'core/js/table-responsive.js' %}"></script>
+    
+    <!-- Sidebar Auto-Hide JavaScript -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.getElementById('sidebar');
+        const toggleStrip = document.getElementById('sidebarToggleStrip');
+        const pinBtn = document.getElementById('sidebarPinBtn');
+        const mainContent = document.querySelector('main');
+        
+        if (!sidebar || !toggleStrip || !pinBtn) {
+            return; // Exit if elements don't exist
+        }
+        
+        // Load pin state from localStorage
+        let isPinned = localStorage.getItem('sidebarPinned') === 'true';
+        
+        // Apply initial state
+        function applyPinnedState() {
+            if (isPinned) {
+                pinBtn.classList.add('pinned');
+                sidebar.classList.remove('sidebar-hidden');
+                if (mainContent) {
+                    mainContent.classList.remove('content-expanded');
+                }
+            } else {
+                pinBtn.classList.remove('pinned');
+            }
+        }
+        
+        applyPinnedState();
+        
+        // Hide sidebar after initial load if not pinned
+        setTimeout(function() {
+            if (!isPinned) {
+                sidebar.classList.add('sidebar-hidden');
+                if (mainContent) {
+                    mainContent.classList.add('content-expanded');
+                }
+                toggleStrip.style.display = 'block';
+            }
+        }, 2000); // Hide after 2 seconds
+        
+        // Show sidebar on hover over toggle strip
+        toggleStrip.addEventListener('mouseenter', function() {
+            if (!isPinned) {
+                sidebar.classList.remove('sidebar-hidden');
+                if (mainContent) {
+                    mainContent.classList.remove('content-expanded');
+                }
+            }
+        });
+        
+        // Show sidebar on hover over sidebar
+        sidebar.addEventListener('mouseenter', function() {
+            sidebar.classList.remove('sidebar-hidden');
+            if (mainContent) {
+                mainContent.classList.remove('content-expanded');
+            }
+        });
+        
+        // Hide sidebar on mouse leave if not pinned
+        sidebar.addEventListener('mouseleave', function() {
+            if (!isPinned) {
+                sidebar.classList.add('sidebar-hidden');
+                if (mainContent) {
+                    mainContent.classList.add('content-expanded');
+                }
+            }
+        });
+        
+        // Pin/Unpin toggle
+        pinBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            isPinned = !isPinned;
+            localStorage.setItem('sidebarPinned', isPinned);
+            
+            if (isPinned) {
+                pinBtn.classList.add('pinned');
+                sidebar.classList.remove('sidebar-hidden');
+                if (mainContent) {
+                    mainContent.classList.remove('content-expanded');
+                }
+                console.log('القائمة الجانبية مثبتة');
+            } else {
+                pinBtn.classList.remove('pinned');
+                console.log('تم إلغاء تثبيت القائمة الجانبية');
+            }
+        });
+        
+        console.log('تم تحميل نظام الإخفاء التلقائي للقائمة الجانبية');
+    });
+    </script>
     
     <!-- Language Switching Enhancement -->
     <script>
