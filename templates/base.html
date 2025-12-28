@@ -290,45 +290,77 @@
         
         .sidebar {
             min-height: 100vh;
+            height: 100vh;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             box-shadow: 2px 0 5px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
             position: fixed;
             top: 0;
             z-index: 1000;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
         
-        /* Sidebar auto-hide styles */
+        /* Sidebar width */
+        .sidebar {
+            width: 250px;
+        }
+        
+        /* Sidebar auto-hide styles - إخفاء كامل */
         .sidebar.sidebar-hidden {
-            margin-left: -250px;
+            transform: translateX(-100%);
         }
         
         html[dir="rtl"] .sidebar.sidebar-hidden {
-            margin-right: -250px;
-            margin-left: 0;
+            transform: translateX(100%);
         }
         
-        /* Sidebar toggle trigger strip */
+        /* Sidebar toggle trigger strip - زر أكثر وضوحاً */
         .sidebar-toggle-strip {
             position: fixed;
-            top: 0;
-            width: 10px;
-            height: 100vh;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 80px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.85) 0%, rgba(118, 75, 162, 0.85) 100%);
             cursor: pointer;
             z-index: 999;
             transition: all 0.3s ease;
             left: 0;
+            border-radius: 0 15px 15px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+        }
+        
+        .sidebar-toggle-strip.visible {
+            opacity: 1;
         }
         
         html[dir="rtl"] .sidebar-toggle-strip {
             left: auto;
             right: 0;
+            border-radius: 15px 0 0 15px;
         }
         
         .sidebar-toggle-strip:hover {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.6) 0%, rgba(118, 75, 162, 0.6) 100%);
-            width: 15px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%);
+            width: 50px;
+            box-shadow: 3px 0 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .sidebar-toggle-strip::before {
+            content: '\f0c9';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            color: white;
+            font-size: 20px;
+        }
+        
+        html[dir="rtl"] .sidebar-toggle-strip::before {
+            content: '\f0c9';
         }
         
         /* Pin button in sidebar */
@@ -355,6 +387,25 @@
         html[dir="rtl"] .sidebar-pin-btn {
             right: auto;
             left: 10px;
+        }
+        
+        /* Main content expansion */
+        .main-content {
+            transition: all 0.3s ease;
+            margin-left: 250px;
+        }
+        
+        html[dir="rtl"] .main-content {
+            margin-left: 0;
+            margin-right: 250px;
+        }
+        
+        .main-content.content-expanded {
+            margin-left: 0 !important;
+        }
+        
+        html[dir="rtl"] .main-content.content-expanded {
+            margin-right: 0 !important;
         }
         
         .sidebar-pin-btn:hover {
@@ -3875,11 +3926,13 @@
             if (isPinned) {
                 pinBtn.classList.add('pinned');
                 sidebar.classList.remove('sidebar-hidden');
+                toggleStrip.classList.remove('visible');
                 if (mainContent) {
                     mainContent.classList.remove('content-expanded');
                 }
             } else {
                 pinBtn.classList.remove('pinned');
+                toggleStrip.classList.add('visible');
             }
         }
         
@@ -3889,10 +3942,10 @@
         setTimeout(function() {
             if (!isPinned) {
                 sidebar.classList.add('sidebar-hidden');
+                toggleStrip.classList.add('visible');
                 if (mainContent) {
                     mainContent.classList.add('content-expanded');
                 }
-                toggleStrip.style.display = 'block';
             }
         }, 2000); // Hide after 2 seconds
         
@@ -3900,6 +3953,7 @@
         toggleStrip.addEventListener('mouseenter', function() {
             if (!isPinned) {
                 sidebar.classList.remove('sidebar-hidden');
+                toggleStrip.classList.remove('visible');
                 if (mainContent) {
                     mainContent.classList.remove('content-expanded');
                 }
@@ -3909,6 +3963,9 @@
         // Show sidebar on hover over sidebar
         sidebar.addEventListener('mouseenter', function() {
             sidebar.classList.remove('sidebar-hidden');
+            if (!isPinned) {
+                toggleStrip.classList.remove('visible');
+            }
             if (mainContent) {
                 mainContent.classList.remove('content-expanded');
             }
@@ -3918,6 +3975,7 @@
         sidebar.addEventListener('mouseleave', function() {
             if (!isPinned) {
                 sidebar.classList.add('sidebar-hidden');
+                toggleStrip.classList.add('visible');
                 if (mainContent) {
                     mainContent.classList.add('content-expanded');
                 }
@@ -3933,12 +3991,18 @@
             if (isPinned) {
                 pinBtn.classList.add('pinned');
                 sidebar.classList.remove('sidebar-hidden');
+                toggleStrip.classList.remove('visible');
                 if (mainContent) {
                     mainContent.classList.remove('content-expanded');
                 }
                 console.log('القائمة الجانبية مثبتة');
             } else {
                 pinBtn.classList.remove('pinned');
+                sidebar.classList.add('sidebar-hidden');
+                toggleStrip.classList.add('visible');
+                if (mainContent) {
+                    mainContent.classList.add('content-expanded');
+                }
                 console.log('تم إلغاء تثبيت القائمة الجانبية');
             }
         });
