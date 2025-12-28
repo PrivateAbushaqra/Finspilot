@@ -416,6 +416,14 @@
         html[dir="rtl"] .main-content.with-sidebar-gap {
             margin-right: 30px !important;
         }
+
+        /* Mobile: always use full width */
+        @media (max-width: 768px) {
+            .main-content {
+                margin: 0 !important;
+                padding: 0 12px !important;
+            }
+        }
         
         .sidebar-pin-btn:hover {
             background: rgba(255, 255, 255, 0.25);
@@ -3938,10 +3946,15 @@
                 toggleStrip.classList.remove('visible');
                 if (mainContent) {
                     mainContent.classList.remove('content-expanded');
+                    mainContent.classList.add('with-sidebar-gap');
                 }
             } else {
                 pinBtn.classList.remove('pinned');
                 toggleStrip.classList.add('visible');
+                if (mainContent) {
+                    mainContent.classList.add('content-expanded');
+                    mainContent.classList.remove('with-sidebar-gap');
+                }
             }
         }
         
@@ -3954,6 +3967,7 @@
                 toggleStrip.classList.add('visible');
                 if (mainContent) {
                     mainContent.classList.add('content-expanded');
+                    mainContent.classList.remove('with-sidebar-gap');
                 }
             }
         }, 2000); // Hide after 2 seconds
@@ -3965,6 +3979,7 @@
                 toggleStrip.classList.remove('visible');
                 if (mainContent) {
                     mainContent.classList.remove('content-expanded');
+                    mainContent.classList.add('with-sidebar-gap');
                 }
             }
         });
@@ -3977,6 +3992,7 @@
             }
             if (mainContent) {
                 mainContent.classList.remove('content-expanded');
+                mainContent.classList.add('with-sidebar-gap');
             }
         });
         
@@ -3987,6 +4003,7 @@
                 toggleStrip.classList.add('visible');
                 if (mainContent) {
                     mainContent.classList.add('content-expanded');
+                    mainContent.classList.remove('with-sidebar-gap');
                 }
             }
         });
@@ -4003,6 +4020,7 @@
                 toggleStrip.classList.remove('visible');
                 if (mainContent) {
                     mainContent.classList.remove('content-expanded');
+                    mainContent.classList.add('with-sidebar-gap');
                 }
                 console.log('القائمة الجانبية مثبتة');
             } else {
@@ -4011,6 +4029,7 @@
                 toggleStrip.classList.add('visible');
                 if (mainContent) {
                     mainContent.classList.add('content-expanded');
+                    mainContent.classList.remove('with-sidebar-gap');
                 }
                 console.log('تم إلغاء تثبيت القائمة الجانبية');
             }
