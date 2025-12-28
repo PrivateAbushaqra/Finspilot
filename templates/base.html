@@ -389,23 +389,32 @@
             left: 10px;
         }
         
-        /* Main content expansion */
+        /* Main content alignment */
+        /* When sidebar is visible, leave a small gap from edge; when hidden, take full width */
         .main-content {
             transition: all 0.3s ease;
-            margin-left: 250px;
+            margin-left: 20px; /* small gap when sidebar visible */
         }
-        
+
+        /* RTL: small gap on the right when sidebar visible */
         html[dir="rtl"] .main-content {
             margin-left: 0;
-            margin-right: 250px;
+            margin-right: 20px;
         }
-        
+
+        /* When sidebar is hidden/expanded content, occupy full width */
         .main-content.content-expanded {
             margin-left: 0 !important;
-        }
-        
-        html[dir="rtl"] .main-content.content-expanded {
             margin-right: 0 !important;
+        }
+
+        /* If you need a slightly larger gap when sidebar is pinned/visible, use this utility */
+        .main-content.with-sidebar-gap {
+            margin-left: 30px !important;
+        }
+
+        html[dir="rtl"] .main-content.with-sidebar-gap {
+            margin-right: 30px !important;
         }
         
         .sidebar-pin-btn:hover {
