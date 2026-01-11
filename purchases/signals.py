@@ -719,8 +719,12 @@ def update_inventory_on_purchase_return_item(sender, instance, created, **kwargs
             product=instance.product
         ).delete()
         
-        # إنشاء حركة مخزون صادرة (إرجاع)
+        # إنشاء حركة مخزون صادرة (إرجاع) باستخدام FIFO
         if instance.product.product_type == 'physical':
+            # حساب التكلفة باستخدام FIFO
+            from inventory.models import get_product_fifo_cost
+            fifo_cost = get_product_fifo_cost(instance.product, warehouse, instance.returned_quantity, return_invoice.date)
+            
             InventoryMovement.objects.create(
                 date=return_invoice.date,
                 product=instance.product,
@@ -729,7 +733,7 @@ def update_inventory_on_purchase_return_item(sender, instance, created, **kwargs
                 reference_type='purchase_return',
                 reference_id=return_invoice.id,
                 quantity=instance.returned_quantity,
-                unit_cost=instance.unit_price,
+                unit_cost=fifo_cost,  # استخدام FIFO بدلاً من سعر الفاتورة
                 notes=f'مردود مشتريات - رقم {return_invoice.return_number}',
                 created_by=return_invoice.created_by
             )

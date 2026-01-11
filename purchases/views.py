@@ -483,8 +483,12 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
             date = request.POST.get('date', '').strip()  # تنظيف التاريخ
             supplier_id = request.POST.get('supplier')
             warehouse_id = request.POST.get('warehouse')
-            payment_type = request.POST.get('payment_type')
             payment_method = request.POST.get('payment_method', '').strip()
+            
+            # استنتاج payment_type من payment_method
+            # إذا كانت طريقة الدفع "آجل"، فإن النوع "آجل"، وإلا فهو "نقدي"
+            payment_type = 'credit' if payment_method == 'credit' else 'cash'
+            
             cashbox_id = request.POST.get('cashbox')
             bank_account_id = request.POST.get('bank_account')
             check_number = request.POST.get('check_number', '').strip()
@@ -510,7 +514,7 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
             }
             
             # التحقق من صحة البيانات
-            if not all([supplier_invoice_number, date, supplier_id, warehouse_id, payment_type]):
+            if not all([supplier_invoice_number, date, supplier_id, warehouse_id, payment_method]):
                 # سجل محاولة فاشلة في سجل النشاط لتتبع أخطاء الإدخال
                 try:
                     from core.signals import log_user_activity
@@ -1482,24 +1486,10 @@ class PurchaseReturnCreateView(LoginRequiredMixin, CreateView):
     
     def create_inventory_movements(self):
         """إنشاء حركات المخزون للمردود (طرح)"""
-        for item in self.object.items.all():
-            # استخدام مستودع الفاتورة الأصلية أو المستودع الافتراضي
-            warehouse = self.object.original_invoice.warehouse if self.object.original_invoice.warehouse else Warehouse.objects.first()
-            if warehouse:
-                InventoryMovement.objects.create(
-                    movement_number=f"RTN-{self.object.return_number}-{item.id}",
-                    date=self.object.date,
-                    product=item.product,
-                    warehouse=warehouse,
-                    movement_type='out',  # طرح من المخزون
-                    quantity=item.returned_quantity,
-                    unit_cost=item.unit_price,
-                    total_cost=item.returned_quantity * item.unit_price,
-                    reference_type='purchase_return',
-                    reference_id=self.object.id,
-                    notes=f'مردود مشتريات رقم {self.object.return_number}',
-                    created_by=self.request.user
-                )
+        # 🔧 تم تعطيل هذه الوظيفة لتجنب التكرار
+        # حركات المخزون تُنشأ تلقائياً عبر السيجنال update_inventory_on_purchase_return_item
+        # في purchases/signals.py عند حفظ PurchaseReturnItem
+        pass
 
 
 class PurchaseReturnDetailView(LoginRequiredMixin, DetailView):

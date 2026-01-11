@@ -9,7 +9,7 @@ class JournalService:
     """خدمة إدارة القيود المحاسبية"""
     
     @staticmethod
-    def create_journal_entry(entry_date, description, lines_data, user=None, reference_id=None, reference_type=None, purchase_invoice=None, sales_invoice=None, sales_return=None):
+    def create_journal_entry(entry_date, description, lines_data, user=None, reference_id=None, reference_type=None, purchase_invoice=None, sales_invoice=None, sales_return=None, purchase_return=None):
         """
         إنشاء قيد محاسبي جديد
         
@@ -23,6 +23,7 @@ class JournalService:
             purchase_invoice: فاتورة المشتريات المرتبطة
             sales_invoice: فاتورة المبيعات المرتبطة
             sales_return: مردود المبيعات المرتبط
+            purchase_return: مردود المشتريات المرتبط
         
         Returns:
             JournalEntry: القيد المحاسبي المنشأ
@@ -67,6 +68,7 @@ class JournalService:
                 purchase_invoice=purchase_invoice,
                 sales_invoice=sales_invoice,
                 sales_return=sales_return,
+                purchase_return=purchase_return,
             )
             
             # إضافة reference_type إذا كان موجوداً
@@ -560,7 +562,8 @@ class JournalService:
                 reference_id=purchase_return.id,
                 description=f'قيد مردود المشتريات رقم {purchase_return.return_number}',
                 lines_data=lines_data,
-                user=user
+                user=user,
+                purchase_return=purchase_return
             )
             
         except Exception as e:

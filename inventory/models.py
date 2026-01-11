@@ -41,6 +41,112 @@ def get_product_average_cost(product, warehouse=None):
     return product.cost_price if hasattr(product, 'cost_price') else Decimal('0')
 
 
+def get_product_fifo_cost(product, warehouse, quantity_to_consume, movement_date=None, exclude_movement_id=None):
+    """
+    حساب تكلفة المنتج باستخدام طريقة FIFO (الوارد أولاً يخرج أولاً)
+    
+    هذه الدالة تحسب تكلفة الوحدة بناءً على الدفعات المتبقية في المخزون
+    باستخدام منهجية FIFO (الأقدم يخرج أولاً)
+    
+    Args:
+        product: المنتج
+        warehouse: المستودع
+        quantity_to_consume: الكمية المراد استهلاكها (لحساب المتوسط)
+        movement_date: تاريخ الحركة (لتجاهل الحركات اللاحقة)
+        exclude_movement_id: معرّف حركة معينة لاستبعادها من الحساب (مفيد عند إعادة الحساب)
+    
+    Returns:
+        Decimal: تكلفة الوحدة بناءً على FIFO
+    """
+    from inventory.models import InventoryMovement
+    from datetime import datetime
+    
+    if quantity_to_consume <= 0:
+        quantity_to_consume = Decimal('1')
+    
+    # البحث عن حركات الدخول (المشتريات) مرتبة حسب التاريخ (الأقدم أولاً)
+    query = Q(product=product, movement_type='in', unit_cost__gt=0)
+    
+    if warehouse is not None:
+        query &= Q(warehouse=warehouse)
+    
+    if movement_date:
+        query &= Q(date__lte=movement_date)
+    
+    if exclude_movement_id:
+        query &= ~Q(id=exclude_movement_id)
+    
+    in_movements = InventoryMovement.objects.filter(query).order_by('date', 'id')
+    
+    if not in_movements.exists():
+        return product.cost_price if hasattr(product, 'cost_price') else Decimal('0')
+    
+    # البحث عن حركات الخروج
+    out_query = Q(product=product, movement_type='out')
+    
+    if warehouse is not None:
+        out_query &= Q(warehouse=warehouse)
+    
+    if movement_date:
+        out_query &= Q(date__lte=movement_date)
+    
+    if exclude_movement_id:
+        out_query &= ~Q(id=exclude_movement_id)
+    
+    out_movements = InventoryMovement.objects.filter(out_query).order_by('date', 'id')
+    
+    # حساب الكميات المتبقية من كل دفعة دخول باستخدام FIFO
+    batches = []  # قائمة الدفعات المتبقية: [(quantity, unit_cost), ...]
+    
+    for in_movement in in_movements:
+        batches.append({
+            'quantity': in_movement.quantity,
+            'unit_cost': in_movement.unit_cost,
+            'date': in_movement.date,
+            'id': in_movement.id
+        })
+    
+    # طرح حركات الخروج من الدفعات حسب FIFO (الأقدم أولاً)
+    for out_movement in out_movements:
+        remaining_out = out_movement.quantity
+        
+        for batch in batches:
+            if remaining_out <= 0:
+                break
+            
+            if batch['quantity'] > 0:
+                consumed = min(batch['quantity'], remaining_out)
+                batch['quantity'] -= consumed
+                remaining_out -= consumed
+    
+    # إزالة الدفعات الفارغة
+    batches = [b for b in batches if b['quantity'] > 0]
+    
+    if not batches:
+        # إذا لم يكن هناك دفعات متبقية، استخدم آخر سعر شراء
+        return in_movements.last().unit_cost
+    
+    # حساب التكلفة من الدفعات المتبقية حسب FIFO
+    total_cost = Decimal('0')
+    remaining_to_cost = quantity_to_consume
+    
+    for batch in batches:
+        if remaining_to_cost <= 0:
+            break
+        
+        qty_from_batch = min(remaining_to_cost, batch['quantity'])
+        total_cost += qty_from_batch * batch['unit_cost']
+        remaining_to_cost -= qty_from_batch
+    
+    # إذا لم تكفِ الدفعات المتبقية، استخدم آخر سعر من آخر دفعة
+    if remaining_to_cost > 0:
+        last_batch = batches[-1]
+        total_cost += remaining_to_cost * last_batch['unit_cost']
+    
+    # إرجاع متوسط تكلفة الوحدة
+    return (total_cost / quantity_to_consume).quantize(Decimal('0.001'))
+
+
 class Warehouse(models.Model):
     """المستودع"""
     name = models.CharField(_('Warehouse Name'), max_length=100)

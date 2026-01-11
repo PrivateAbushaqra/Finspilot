@@ -195,20 +195,10 @@
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label"><i class="fas fa-receipt me-1"></i>
-                                         {% trans "Supplier Invoice Number" %} <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="supplier_invoice_number" value="{{ form_data.supplier_invoice_number|default:'' }}" required>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
                                     <label class="form-label"><i class="fas fa-calendar me-1"></i> {% trans "Date" %} <span class="text-danger">*</span></label>
                                     <input type="date" class="form-control" name="date" value="{% if form_data.date %}{{ form_data.date }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}" required>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <div class="row mb-4">
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">
@@ -237,6 +227,9 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                        
+                        <div class="row mb-4">
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label"><i class="fas fa-percentage me-1"></i> {% trans "Tax Settings" %}</label>
@@ -253,10 +246,6 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <!-- {% trans "Warehouse Row" %} -->
-                        <div class="row mb-4">
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label"><i class="fas fa-warehouse me-1"></i> {% trans "Warehouse" %} <span class="required-field"> <span class="text-danger">*</span></span></label>
@@ -277,6 +266,9 @@
                                     <div class="form-text">{% trans "Select the warehouse where products will be stored." %}</div>
                                 </div>
                             </div>
+                        </div>
+                        
+                        <div class="row mb-4">
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label"><i class="fas fa-money-bill-wave me-1"></i> {% trans "Payment Method" %} <span class="text-danger">*</span></label>
@@ -1005,17 +997,25 @@ document.getElementById('productSearch').addEventListener('input', function() {
 document.getElementById('invoiceForm').addEventListener('submit', function(e) {
     // التحقق من المورد
     const supplierSelect = document.getElementById('supplierSelect');
+    const supplierSearch = document.getElementById('supplier_search');
+    
     if (!supplierSelect || !supplierSelect.value) {
         e.preventDefault();
-        alert('{% trans "يرجى اختيار المورد" %}');
+        // تسليط الضوء على حقل البحث
+        if (supplierSearch) {
+            supplierSearch.focus();
+            supplierSearch.classList.add('is-invalid');
+            setTimeout(() => supplierSearch.classList.remove('is-invalid'), 3000);
+        }
+        alert('يرجى اختيار المورد من القائمة المنسدلة بعد البحث عنه');
         return false;
     }
     
     // التحقق من طريقة الدفع
-    const paymentTypeSelect = document.getElementById('id_payment_type');
-    if (!paymentTypeSelect || !paymentTypeSelect.value) {
+    const paymentMethodSelect = document.getElementById('id_payment_method');
+    if (!paymentMethodSelect || !paymentMethodSelect.value) {
         e.preventDefault();
-        alert('{% trans "يرجى اختيار طريقة الدفع" %}');
+        alert('يرجى اختيار طريقة الدفع');
         return false;
     }
     
@@ -1564,6 +1564,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (searchTerm === '') {
                 supplierDropdown.style.display = 'none';
                 currentSelectedIndex = -1;
+                // إزالة أي تحذير سابق
+                supplierSearch.classList.remove('is-invalid');
                 return;
             }
             
@@ -1605,6 +1607,8 @@ document.addEventListener('DOMContentLoaded', function() {
             supplierSelect.value = supplier.id;
             supplierDropdown.style.display = 'none';
             currentSelectedIndex = -1;
+            // إزالة أي تحذير عند الاختيار
+            supplierSearch.classList.remove('is-invalid');
             // Trigger change event for balance update
             supplierSelect.dispatchEvent(new Event('change'));
         }

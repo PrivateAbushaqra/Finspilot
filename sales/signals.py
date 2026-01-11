@@ -353,9 +353,9 @@ def update_inventory_on_sales_invoice(sender, instance, created, **kwargs):
         if created:
             for item in instance.items.all():
                 if item.product.product_type == 'physical':
-                    # حساب متوسط التكلفة من حركات المخزون السابقة
-                    from inventory.models import get_product_average_cost
-                    avg_cost = get_product_average_cost(item.product, warehouse)
+                    # حساب التكلفة باستخدام طريقة FIFO (الوارد أولاً يخرج أولاً)
+                    from inventory.models import get_product_fifo_cost
+                    fifo_cost = get_product_fifo_cost(item.product, warehouse, item.quantity, instance.date)
                     
                     InventoryMovement.objects.create(
                         date=instance.date,
@@ -365,7 +365,7 @@ def update_inventory_on_sales_invoice(sender, instance, created, **kwargs):
                         reference_type='sales_invoice',
                         reference_id=instance.id,
                         quantity=item.quantity,
-                        unit_cost=avg_cost,  # استخدام متوسط التكلفة
+                        unit_cost=fifo_cost,  # استخدام FIFO بدلاً من المتوسط المرجح
                         notes=f'مبيعات - فاتورة رقم {instance.invoice_number}',
                         created_by=instance.created_by
                     )
@@ -378,9 +378,9 @@ def update_inventory_on_sales_invoice(sender, instance, created, **kwargs):
             
             for item in instance.items.all():
                 if item.product.product_type == 'physical':
-                    # حساب متوسط التكلفة من حركات المخزون السابقة
-                    from inventory.models import get_product_average_cost
-                    avg_cost = get_product_average_cost(item.product, warehouse)
+                    # حساب التكلفة باستخدام طريقة FIFO
+                    from inventory.models import get_product_fifo_cost
+                    fifo_cost = get_product_fifo_cost(item.product, warehouse, item.quantity, instance.date)
                     
                     InventoryMovement.objects.create(
                         date=instance.date,
@@ -390,7 +390,7 @@ def update_inventory_on_sales_invoice(sender, instance, created, **kwargs):
                         reference_type='sales_invoice',
                         reference_id=instance.id,
                         quantity=item.quantity,
-                        unit_cost=avg_cost,  # استخدام متوسط التكلفة
+                        unit_cost=fifo_cost,  # استخدام FIFO
                         notes=f'مبيعات - فاتورة رقم {instance.invoice_number}',
                         created_by=instance.created_by
                     )
@@ -458,9 +458,9 @@ def update_inventory_on_sales_return(sender, instance, created, **kwargs):
         if created:
             for item in instance.items.all():
                 if item.product.product_type == 'physical':
-                    # حساب التكلفة الفعلية من حركة المخزون الأصلية للفاتورة
-                    # استخدام متوسط التكلفة المرجح أو FIFO
-                    unit_cost = item.product.cost_price
+                    # حساب التكلفة باستخدام FIFO
+                    from inventory.models import get_product_fifo_cost
+                    fifo_cost = get_product_fifo_cost(item.product, warehouse, item.quantity, instance.date)
                     
                     # محاولة الحصول على التكلفة من حركة المخزون الأصلية
                     if instance.original_invoice:
@@ -472,12 +472,7 @@ def update_inventory_on_sales_return(sender, instance, created, **kwargs):
                         ).first()
                         
                         if original_movement and original_movement.unit_cost > 0:
-                            unit_cost = original_movement.unit_cost
-                        elif hasattr(item.product, 'calculate_weighted_average_cost'):
-                            # استخدام المتوسط المرجح إذا كان متوفراً
-                            weighted_cost = item.product.calculate_weighted_average_cost()
-                            if weighted_cost > 0:
-                                unit_cost = weighted_cost
+                            fifo_cost = original_movement.unit_cost
                     
                     InventoryMovement.objects.create(
                         date=instance.date,
@@ -487,7 +482,7 @@ def update_inventory_on_sales_return(sender, instance, created, **kwargs):
                         reference_type='sales_return',
                         reference_id=instance.id,
                         quantity=item.quantity,
-                        unit_cost=unit_cost,
+                        unit_cost=fifo_cost,
                         notes=f'مردود مبيعات - رقم {instance.return_number}',
                         created_by=instance.created_by
                     )
@@ -500,10 +495,12 @@ def update_inventory_on_sales_return(sender, instance, created, **kwargs):
             
             for item in instance.items.all():
                 if item.product.product_type == 'physical':
-                    # حساب التكلفة الفعلية من حركة المخزون الأصلية للفاتورة
-                    unit_cost = item.product.cost_price
+                    # حساب التكلفة باستخدام FIFO من تاريخ المردود
+                    # مردود المبيعات يُعيد البضاعة للمخزون بتكلفة FIFO
+                    from inventory.models import get_product_fifo_cost
+                    fifo_cost = get_product_fifo_cost(item.product, warehouse, item.quantity, instance.date)
                     
-                    # محاولة الحصول على التكلفة من حركة المخزون الأصلية
+                    # إذا كانت هناك حركة أصلية، يمكن استخدامها كمرجع
                     if instance.original_invoice:
                         original_movement = InventoryMovement.objects.filter(
                             reference_type='sales_invoice',
@@ -512,13 +509,9 @@ def update_inventory_on_sales_return(sender, instance, created, **kwargs):
                             movement_type='out'
                         ).first()
                         
+                        # استخدام تكلفة الحركة الأصلية إذا كانت موجودة ومعقولة
                         if original_movement and original_movement.unit_cost > 0:
-                            unit_cost = original_movement.unit_cost
-                        elif hasattr(item.product, 'calculate_weighted_average_cost'):
-                            # استخدام المتوسط المرجح إذا كان متوفراً
-                            weighted_cost = item.product.calculate_weighted_average_cost()
-                            if weighted_cost > 0:
-                                unit_cost = weighted_cost
+                            fifo_cost = original_movement.unit_cost
                     
                     InventoryMovement.objects.create(
                         date=instance.date,
@@ -528,7 +521,7 @@ def update_inventory_on_sales_return(sender, instance, created, **kwargs):
                         reference_type='sales_return',
                         reference_id=instance.id,
                         quantity=item.quantity,
-                        unit_cost=unit_cost,
+                        unit_cost=fifo_cost,  # استخدام FIFO أو تكلفة الحركة الأصلية
                         notes=f'مردود مبيعات - رقم {instance.return_number}',
                         created_by=instance.created_by
                     )
