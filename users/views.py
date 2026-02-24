@@ -1776,19 +1776,14 @@ class UserGroupUpdateView(LoginRequiredMixin, UpdateView):
                     ]
                 )
                 
-                # مسح كل الصلاحيات وإضافة الجديدة
-                group.permissions.clear()
-                for permission in form.cleaned_data['permissions']:
-                    group.permissions.add(permission)
-                    
-                # إعادة إضافة صلاحيات superadmin الموجودة
-                for permission in existing_superadmin_permissions:
-                    group.permissions.add(permission)
+                # مسح كل الصلاحيات وإضافة الجديدة دفعة واحدة
+                new_permissions = list(form.cleaned_data['permissions'])
+                # إضافة صلاحيات superadmin الموجودة
+                all_permissions = new_permissions + list(existing_superadmin_permissions)
+                group.permissions.set(all_permissions)
             else:
-                # للسوبر أدمين، يمكنه تعديل كل الصلاحيات
-                group.permissions.clear()
-                for permission in form.cleaned_data['permissions']:
-                    group.permissions.add(permission)
+                # للسوبر أدمين، يمكنه تعديل كل الصلاحيات دفعة واحدة
+                group.permissions.set(form.cleaned_data['permissions'])
             
             # حفظ dashboard_sections
             group.dashboard_sections = ','.join(form.cleaned_data.get('dashboard_sections', []))

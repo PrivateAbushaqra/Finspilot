@@ -85,14 +85,23 @@ def log_user_activity(request, action_type, obj, description):
 
 def sync_user_permissions(user):
     """تزامن صلاحيات المستخدم مع صلاحيات مجموعاته"""
-    perms = Permission.objects.filter(group__user=user)
-    user.user_permissions.set(perms)
-    user.save(update_fields=["updated_at"])
+    try:
+        perms = list(Permission.objects.filter(group__user=user).distinct())
+        user.user_permissions.set(perms)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error syncing permissions for user {user.pk}: {e}")
 
 def sync_group_users_permissions(group):
     """تحديث صلاحيات جميع أعضاء المجموعة عند تعديل صلاحيات المجموعة"""
-    for user in group.user_set.all():
-        sync_user_permissions(user)
+    try:
+        for user in group.user_set.all().only('id', 'user_permissions'):
+            sync_user_permissions(user)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error syncing group permissions for group {group.pk}: {e}")
 
 # عند تعديل صلاحيات المجموعة
 def group_permissions_changed(sender, instance, action, **kwargs):
