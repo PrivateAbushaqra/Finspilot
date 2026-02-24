@@ -303,7 +303,7 @@
         
         /* Sidebar width */
         .sidebar {
-            width: 250px;
+            width: 300px;
         }
         
         /* Sidebar auto-hide styles - إخفاء كامل */
@@ -815,7 +815,7 @@
             <!-- Sidebar Toggle Strip -->
             <div class="sidebar-toggle-strip" id="sidebarToggleStrip"></div>
             
-            <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+            <nav id="sidebar" class="col-md-3 col-lg-3 d-md-block sidebar collapse">
                 <!-- Pin Button -->
                 <div class="sidebar-pin-btn" id="sidebarPinBtn" title="{% trans 'Pin/Unpin Sidebar' %}">
                     <i class="fas fa-thumbtack"></i>
@@ -1696,9 +1696,9 @@
             <!-- Main Content -->
             {% if user.is_authenticated %}
                 {% if user.user_type == 'pos_user' and user.groups.all %}
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <main class="col-md-9 ms-sm-auto col-lg-9 px-md-4">
                 {% elif user.user_type != 'pos_user' %}
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <main class="col-md-9 ms-sm-auto col-lg-9 px-md-4">
                 {% else %}
             <main class="col-12 px-md-4">
                 {% endif %}
