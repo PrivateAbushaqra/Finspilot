@@ -22,8 +22,8 @@ from .services import (
 @login_required
 def dashboard(request):
     """Main AI Financial Intelligence dashboard"""
-    if not request.user.has_perm('analytics.view_ai_dashboard'):
-        raise PermissionDenied(_("You do not have permission to access AI Financial Intelligence"))
+    if not (request.user.is_superadmin or request.user.user_type == 'admin' or request.user.has_perm('analytics.view_ai_dashboard')):
+        raise PermissionDenied(_('You do not have permission to access AI Financial Intelligence'))
     
     # Log activity
     log_view_activity(request, 'view', None, _('Accessed AI Financial Intelligence Dashboard'))
@@ -47,8 +47,8 @@ def parse_date(date_str):
 @require_http_methods(["GET", "POST"])
 def sales_analytics(request):
     """Sales analytics view"""
-    if not request.user.has_perm('analytics.view_sales_analytics'):
-        raise PermissionDenied(_("You do not have permission to view sales analytics"))
+    if not (request.user.is_superadmin or request.user.user_type == 'admin' or request.user.has_perm('analytics.view_sales_analytics')):
+        raise PermissionDenied(_('You do not have permission to view sales analytics'))
     
     # Get filter parameters
     period_type = request.GET.get('period_type', 'monthly')
@@ -128,8 +128,8 @@ def sales_analytics(request):
 @require_http_methods(["GET", "POST"])
 def purchase_analytics(request):
     """Purchase analytics view"""
-    if not request.user.has_perm('analytics.view_purchase_analytics'):
-        raise PermissionDenied(_("You do not have permission to view purchase analytics"))
+    if not (request.user.is_superadmin or request.user.user_type == 'admin' or request.user.has_perm('analytics.view_purchase_analytics')):
+        raise PermissionDenied(_('You do not have permission to view purchase analytics'))
     
     # Get filter parameters
     period_type = request.GET.get('period_type', 'monthly')
@@ -204,8 +204,8 @@ def purchase_analytics(request):
 @require_http_methods(["GET", "POST"])
 def tax_analytics(request):
     """Tax analytics view"""
-    if not request.user.has_perm('analytics.view_tax_analytics'):
-        raise PermissionDenied(_("You do not have permission to view tax analytics"))
+    if not (request.user.is_superadmin or request.user.user_type == 'admin' or request.user.has_perm('analytics.view_tax_analytics')):
+        raise PermissionDenied(_('You do not have permission to view tax analytics'))
     
     # Get filter parameters
     period_type = request.GET.get('period_type', 'monthly')
@@ -270,8 +270,8 @@ def tax_analytics(request):
 @require_http_methods(["GET", "POST"])
 def cashflow_analytics(request):
     """Cash flow analytics view"""
-    if not request.user.has_perm('analytics.view_cashflow_analytics'):
-        raise PermissionDenied(_("You do not have permission to view cash flow analytics"))
+    if not (request.user.is_superadmin or request.user.user_type == 'admin' or request.user.has_perm('analytics.view_cashflow_analytics')):
+        raise PermissionDenied(_('You do not have permission to view cash flow analytics'))
     
     # Get filter parameters
     period_type = request.GET.get('period_type', 'monthly')
@@ -340,8 +340,8 @@ def cashflow_analytics(request):
 @login_required
 def export_analytics(request):
     """Export analytics report"""
-    if not request.user.has_perm('analytics.export_analytics_reports'):
-        raise PermissionDenied(_("You do not have permission to export analytics reports"))
+    if not (request.user.is_superadmin or request.user.user_type == 'admin' or request.user.has_perm('analytics.export_analytics_reports')):
+        raise PermissionDenied(_('You do not have permission to export analytics reports'))
     
     export_type = request.GET.get('type', 'sales')
     format_type = request.GET.get('format', 'xlsx')
