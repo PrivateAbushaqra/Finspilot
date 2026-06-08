@@ -49,6 +49,151 @@ def should_log_activity(user, action_type, content_type, object_id, description_
     
     return not recent_logs.exists()
 
+"""
+@receiver(post_save, sender=SalesInvoice)
+def create_cashbox_transaction_for_sales(sender, instance, created, **kwargs):
+    """إنشاء معاملة صندوق تلقائياً عند إنشاء أو تحديث فاتورة مبيعات نقدية"""
+    # 🔧 تجاهل أثناء استعادة النسخة الاحتياطية
+    try:
+        from backup.restore_context import is_restoring
+        if is_restoring():
+            return
+    except ImportError:
+        pass
+    
+    try:
+        from cashboxes.models import CashboxTransaction
+        from core.models import AuditLog
+        
+        # التحقق من أن الفاتورة نقدية ولديها مبلغ
+        if instance.payment_type == 'cash' and instance.total_amount > 0:
+            # التحقق من عدم وجود معاملة صندوق مسبقاً (لتجنب التكرار)
+            existing_transaction = CashboxTransaction.objects.filter(
+                reference_type='sales_invoice',
+                reference_id=instance.id,
+                transaction_type='deposit'
+            ).first()
+            
+            # إنشاء المعاملة فقط إذا لم تكن موجودة
+            if existing_transaction:
+                return
+            cashbox = instance.cashbox
+            
+            # إذا كانت طريقة الدفع في POS بطاقة، تأكد من استخدام صندوق البطاقة الصحيح
+            if getattr(instance, 'pos_payment_method', None) == 'card' and instance.created_by:
+                card_cashbox = find_pos_cashbox_for_user(instance.created_by, 'card')
+                if card_cashbox and (not cashbox or cashbox.id != card_cashbox.id):
+                    cashbox = card_cashbox
+                    if not instance.cashbox or instance.cashbox.id != cashbox.id:
+                        instance.cashbox = cashbox
+                        # ✅ حماية الحفظ الخاص بالبطاقة لمنع الـ Loop
+                        post_save.disconnect(create_cashbox_transaction_for_sales, sender=SalesInvoice)
+                        instance.save(update_fields=['cashbox'])
+                        post_save.connect(create_cashbox_transaction_for_sales, sender=SalesInvoice)
+            
+            # إذا لم يكن هناك صندوق محدد، حدد واحد حسب المستخدم
+            if not cashbox:
+                # إذا كان المستخدم يستطيع الوصول لنقطة البيع، استخدم صندوقه الخاص
+                if instance.created_by.has_perm('users.can_access_pos'):
+                    from cashboxes.models import Cashbox
+                    cashbox_name = POS_CASHBOX_NAME
+                    if getattr(instance, 'pos_payment_method', None) == 'card':
+                        cashbox_name = POS_CARD_CASHBOX_NAME
+                    cashbox = Cashbox.objects.filter(
+                        responsible_user=instance.created_by
+                    ).filter(
+                        Q(name__iexact=cashbox_name) |
+                        Q(name__iexact=instance.created_by.username) |
+                        Q(name__iexact=f"{instance.created_by.username} - card") |
+                        Q(name__iexact=f"{instance.created_by.username} - Card") |
+                        Q(name__icontains='بطاقة') |
+                        Q(name__icontains='Card')
+                    ).first()
+                    if not cashbox:
+                        cashbox = Cashbox.objects.filter(responsible_user=instance.created_by).first()
+                    
+                    # إذا لم يكن له صندوق، إنشاء واحد تلقائياً
+                    if not cashbox:
+                        # اسم الصندوق = اسم المستخدم
+                        cashbox_name = instance.created_by.username
+                        
+                        # الحصول على العملة الأساسية
+                        from core.models import CompanySettings
+                        company_settings = CompanySettings.get_settings()
+                        currency = 'JOD'
+                        if company_settings and company_settings.currency:
+                            currency = company_settings.currency
+                        
+                        cashbox = Cashbox.objects.create(
+                            name=cashbox_name,
+                            description=_('صندوق مستخدم نقطة البيع: %(full_name)s') % {
+                                'full_name': instance.created_by.get_full_name() or instance.created_by.username
+                            },
+                            balance=Decimal('0.000'),
+                            currency=currency,
+                            location=_('نقطة البيع - %(username)s') % {'username': instance.created_by.username},
+                            responsible_user=instance.created_by,
+                            is_active=True
+                        )
+                        
+                        # تسجيل إنشاء الصندوق في سجل الأنشطة
+                        try:
+                            description = _('تم إنشاء صندوق تلقائياً لمستخدم نقطة البيع: %(username)s - %(cashbox)s') % {
+                                'username': instance.created_by.username,
+                                'cashbox': str(cashbox)
+                            }
+                            if should_log_activity(instance.created_by, 'create', 'Cashbox', cashbox.id, 'تم إنشاء صندوق تلقائياً'):
+                                AuditLog.objects.create(
+                                    user=instance.created_by,
+                                    action_type='create',
+                                    content_type='Cashbox',
+                                    object_id=cashbox.id,
+                                    description=description,
+                                    ip_address='127.0.0.1'
+                                )
+                        except Exception as log_error:
+                            print(f"خطأ في تسجيل نشاط إنشاء الصندوق: {log_error}")
+                
+                # إذا لم يتم تحديد صندوق، استخدم الصندوق الرئيسي أو إنشاء واحد
+                if not cashbox:
+                    from cashboxes.models import Cashbox
+                    cashbox = Cashbox.objects.filter(name__icontains='رئيسي', is_active=True).first()
+                    if not cashbox:
+                        cashbox = Cashbox.objects.filter(is_active=True).first()
+                    if not cashbox:
+                        # إنشاء صندوق رئيسي افتراضي
+                        cashbox = Cashbox.objects.create(
+                            name='الصندوق الرئيسي',
+                            description='الصندوق الرئيسي للمبيعات النقدية',
+                            balance=0,
+                            location='المكتب الرئيسي',
+                            is_active=True
+                        )
+                
+                # ربط الفاتورة بالصندوق (فقط إذا لم يكن محدداً مسبقاً)
+                #if cashbox and not instance.cashbox:
+                #    instance.cashbox = cashbox
+                #    instance.save(update_fields=['cashbox'])
+
+                if cashbox and not instance.cashbox:
+                    instance.cashbox = cashbox
+                    # نَفْصِل السيجنال مؤقتاً لمنع الـ Loop
+                    post_save.disconnect(create_cashbox_transaction_for_sales, sender=SalesInvoice)
+                    instance.save(update_fields=['cashbox'])
+                    # نُعيد ربط السيجنال بعد الحفظ الآمن
+                    post_save.connect(create_cashbox_transaction_for_sales, sender=SalesInvoice)
+            
+            # ✅ تم تعطيل إنشاء معاملة الصندوق المباشر هنا لتجنب التكرار.
+            # معاملات الصندوق الآن تُنشأ من خلال القيد المحاسبي (Journal) عبر journal.signals.create_cashbox_transaction_from_journal_line
+            # هذا يحافظ على مصدر واحد للحقائق المحاسبية ويتوافق مع مبادئ IFRS.
+            print(f"تم تخطي إنشاء معاملة صندوق مباشر لفاتورة {instance.invoice_number} — يعتمد على إنشاء القيد المحاسبي")
+                
+    except Exception as e:
+        print(f"خطأ في معالجة الصندوق لفاتورة {instance.invoice_number}: {e}")
+        # لا نوقف عملية إنشاء الفاتورة في حالة فشل إنشاء معاملة الصندوق
+        pass """
+
+        """-------------------new-----"""
 @receiver(post_save, sender=SalesInvoice)
 def create_cashbox_transaction_for_sales(sender, instance, created, **kwargs):
     """إنشاء معاملة صندوق تلقائياً عند إنشاء أو تحديث فاتورة مبيعات نقدية"""
@@ -67,9 +212,7 @@ def create_cashbox_transaction_for_sales(sender, instance, created, **kwargs):
         from cashboxes.models import CashboxTransaction
         from core.models import AuditLog
         
-        #if instance.payment_type == 'cash' and instance.total_amount > 0:
-        # ✅ السماح للكاش والبطاقة بالدخول لمعالجة الصناديق وبناء القيد المحاسبي
-        if instance.total_amount > 0 and (instance.payment_type == 'cash' or getattr(instance, 'pos_payment_method', None) == 'card'):
+        if instance.payment_type == 'cash' and instance.total_amount > 0:
             existing_transaction = CashboxTransaction.objects.filter(
                 reference_type='sales_invoice',
                 reference_id=instance.id,
@@ -109,17 +252,8 @@ def create_cashbox_transaction_for_sales(sender, instance, created, **kwargs):
                     instance._bypass_signals = False
 
             # تحذير: لا تضع return هنا للبطاقة لكي تسمح لباقي السيجنالات والـ views بإنشاء القيد!
-            #if existing_transaction:
-            #    return
-
-            # التحقق من وجود حركة صندوق مسبقاً لمنع التكرار
             if existing_transaction:
-                # إذا كانت طريقة الدفع بطاقة، لا تخرج بـ return! دع السيجنال يكمل طريقه لبناء القيد المحاسبي
-                if getattr(instance, 'pos_payment_method', None) == 'card':
-                    print(f"فاتورة بطاقة {instance.invoice_number} - تخطي الـ return لإنشاء القيد المحاسبي")
-                else:
-                    # إذا كانت كاش عادي، اخرج لمنع تكرار الحركة
-                    return
+                return
 
             # تم تعطيل المعاملة المباشرة لأنها تعتمد على القيد المحاسبي الموزون
             print(f"تمت معالجة صناديق فاتورة {instance.invoice_number} بنجاح")
@@ -169,15 +303,15 @@ def delete_cashbox_transaction_for_sales(sender, instance, **kwargs):
         pass
 
 
+# @receiver(post_save, sender=SalesInvoice)
+# def create_payment_receipt_for_cash_sales(sender, instance, created, **kwargs):
+#     """إنشاء سند قبض تلقائياً عند إنشاء فاتورة مبيعات نقدية - معطل"""
+#     pass
+
 
 @receiver(post_save, sender=SalesInvoice)
 def update_cashbox_transaction_on_invoice_change(sender, instance, created, **kwargs):
     """تحديث معاملة الصندوق عند تعديل الفاتورة"""
-
-# 🔧 حماية من الحلقة المفرغة: إذا كان هذا العلم موجوداً، توقف فوراً
-    if getattr(instance, '_bypass_signals', False):
-        return
-
     # 🔧 تجاهل أثناء استعادة النسخة الاحتياطية
     try:
         from backup.restore_context import is_restoring
@@ -227,11 +361,6 @@ def update_cashbox_transaction_on_invoice_change(sender, instance, created, **kw
 @receiver(post_save, sender=SalesInvoice)
 def create_account_transaction_for_sales_invoice(sender, instance, created, **kwargs):
     """إنشاء أو تحديث حركة حساب للعميل عند إنشاء أو تعديل فاتورة مبيعات آجلة"""
-
-# 🔧 حماية من الحلقة المفرغة: إذا كان هذا العلم موجوداً، توقف فوراً
-    if getattr(instance, '_bypass_signals', False):
-        return
-
     # 🔧 تجاهل أثناء استعادة النسخة الاحتياطية
     try:
         from backup.restore_context import is_restoring
@@ -292,6 +421,98 @@ def create_account_transaction_for_sales_invoice(sender, instance, created, **kw
         # لا نوقف العملية في حالة فشل تسجيل الحركة المالية
         pass
 
+
+"""@receiver(post_save, sender=SalesInvoice)
+def update_inventory_on_sales_invoice(sender, instance, created, **kwargs):
+    """تحديث المخزون عند إنشاء أو تعديل فاتورة مبيعات"""
+    # 🔧 تجاهل أثناء استعادة النسخة الاحتياطية
+    try:
+        from backup.restore_context import is_restoring
+        if is_restoring():
+            return
+    except ImportError:
+        pass
+    
+    try:
+        from inventory.models import InventoryMovement, Warehouse
+        
+        # تحديد المستودع
+        warehouse = instance.warehouse
+        #if not warehouse:
+            #warehouse = Warehouse.get_default_warehouse()
+            #if warehouse:
+                #instance.warehouse = warehouse
+                #instance.save(update_fields=['warehouse'])
+        if not warehouse:
+            warehouse = Warehouse.get_default_warehouse()
+            if warehouse:
+                instance.warehouse = warehouse
+                # نَفْصِل سيجنال المخزن مؤقتاً لمنع التكرار والإطلاق المزدوج
+                post_save.disconnect(update_inventory_on_sales_invoice, sender=SalesInvoice)
+                instance.save(update_fields=['warehouse'])
+                # نُعيد ربطه
+                post_save.connect(update_inventory_on_sales_invoice, sender=SalesInvoice)
+        
+        if not warehouse:
+            print(f"لا يوجد مستودع افتراضي لفاتورة المبيعات {instance.invoice_number}")
+            return
+        
+        # للفواتير الجديدة، إنشاء حركات مخزون صادرة
+        if created:
+            for item in instance.items.all():
+                if item.product.product_type == 'physical':
+                    # حساب التكلفة باستخدام طريقة FIFO (الوارد أولاً يخرج أولاً)
+                    from inventory.models import get_product_fifo_cost
+                    fifo_cost = get_product_fifo_cost(item.product, warehouse, item.quantity, instance.date)
+                    
+                    InventoryMovement.objects.create(
+                        date=instance.date,
+                        product=item.product,
+                        warehouse=warehouse,
+                        movement_type='out',
+                        reference_type='sales_invoice',
+                        reference_id=instance.id,
+                        quantity=item.quantity,
+                        unit_cost=fifo_cost,  # استخدام FIFO بدلاً من المتوسط المرجح
+                        notes=f'مبيعات - فاتورة رقم {instance.invoice_number}',
+                        created_by=instance.created_by
+                    )
+        else:
+            # للتعديلات، حذف الحركات القديمة وإنشاء جديدة
+            InventoryMovement.objects.filter(
+                reference_type='sales_invoice',
+                reference_id=instance.id
+            ).delete()
+            
+            for item in instance.items.all():
+                if item.product.product_type == 'physical':
+                    # حساب التكلفة باستخدام طريقة FIFO
+                    from inventory.models import get_product_fifo_cost
+                    fifo_cost = get_product_fifo_cost(item.product, warehouse, item.quantity, instance.date)
+                    
+                    InventoryMovement.objects.create(
+                        date=instance.date,
+                        product=item.product,
+                        warehouse=warehouse,
+                        movement_type='out',
+                        reference_type='sales_invoice',
+                        reference_id=instance.id,
+                        quantity=item.quantity,
+                        unit_cost=fifo_cost,  # استخدام FIFO
+                        notes=f'مبيعات - فاتورة رقم {instance.invoice_number}',
+                        created_by=instance.created_by
+                    )
+        
+        print(f"تم تحديث المخزون لفاتورة المبيعات {instance.invoice_number}")
+        
+        # ملاحظة: قيد COGS يتم إنشاؤه من views.py بعد حفظ الفاتورة وعناصرها
+        # لتجنب التكرار، لا نقوم بإنشائه هنا
+        
+    except Exception as e:
+        print(f"خطأ في تحديث المخزون لفاتورة المبيعات {instance.invoice_number}: {e}")
+        pass"""
+
+        """--------new------"""
 @receiver(post_save, sender=SalesInvoice)
 def update_inventory_on_sales_invoice(sender, instance, created, **kwargs):
     """تحديث المخزون عند إنشاء أو تعديل فاتورة مبيعات"""
@@ -782,15 +1003,10 @@ def delete_sales_return_related_records(sender, instance, **kwargs):
 # Signals لإنشاء القيود المحاسبية تلقائياً
 # =====================================================
 
-@receiver(post_save, sender=SalesInvoice)
+@receiver(post_save, sender=SalesInvoiceItem)
 def create_journal_entry_for_sales_invoice(sender, instance, created, **kwargs):
-    """إنشاء القيد المحاسبي تلقائياً عند حفظ فاتورة المبيعات"""
-
-    # 🔧 حماية من الحلقة المفرغة: إذا كان هذا العلم موجوداً، توقف فوراً
-    if getattr(instance, '_bypass_signals', False):
-        return
-    
-    # 1. تجاهل أثناء استعادة النسخة الاحتياطية
+    """إنشاء القيد المحاسبي تلقائياً عند إضافة عنصر فاتورة"""
+    # تجاهل أثناء استعادة النسخة الاحتياطية
     try:
         from backup.restore_context import is_restoring
         if is_restoring():
@@ -798,25 +1014,29 @@ def create_journal_entry_for_sales_invoice(sender, instance, created, **kwargs):
     except ImportError:
         pass
     
-    # 2. التحقق من وجود القيد مسبقاً لمنع التكرار (هذا هو الحل الجذري)
     try:
         from journal.models import JournalEntry
         from journal.services import JournalService
         from django.db import transaction as db_transaction
         
-        # instance هنا هي الفاتورة (SalesInvoice) مباشرة
-        invoice = instance
+        # الحصول على الفاتورة
+        invoice = instance.invoice
         
-        # التحقق إذا كان القيد موجوداً بالفعل لهذه الفاتورة
-        if JournalEntry.objects.filter(sales_invoice=invoice).exists():
-            return # إذا وجد قيد، لا تفعل شيئاً
-
-        # التحقق من وجود عناصر ومبلغ، وأن الفاتورة مرتبطة بصندوق
-        #if invoice.items.count() > 0 and invoice.total_amount > 0 and invoice.cashbox:
-        # التأكد من شمولية طرق الدفع (كاش أو بطاقة)
-        if invoice.items.count() > 0 and invoice.total_amount > 0 and (invoice.cashbox or invoice.payment_type == 'card'):
+        # التحقق من وجود عناصر ومبلغ
+        if invoice.items.count() > 0 and invoice.total_amount > 0:
+            # حذف القيود القديمة إذا كانت موجودة
+            existing_sales_entry = JournalEntry.objects.filter(sales_invoice=invoice).first()
+            if existing_sales_entry:
+                existing_sales_entry.delete()
             
-            # إنشاء القيود الجديدة فقط إذا لم تكن موجودة
+            existing_cogs_entry = JournalEntry.objects.filter(
+                reference_type='sales_invoice_cogs',
+                reference_id=invoice.id
+            ).first()
+            if existing_cogs_entry:
+                existing_cogs_entry.delete()
+            
+            # إنشاء القيود الجديدة
             def _create_entries():
                 # قيد الإيراد (المبيعات)
                 sales_entry = JournalService.create_sales_invoice_entry(invoice, invoice.created_by)
@@ -829,7 +1049,6 @@ def create_journal_entry_for_sales_invoice(sender, instance, created, **kwargs):
                     print(f"✅ تم إنشاء قيد COGS {cogs_entry.entry_number}")
             
             db_transaction.on_commit(_create_entries)
-            
     except Exception as e:
         print(f"خطأ في إنشاء القيد المحاسبي لفاتورة المبيعات: {e}")
 

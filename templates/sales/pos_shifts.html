@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "POS Shift Management" %}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3>{% trans "POS Shift Management" %}</h3>
+            <p class="text-muted">{% trans "Review open and closed POS shifts and close shifts when needed." %}</p>
+        </div>
+        <a href="{% url 'sales:pos' %}" class="btn btn-secondary">
+            <i class="fas fa-cash-register"></i> {% trans "Back to POS" %}
+        </a>
+    </div>
+    
+    <!-- نموذج فتح شفت جديد -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-play-circle"></i> {% trans "Open a New POS Shift" %}
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{% url 'sales:pos_open_shift' %}" class="row g-3">
+                {% csrf_token %}
+                <div class="col-md-6">
+                    <label for="pos_user_id" class="form-label">
+                        <i class="fas fa-user"></i> {% trans "Select POS User" %}
+                    </label>
+                    <select class="form-select" id="pos_user_id" name="pos_user_id" required>
+                        <option value="">{% trans "Choose a POS user..." %}</option>
+                        {% for user in pos_users %}
+                        <option value="{{ user.id }}">{{ user.get_full_name|default:user.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-play-circle"></i> {% trans "Open Shift" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- جدول الشفتات الموجودة -->
+    {% if shift_rows %}
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="fas fa-list"></i> {% trans "POS Shifts History" %}
+            </h5>
+        </div>
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>{% trans "POS User" %}</th>
+                    <th>{% trans "Shift Status" %}</th>
+                    <th>{% trans "Opened At" %}</th>
+                    <th>{% trans "Opened By" %}</th>
+                    <th>{% trans "Closed At" %}</th>
+                    <th>{% trans "Closed By" %}</th>
+                    <th>{% trans "Cashboxes" %}</th>
+                    <th>{% trans "Actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in shift_rows %}
+                {% with shift=row.shift %}
+                <tr>
+                    <td>{{ shift.user.get_full_name|default:shift.user.username }}</td>
+                    <td>{{ shift.get_status_display }}</td>
+                    <td>{{ shift.opened_at }}</td>
+                    <td>{{ shift.opened_by.get_full_name|default:shift.opened_by.username }}</td>
+                    <td>{{ shift.closed_at|default:_('N/A') }}</td>
+                    <td>{% if shift.closed_by %}{{ shift.closed_by.get_full_name|default:shift.closed_by.username }}{% else %}{% trans "N/A" %}{% endif %}</td>
+                    <td>
+                        {% if row.cashboxes %}
+                            <ul class="mb-0 ps-3">
+                                {% for cashbox in row.cashboxes %}
+                                    <li>{{ cashbox.name }} - {{ cashbox.balance|floatformat:3 }} {{ cashbox.currency }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <span class="text-muted">{% trans "No cashboxes" %}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if shift.status == 'open' %}
+                        <form method="post" action="{% url 'sales:pos_close_shift' shift.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger">
+                                <i class="fas fa-stop-circle"></i> {% trans "Close" %}
+                            </button>
+                        </form>
+                        {% else %}
+                        <span class="text-muted">{% trans "Closed" %}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endwith %}
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    {% else %}
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="alert alert-info mb-0">
+                <i class="fas fa-info-circle"></i> {% trans "No POS shifts found." %}
+            </div>
+        </div>
+    {% endif %}
+    </div>
+</div>
+{% endblock %}

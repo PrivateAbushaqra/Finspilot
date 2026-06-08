@@ -77,6 +77,17 @@ def create_receipt_voucher_journal_entry(sender, instance, created, **kwargs):
     
     if created and instance.id:
         try:
+            # تجنب إنشاء قيد مكرر في حال كان قد تم إنشاؤه بالفعل من مكان آخر
+            from journal.models import JournalEntry
+            existing = JournalEntry.objects.filter(
+                reference_type='receipt_voucher',
+                reference_id=instance.id
+            ).exists()
+
+            if existing:
+                logger.info(f"تجاوز إنشاء قيد محاسبي لسند القبض {instance.receipt_number} لأن القيد موجود بالفعل")
+                return
+
             user = getattr(instance, 'created_by', None)
             if user:
                 JournalService.create_receipt_voucher_entry(instance, user)
@@ -94,6 +105,17 @@ def create_payment_voucher_journal_entry(sender, instance, created, **kwargs):
     
     if created and instance.id:
         try:
+            # تجنب إنشاء قيد مكرر في حال كان قد تم إنشاؤه بالفعل من مكان آخر
+            from journal.models import JournalEntry
+            existing = JournalEntry.objects.filter(
+                reference_type='payment_voucher',
+                reference_id=instance.id
+            ).exists()
+
+            if existing:
+                logger.info(f"تجاوز إنشاء قيد محاسبي لسند الصرف {instance.voucher_number} لأن القيد موجود بالفعل")
+                return
+
             user = getattr(instance, 'created_by', None)
             if user:
                 JournalService.create_payment_voucher_entry(instance, user)
@@ -351,30 +373,6 @@ def create_asset_journal_entry(sender, instance, created, **kwargs):
                 lines_data = []
                 # قيد شراء الأصل: مدين الأصل، دائن الصندوق/البنك
                 # يمكن تفعيل هذا لاحقاً عند ربط الحسابات
-                logger.info(f"تم إنشاء أصل جديد: {instance.name} بقيمة {instance.purchase_cost}")
-                
-                # lines_data = [
-                #     {
-                #         'account_id': asset_account_id,
-                #         'debit': instance.purchase_cost,
-                #         'credit': 0,
-                #         'description': f"شراء أصل: {instance.name}"
-                #     },
-                #     {
-                #         'account_id': cash_account_id,
-                #         'debit': 0,
-                #         'credit': instance.purchase_cost,
-                #         'description': f"دفع ثمن أصل: {instance.name}"
-                #     }
-                # ]
-                
-                # JournalService.create_journal_entry(
-                #     reference_type='asset',
-                #     reference_id=instance.id,
-                #     description=f"شراء أصل: {instance.name}",
-                #     lines_data=lines_data,
-                #     user=user
-                # )
         except Exception as e:
             logger.error(f"خطأ في إنشاء القيد المحاسبي لشراء الأصل {instance.name}: {e}")
 

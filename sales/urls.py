@@ -38,6 +38,9 @@ urlpatterns = [
     path('api/product-stock/<int:product_id>/<int:warehouse_id>/', views.get_product_stock, name='get_product_stock'),    # Point of Sale
     path('pos/', views.pos_view, name='pos'),
     path('pos/create-invoice/', views.pos_create_invoice, name='pos_create_invoice'),
+    path('pos/shifts/', views.pos_shifts_view, name='pos_shifts'),
+    path('pos/shifts/open/', views.open_pos_shift, name='pos_open_shift'),
+    path('pos/shifts/close/<int:pk>/', views.close_pos_shift, name='pos_close_shift'),
     path('pos/product/<int:product_id>/', views.pos_get_product, name='pos_get_product'),
     path('pos/search-products/', views.pos_search_products, name='pos_search_products'),
     

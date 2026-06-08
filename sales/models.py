@@ -24,6 +24,17 @@ class SalesInvoice(models.Model):
     warehouse = models.ForeignKey('inventory.Warehouse', on_delete=models.PROTECT, 
                                 verbose_name=_('Warehouse'), default=1)
     payment_type = models.CharField(_('Payment Type'), max_length=20, choices=PAYMENT_TYPES)
+    POS_PAYMENT_METHODS = [
+        ('cash', _('Cash')),
+        ('card', _('Card')),
+    ]
+    pos_payment_method = models.CharField(
+        _('POS Payment Method'),
+        max_length=20,
+        choices=POS_PAYMENT_METHODS,
+        default='cash',
+        help_text=_('POS payment method used for this invoice')
+    )
     cashbox = models.ForeignKey('cashboxes.Cashbox', on_delete=models.SET_NULL, 
                                verbose_name=_('Cashbox'), null=True, blank=True,
                                help_text=_('Cashbox from which cash is collected for cash sales'))
@@ -110,6 +121,40 @@ class SalesInvoice(models.Model):
         
         # استدعاء التحقق الأساسي
         super().clean()
+
+
+class POSShift(models.Model):
+    SHIFT_STATUS = [
+        ('open', _('Open')),
+        ('closed', _('Closed')),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_('POS User'), limit_choices_to={'user_type': 'pos_user'})
+    opened_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='opened_pos_shifts', verbose_name=_('Opened By'))
+    opened_at = models.DateTimeField(_('Opened At'), auto_now_add=True)
+    closed_by = models.ForeignKey(User, on_delete=models.PROTECT, related_name='closed_pos_shifts', null=True, blank=True, verbose_name=_('Closed By'))
+    closed_at = models.DateTimeField(_('Closed At'), null=True, blank=True)
+    status = models.CharField(_('Status'), max_length=10, choices=SHIFT_STATUS, default='open')
+    notes = models.TextField(_('Notes'), blank=True)
+
+    class Meta:
+        verbose_name = _('POS Shift')
+        verbose_name_plural = _('POS Shifts')
+        ordering = ['-opened_at']
+        permissions = [
+            ('can_manage_pos_shifts', _('Can Manage POS Shifts')),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.get_status_display()}"
+
+    @property
+    def is_open(self):
+        return self.status == 'open'
+
+    @classmethod
+    def current_shift_for_user(cls, user):
+        return cls.objects.filter(user=user, status='open').order_by('-opened_at').first()
 
 
 class SalesInvoiceItem(models.Model):

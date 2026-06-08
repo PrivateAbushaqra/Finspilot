@@ -24,7 +24,14 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
 
 # السماح بالمضيفين مع قيمة افتراضية آمنة محلياً
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost,192.168.2.117,testserver').split(',')
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in config(
+        'ALLOWED_HOSTS',
+        default='127.0.0.1,localhost,192.168.2.117,192.168.2.118,testserver'
+    ).split(',')
+    if host.strip()
+]
 
 # إضافة نطاق Render تلقائياً إذا كان متاحاً في البيئة
 if IS_RENDER:
@@ -276,10 +283,14 @@ _DEFAULT_CORS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
 ]
-CORS_ALLOWED_ORIGINS = config(
-    'CORS_ALLOWED_ORIGINS',
-    default=','.join(_DEFAULT_CORS)
-).split(',')
+CORS_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in config(
+        'CORS_ALLOWED_ORIGINS',
+        default=','.join(_DEFAULT_CORS)
+    ).split(',')
+    if origin.strip()
+]
 
 # إضافة أصول نطاق Render (https) إن تم تحديدها ضمن ALLOWED_HOSTS
 for host in ALLOWED_HOSTS:

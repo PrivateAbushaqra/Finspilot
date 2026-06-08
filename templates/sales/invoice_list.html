@@ -527,7 +527,13 @@
                                         <strong>{{ invoice.invoice_number }}</strong>
                                     </a>
                                 </td>
-                                <td>{{ invoice.customer.name|default:"{% trans 'Not specified' %}" }}</td>
+                                <td>
+                                    {% if invoice.customer.name %}
+                                        {{ invoice.customer.name }}
+                                    {% else %}
+                                        {% trans "Not specified" %}
+                                    {% endif %}
+                                </td>
                                 <td>{{ invoice.date|date:"Y-m-d" }}</td>
                                 <td>
                                     <strong>{{ invoice.total_amount|currency_format }}</strong>

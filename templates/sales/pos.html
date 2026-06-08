@@ -3,6 +3,9 @@
 {% load i18n %}
 {% load currency_tags %}
 
+{# توليد بيانات المنازل العشرية للعملة بشكل آمن للجافا سكريبت #}
+{{ base_currency.decimal_places|default:2|json_script:"currency-decimals-data" }}
+
 {% csrf_token %}
 
 
@@ -1044,8 +1047,70 @@
                         <i class="fas fa-check-circle text-success"></i>
                         {% trans "Available Products" %}
                         <span class="product-count" id="available-count">0</span>
-                    </h6>
-                    <div class="product-grid" id="available-products">
+                    </h6>   
+                        <div class="product-grid" id="available-products">
+                            {% for product in products %}
+                                {% if product.current_stock > 0 %}
+                                <div class="product-card" 
+                                    onclick="addToCart('{{ product.id }}')" 
+                                    style="border: 1px solid var(--primary-color);" 
+                                    data-product-id="{{ product.id }}"
+                                    data-name="{{ product.name|lower }}"
+                                    data-barcode="{{ product.barcode|default:'' }}"
+                                    data-price="{{ product.sale_price }}"
+                                    data-stock="{{ product.current_stock }}"
+                                    data-code="{{ product.code }}"
+                                    data-tax-rate="{{ product.tax_rate }}">
+                                    <div class="product-name">{{ product.name }}</div>
+                                    <div class="product-price">{{ product.sale_price }} {% if base_currency %}{{ base_currency.symbol }}{% else %}{% get_currency_symbol %}{% endif %}</div>
+                                    <div class="product-stock">
+                                        {% if product.current_stock <= 5 %}
+                                            <span class="stock-warning">{% trans "Low Stock" %}: {{ product.current_stock }}</span>
+                                        {% else %}
+                                            <span class="stock-good">{% trans "Stock" %}: {{ product.current_stock }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if product.barcode %}
+                                        <div class="product-barcode">{{ product.barcode }}</div>
+                                    {% endif %}
+                                    <div class="product-id">{% trans "Product Code" %}: {{ product.code }}</div>
+                                    <div class="product-tax-rate">{% trans "Tax Rate" %}: {{ product.tax_rate }}%</div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>     
+                    <!--<div class="product-grid" id="available-products">
+                        {% for product in products %}
+                            {% if product.current_stock > 0 %}
+                            <div class="product-card" 
+                                onclick="addToCart(this)" 
+                                style="border: 1px solid var(--primary-color);" 
+                                data-product-id="{{ product.id }}"
+                                data-name="{{ product.name|lower }}"
+                                data-barcode="{{ product.barcode|default:'' }}"
+                                data-price="{{ product.sale_price }}"
+                                data-stock="{{ product.current_stock }}"
+                                data-code="{{ product.code }}"
+                                data-tax-rate="{{ product.tax_rate }}">
+                                <div class="product-name">{{ product.name }}</div>
+                                <div class="product-price">{{ product.sale_price }} {% if base_currency %}{{ base_currency.symbol }}{% else %}{% get_currency_symbol %}{% endif %}</div>
+                                <div class="product-stock">
+                                    {% if product.current_stock <= 5 %}
+                                        <span class="stock-warning">{% trans "Low Stock" %}: {{ product.current_stock }}</span>
+                                    {% else %}
+                                        <span class="stock-good">{% trans "Stock" %}: {{ product.current_stock }}</span>
+                                    {% endif %}
+                                </div>
+                                {% if product.barcode %}
+                                    <div class="product-barcode">{{ product.barcode }}</div>
+                                {% endif %}
+                                <div class="product-id">{% trans "Product Code" %}: {{ product.code }}</div>
+                                <div class="product-tax-rate">{% trans "Tax Rate" %}: {{ product.tax_rate }}%</div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>-->
+                    <!--<div class="product-grid" id="available-products">
                         {% for product in products %}
                             {% if product.current_stock > 0 %}
                             <div class="product-card" 
@@ -1074,11 +1139,10 @@
                             </div>
                             {% endif %}
                         {% endfor %}
-                    </div>
+                    </div>-->
                 </div>
 
-                <!-- {% trans "Out of Stock Products" %} -->
-                <div class="out-of-stock-section">
+                <!--<div class="out-of-stock-section">
                     <h6 class="section-title">
                         <i class="fas fa-times-circle text-danger"></i>
                         {% trans "Out of Stock Products" %}
@@ -1109,7 +1173,41 @@
                             {% endif %}
                         {% endfor %}
                     </div>
+                </div>-->
+<!--                                                                                             -->                
+                <div class="out-of-stock-section d-none" style="display: none;">
+                    <h6 class="section-title">
+                        <i class="fas fa-times-circle text-danger"></i>
+                        {% trans "Out of Stock Products" %}
+                        <span class="product-count" id="outofstock-count">0</span>
+                    </h6>
+                    <div class="product-grid" id="outofstock-products">
+                        {% for product in products %}
+                            {% if product.current_stock <= 0 %}
+                            <div class="product-card out-of-stock" 
+                                data-product-id="{{ product.id }}"
+                                data-name="{{ product.name|lower }}"
+                                data-barcode="{{ product.barcode|default:'' }}"
+                                data-price="{{ product.sale_price }}"
+                                data-stock="{{ product.current_stock }}"
+                                data-code="{{ product.code }}"
+                                data-tax-rate="{{ product.tax_rate }}">
+                                <div class="product-name">{{ product.name }}</div>
+                                <div class="product-price">{{ product.sale_price }} {% if base_currency %}{{ base_currency.symbol }}{% else %}{% get_currency_symbol %}{% endif %}</div>
+                                <div class="product-stock">
+                                    <span class="stock-warning">نفد المخزون</span>
+                                </div>
+                                {% if product.barcode %}
+                                    <div class="product-barcode">{{ product.barcode }}</div>
+                                {% endif %}
+                                <div class="product-id">{% trans "Product Code" %}: {{ product.code }}</div>
+                                <div class="product-tax-rate">{% trans "Tax Rate" %}: {{ product.tax_rate }}%</div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
                 </div>
+<!--                                                                                             -->                                
             </div>
         </div>
 
@@ -1142,19 +1240,18 @@
                 </div>
                 {% endif %}
                 
-                <!-- Payment Type - مخفي للمستخدمين العاديين -->
-                {% if user_is_admin %}
+                <!-- Payment Method - إظهار لجميع مستخدمي POS -->
                 <div class="form-group">
                     <label for="payment-type" class="form-label">
                         <i class="fas fa-credit-card"></i> {% trans "Payment method" %}
                     </label>
                     <select class="form-select" id="payment-type">
-                        {% for value, label in payment_types %}
+                        <option value="">{% trans "Select Payment Method" %}</option>
+                        {% for value, label in payment_methods %}
                         <option value="{{ value }}">{{ label }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                {% endif %}
                 
                 <!-- Cashbox Selection - للمستخدمين Admin فقط -->
                 {% if user_is_admin %}
@@ -1171,15 +1268,17 @@
                 </div>
                 {% endif %}
                 
-                <!-- Customer and Payment Info Display - للمستخدمين العاديين -->
+                <!-- Customer and Payment Info Display (non-admin still sees selected cashbox name) -->
                 {% if not user_is_admin %}
                 <div class="form-group">
                     <div class="alert alert-info" style="padding: 0.75rem; margin-bottom: 0;">
                         <small>
                             <i class="fas fa-info-circle"></i>
                             <strong>{% trans "Customer:" %}</strong> {% trans "Cash Customer" %} | 
-                            <strong>{% trans "Payment:" %}</strong> {% trans "Cash" %} | 
-                            <strong>{% trans "Cashbox:" %}</strong> {{ selected_cashbox.name }}
+                            <strong>{% trans "Cashbox:" %}</strong>
+                            <span id="selected-cashbox-name" data-cashcashbox-name="{{ pos_cashbox.name }}" data-cardcashbox-name="{{ pos_card_cashbox.name }}">
+                                {{ selected_cashbox.name }}
+                            </span>
                         </small>
                     </div>
                 </div>
@@ -1257,6 +1356,7 @@ let originalAvailableHtml = '';
 let originalOutOfStockHtml = '';
 const currencySymbol = '{% if base_currency and base_currency.symbol %}{{ base_currency.symbol }}{% else %}{% get_currency_symbol %}{% endif %}';
 const currencyDecimalPlaces = {% if base_currency %}{{ base_currency.decimal_places }}{% else %}2{% endif %};
+//const currencyDecimalPlaces = JSON.parse(document.getElementById('currency-decimals-data').textContent);
 
 // URLs للـ API
 const POS_PRODUCT_URL_BASE = '{% url "sales:pos_get_product" product_id=0 %}'.replace('/0/', '/');
@@ -1391,7 +1491,22 @@ function updateCartDisplay() {
     document.getElementById('total').textContent = total.toFixed(currencyDecimalPlaces) + ' ' + currencySymbol;
     
     cartTotals.style.display = 'block';
-    checkoutBtn.disabled = false;
+    const cashboxNameEl = document.getElementById('selected-cashbox-name');
+    if (cashboxNameEl) {
+        const paymentSelect = document.getElementById('payment-type');
+        if (paymentSelect && paymentSelect.value === 'card') {
+            cashboxNameEl.textContent = cashboxNameEl.dataset.cardcashboxName || cashboxNameEl.textContent;
+        } else {
+            cashboxNameEl.textContent = cashboxNameEl.dataset.cashcashboxName || cashboxNameEl.textContent;
+        }
+    }
+    // Enable checkout only if a payment method is selected
+    const paymentSelect = document.getElementById('payment-type');
+    if (paymentSelect) {
+        checkoutBtn.disabled = !paymentSelect.value;
+    } else {
+        checkoutBtn.disabled = false;
+    }
 }
 
 // تحديث {% trans "Quantity" %}
@@ -1448,7 +1563,7 @@ function clearCart() {
 }
 
 // إتمام البيع
-function checkout() {
+/*function checkout() {
     if (cart.length === 0) {
         alert('السلة {% trans "Empty" %}ة');
         return;
@@ -1461,7 +1576,8 @@ function checkout() {
         checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري المعالجة...';
         
         const customerId = document.getElementById('customer-select') ? document.getElementById('customer-select').value : null;
-        const paymentType = document.getElementById('payment-type') ? document.getElementById('payment-type').value : 'cash';
+        const paymentSelectEl = document.getElementById('payment-type');
+        const paymentMethod = paymentSelectEl ? paymentSelectEl.value : '';
         const cashboxId = document.getElementById('cashbox-select') ? document.getElementById('cashbox-select').value : null;
     
     // حساب الإجماليات
@@ -1476,20 +1592,24 @@ function checkout() {
         
         const itemTotal = parseFloat(item.price) * parseFloat(item.quantity);
         const itemTax = itemTotal * (parseFloat(item.tax_rate || 0) / 100);
-        subtotal += itemTotal;
-        totalTax += itemTax;
+        const roundedItemTotal = parseFloat(itemTotal.toFixed(currencyDecimalPlaces));
+        const roundedItemTax = parseFloat(itemTax.toFixed(currencyDecimalPlaces));
+        subtotal += roundedItemTotal;
+        totalTax += roundedItemTax;
         
         return {
             product_id: parseInt(item.product_id),
             quantity: parseFloat(item.quantity),
             unit_price: parseFloat(item.price),
-            total: itemTotal,
+            total: roundedItemTotal,
             tax_rate: parseFloat(item.tax_rate || 0),
-            tax_amount: itemTax
+            tax_amount: roundedItemTax
         };
     });
     
-    const total = subtotal + totalTax;
+    subtotal = parseFloat(subtotal.toFixed(currencyDecimalPlaces));
+    totalTax = parseFloat(totalTax.toFixed(currencyDecimalPlaces));
+    const total = parseFloat((subtotal + totalTax).toFixed(currencyDecimalPlaces));
     
     // التحقق من صحة الإجماليات
     if (total <= 0) {
@@ -1501,7 +1621,8 @@ function checkout() {
     }
     
     // التحقق من الصندوق للمستخدمين Admin
-    const isAdmin = {% if user_is_admin %}true{% else %}false{% endif %};
+    //const isAdmin = {% if user_is_admin %}true{% else %}false{% endif %};
+    const isAdmin = JSON.parse(document.getElementById('user-is-admin-data').textContent);
     if (isAdmin && !cashboxId) {
         alert('يجب اختيار الصندوق');
         const checkoutBtn = document.getElementById('checkout-btn');
@@ -1510,9 +1631,18 @@ function checkout() {
         return;
     }
     
+    // تأكد من اختيار طريقة الدفع
+    if (!paymentMethod) {
+        alert('يجب اختيار طريقة الدفع');
+        const checkoutBtn = document.getElementById('checkout-btn');
+        checkoutBtn.disabled = false;
+        checkoutBtn.innerHTML = '<i class="fas fa-cash-register"></i> إتمام البيع';
+        return;
+    }
+
     const data = {
         customer_id: customerId || null,
-        payment_type: paymentType,
+        payment_method: paymentMethod,
         items: items,
         subtotal: subtotal,
         tax_amount: totalTax,
@@ -1558,7 +1688,7 @@ function checkout() {
         // التحقق من نوع المحتوى
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
-            throw new Error('استجابة الخادم ليست من نوع JSON');
+            throw new Error('{% trans "Server response is not of JSON type" %}');
         }
         
         return response.json();
@@ -1567,7 +1697,7 @@ function checkout() {
         console.log('Response data:', data);
         
         if (!data) {
-            throw new Error('البيانات المُستقبلة {% trans "Empty" %}ة');
+            throw new Error('{% trans "Received data is empty" %}');
         }
         
         if (data.success) {
@@ -1769,6 +1899,362 @@ function showAllProducts() {
     // إعادة تحديث العدادات
     updateProductCounts();
 }
+    */
+
+// إتمام البيع
+function checkout() {
+    if (cart.length === 0) {
+        alert('السلة {% trans "Empty" %}ة');
+        return;
+    }
+    
+    try {
+        // تعطيل الزر لمنع النقر المتكرر
+        const checkoutBtn = document.getElementById('checkout-btn');
+        if (checkoutBtn) {
+            checkoutBtn.disabled = true;
+            checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري المعالجة...';
+        }
+        
+        const customerId = document.getElementById('customer-select') ? document.getElementById('customer-select').value : null;
+        const paymentSelectEl = document.getElementById('payment-type');
+        const paymentMethod = paymentSelectEl ? paymentSelectEl.value : '';
+        const cashboxId = document.getElementById('cashbox-select') ? document.getElementById('cashbox-select').value : null;
+    
+        // حساب الإجماليات
+        let subtotal = 0;
+        let totalTax = 0;
+        
+        const items = cart.map(item => {
+            // التحقق من صحة بيانات العنصر
+            if (!item.product_id || !item.quantity || !item.price) {
+                throw new Error('بيانات المنتج غير صحيحة');
+            }
+            
+            const itemTotal = parseFloat(item.price) * parseFloat(item.quantity);
+            const itemTax = itemTotal * (parseFloat(item.tax_rate || 0) / 100);
+            const roundedItemTotal = parseFloat(itemTotal.toFixed(currencyDecimalPlaces));
+            const roundedItemTax = parseFloat(itemTax.toFixed(currencyDecimalPlaces));
+            subtotal += roundedItemTotal;
+            totalTax += roundedItemTax;
+            
+            return {
+                product_id: parseInt(item.product_id),
+                quantity: parseFloat(item.quantity),
+                unit_price: parseFloat(item.price),
+                total: roundedItemTotal,
+                tax_rate: parseFloat(item.tax_rate || 0),
+                tax_amount: roundedItemTax
+            };
+        });
+        
+        subtotal = parseFloat(subtotal.toFixed(currencyDecimalPlaces));
+        totalTax = parseFloat(totalTax.toFixed(currencyDecimalPlaces));
+        const total = parseFloat((subtotal + totalTax).toFixed(currencyDecimalPlaces));
+        
+        // التحقق من صحة الإجماليات
+        if (total <= 0) {
+            alert('الإجمالي يجب أن يكون أكبر من صفر');
+            const checkoutBtn = document.getElementById('checkout-btn');
+            if (checkoutBtn) {
+                checkoutBtn.disabled = false;
+                checkoutBtn.innerHTML = '<i class="fas fa-cash-register"></i> إتمام البيع';
+            }
+            return;
+        }
+        
+        // التحقق الآمن من الصندوق للمييزات Admin لمنع خطأ الـ null
+        const adminDataEl = document.getElementById('user-is-admin-data');
+        const isAdmin = adminDataEl ? JSON.parse(adminDataEl.textContent) : false;
+        
+        if (isAdmin && !cashboxId) {
+            alert('يجب اختيار الصندوق');
+            const checkoutBtn = document.getElementById('checkout-btn');
+            if (checkoutBtn) {
+                checkoutBtn.disabled = false;
+                checkoutBtn.innerHTML = '<i class="fas fa-cash-register"></i> إتمام البيع';
+            }
+            return;
+        }
+        
+        // تأكد من اختيار طريقة الدفع
+        if (!paymentMethod) {
+            alert('يجب اختيار طريقة الدفع');
+            const checkoutBtn = document.getElementById('checkout-btn');
+            if (checkoutBtn) {
+                checkoutBtn.disabled = false;
+                checkoutBtn.innerHTML = '<i class="fas fa-cash-register"></i> إتمام البيع';
+            }
+            return;
+        }
+
+        const data = {
+            customer_id: customerId || null,
+            payment_method: paymentMethod,
+            items: items,
+            subtotal: subtotal,
+            tax_amount: totalTax,
+            discount_amount: 0,
+            total: total
+        };
+        
+        // إضافة cashbox_id للمستخدمين Admin
+        if (isAdmin) {
+            data.cashbox_id = cashboxId;
+        }
+        
+        // إرسال البيانات للخادم
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        
+        if (!csrfToken) {
+            alert('{% trans "Error" %}: لم يتم العثور على رمز الأمان');
+            const checkoutBtn = document.getElementById('checkout-btn');
+            if (checkoutBtn) {
+                checkoutBtn.disabled = false;
+                checkoutBtn.innerHTML = '<i class="fas fa-cash-register"></i> إتمام البيع';
+            }
+            return;
+        }
+        
+        console.log('Sending data:', data);
+        console.log('CSRF Token:', csrfToken.value);
+        
+        fetch('{% url "sales:pos_create_invoice" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken.value,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response) {
+                throw new Error('لم يتم الحصول على رد من الخادم');
+            }
+            
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('{% trans "Server response is not of JSON type" %}');
+            }
+            
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            if (!data) {
+                throw new Error('{% trans "Received data is empty" %}');
+            }
+            
+            if (data.success) {
+                invoiceId = data.invoice_id;
+                const successMsgEl = document.getElementById('success-message');
+                if (successMsgEl) {
+                    successMsgEl.innerHTML = `
+                        <strong>رقم ال{% trans "Invoice" %}:</strong> ${data.invoice_number}<br>
+                        <strong>الإجمالي:</strong> ${total.toFixed(currencyDecimalPlaces)} ${currencySymbol}
+                    `;
+                }
+                
+                const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+                successModal.show();
+                
+                // مسح السلة
+                cart = [];
+                updateCartDisplay();
+                
+                // إعادة تمكين الزر
+                const checkoutBtn = document.getElementById('checkout-btn');
+                if (checkoutBtn) {
+                    checkoutBtn.disabled = false;
+                    checkoutBtn.innerHTML = '<i class="fas fa-cash-register"></i> إتمام البيع';
+                }
+            } else {
+                console.error('Server error:', data.message);
+                alert(data.message || 'حدث {% trans "Error" %} أثناء إتمام البيع');
+                
+                const checkoutBtn = document.getElementById('checkout-btn');
+                if (checkoutBtn) {
+                    checkoutBtn.disabled = false;
+                    checkoutBtn.innerHTML = '<i class="fas fa-cash-register"></i> إتمام البيع';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            let errorMessage = 'حدث {% trans "Error" %} في ا{% trans "No" %}تصال مع الخادم';
+            if (error.message) {
+                errorMessage += ': ' + error.message;
+            }
+            alert(errorMessage);
+            
+            const completeBtn = document.getElementById('checkout-btn');
+            if (completeBtn) {
+                completeBtn.disabled = false;
+                completeBtn.innerHTML = '<i class="fas fa-cash-register"></i> إتمام البيع';
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error in checkout function:', error);
+        alert('{% trans "Error" %} في معالجة البيانات: ' + error.message);
+        
+        const checkoutBtn = document.getElementById('checkout-btn');
+        if (checkoutBtn) {
+            checkoutBtn.disabled = false;
+            checkoutBtn.innerHTML = '<i class="fas fa-cash-register"></i> إتمام البيع';
+        }
+    }
+}
+
+// {% trans "Print" %} ال{% trans "Invoice" %}
+function printInvoice() {
+    if (invoiceId) {
+        window.open(`${POS_PRINT_URL_BASE}${invoiceId}/`, '_blank');
+    }
+}
+
+// بيع {% trans "New" %}
+function newSale() {
+    cart = [];
+    invoiceId = null;
+    updateCartDisplay();
+    const customerSel = document.getElementById('customer-select');
+    if (customerSel) customerSel.value = '';
+    const paymentType = document.getElementById('payment-type');
+    if (paymentType) paymentType.value = 'cash';
+}
+
+// {% trans "Search" %} عن المنتجات مع تأمين العدادات من انهيار null
+document.getElementById('product-search').addEventListener('input', function() {
+    const query = this.value.trim().toLowerCase();
+    
+    if (query.length < 2) {
+        showAllProducts();
+        return;
+    }
+    
+    const allProducts = document.querySelectorAll('.product-card');
+    let foundProducts = [];
+    
+    allProducts.forEach(product => {
+        const name = product.getAttribute('data-name') || '';
+        const barcode = product.getAttribute('data-barcode') || '';
+        const productId = product.getAttribute('data-product-id') || '';
+        const price = product.getAttribute('data-price') || '';
+        const stock = product.getAttribute('data-stock') || '';
+        const code = product.getAttribute('data-code') || '';
+        
+        if (name.includes(query) || barcode.includes(query) || productId.includes(query) || price.includes(query) || stock.includes(query) || code.includes(query)) {
+            foundProducts.push(product);
+            product.style.display = 'block';
+        } else {
+            product.style.display = 'none';
+        }
+    });
+    
+    // تحديث العدادات بناءً على النتائج المرئية مع حماية ضد الـ null
+    const visibleAvailable = document.querySelectorAll('#available-products .product-card[style*="block"], #available-products .product-card:not([style*="none"])').length;
+    const visibleOutOfStock = document.querySelectorAll('#outofstock-products .product-card[style*="block"], #outofstock-products .product-card:not([style*="none"])').length;
+    
+    const availableCountEl = document.getElementById('available-count');
+    const outofstockCountEl = document.getElementById('outofstock-count');
+    
+    if (availableCountEl) availableCountEl.textContent = visibleAvailable;
+    if (outofstockCountEl) outofstockCountEl.textContent = visibleOutOfStock;
+    
+    if (foundProducts.length === 0) {
+        fetch(`{% url "sales:pos_search_products" %}?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                displayProducts(data.products);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+});
+
+// {% trans "View" %} المنتجات
+function displayProducts(products) {
+    const availableGrid = document.getElementById('available-products');
+    const outOfStockGrid = document.getElementById('outofstock-products');
+    
+    let availableHtml = '';
+    let outOfStockHtml = '';
+    let availableCount = 0;
+    let outOfStockCount = 0;
+    
+    products.forEach(product => {
+        const isOutOfStock = product.stock <= 0;
+        
+        let productHtml = `
+            <div class="product-card ${isOutOfStock ? 'out-of-stock' : ''}" 
+                 ${!isOutOfStock ? `onclick="addToCart('${product.id}')"` : ''} 
+                 data-product-id="${product.id}"
+                 data-name="${product.name.toLowerCase()}"
+                 data-barcode="${product.barcode || ''}"
+                 data-price="${product.price}"
+                 data-stock="${product.stock}"
+                 data-code="${product.code || ''}"
+                 data-tax-rate="${product.tax_rate || 0}">
+                <div class="product-name">${product.name}</div>
+                <div class="product-price">${product.price.toFixed(currencyDecimalPlaces)} ${currencySymbol}</div>
+        `;
+        
+        if (product.stock <= 0) {
+            productHtml += '<div class="product-stock"><span class="stock-warning">نفد المخزون</span></div>';
+            outOfStockHtml += productHtml;
+            outOfStockCount++;
+        } else if (product.stock <= 5) {
+            productHtml += `<div class="product-stock"><span class="stock-warning">مخزون منخفض: ${product.stock}</span></div>`;
+            availableHtml += productHtml;
+            availableCount++;
+        } else {
+            productHtml += `<div class="product-stock"><span class="stock-good">المخزون: ${product.stock}</span></div>`;
+            availableHtml += productHtml;
+            availableCount++;
+        }
+        
+        if (product.barcode) {
+            if (product.stock <= 0) {
+                outOfStockHtml += `<div class="product-barcode">${product.barcode}</div><div class="product-id">{% trans "Product Code" %}: ${product.code}</div><div class="product-tax-rate">{% trans "Tax Rate" %}: ${product.tax_rate || 0}%</div></div>`;
+            } else {
+                availableHtml += `<div class="product-barcode">${product.barcode}</div><div class="product-id">{% trans "Product Code" %}: ${product.code}</div><div class="product-tax-rate">{% trans "Tax Rate" %}: ${product.tax_rate || 0}%</div></div>`;
+            }
+        } else {
+            if (product.stock <= 0) {
+                outOfStockHtml += `<div class="product-id">{% trans "Product Code" %}: ${product.code}</div><div class="product-tax-rate">{% trans "Tax Rate" %}: ${product.tax_rate || 0}%</div></div>`;
+            } else {
+                availableHtml += `<div class="product-id">{% trans "Product Code" %}: ${product.code}</div><div class="product-tax-rate">{% trans "Tax Rate" %}: ${product.tax_rate || 0}%</div></div>`;
+            }
+        }
+    });
+    
+    if (availableGrid) availableGrid.innerHTML = availableHtml;
+    if (outOfStockGrid) outOfStockGrid.innerHTML = outOfStockHtml;
+    
+    const availableCountEl = document.getElementById('available-count');
+    const outofstockCountEl = document.getElementById('outofstock-count');
+    
+    if (availableCountEl) availableCountEl.textContent = availableCount;
+    if (outofstockCountEl) outofstockCountEl.textContent = outOfStockCount;
+}
+
+// {% trans "View" %} جميع المنتجات
+function showAllProducts() {
+    const availableGrid = document.getElementById('available-products');
+    const outOfStockGrid = document.getElementById('outofstock-products');
+    
+    if (availableGrid && typeof originalAvailableHtml !== 'undefined') availableGrid.innerHTML = originalAvailableHtml;
+    if (outOfStockGrid && typeof originalOutOfStockHtml !== 'undefined') outOfStockGrid.innerHTML = originalOutOfStockHtml;
+    
+    if (typeof updateProductCounts === 'function') {
+        updateProductCounts();
+    }
+}
+
 
 // مسح {% trans "Search" %}
 function clearSearch() {
@@ -1810,6 +2296,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // تحديث عدادات المنتجات
     updateProductCounts();
+    // تفعيل/تعطيل زر الإتمام عند تغيير طريقة الدفع
+    const paymentSelect = document.getElementById('payment-type');
+    if (paymentSelect) {
+        paymentSelect.addEventListener('change', function() {
+            updateCartDisplay();
+        });
+    }
 });
 
 // تحديث عدادات المنتجات

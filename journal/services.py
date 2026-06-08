@@ -50,20 +50,67 @@ class JournalService:
                 return None
             
             # التحقق من توازن القيد
-            if total_debit != total_credit:
-                raise ValueError(_('مجموع المدين يجب أن يساوي مجموع الدائن'))
+            diff = total_debit - total_credit
+            if abs(diff) > Decimal('0.001'):
+                print(f"⚠️ عدم توازن قيد journal (ref={reference_type}:{reference_id}) debit={total_debit} credit={total_credit} diff={diff}")
+                raise ValueError(_('The total amount owed must equal the total amount owed.'))
+            if diff != 0:
+                # ضبط فرق التقريب الصغير على آخر سطر مناسب
+                adjusted = False
+                if diff > 0:
+                    for line_data in reversed(lines_data):
+                        if Decimal(str(line_data.get('credit', 0))) > 0:
+                            line_data['credit'] = Decimal(str(line_data.get('credit', 0))) + diff
+                            adjusted = True
+                            break
+                else:
+                    for line_data in reversed(lines_data):
+                        if Decimal(str(line_data.get('debit', 0))) > 0:
+                            line_data['debit'] = Decimal(str(line_data.get('debit', 0))) - diff
+                            adjusted = True
+                            break
+                if not adjusted and lines_data:
+                    last_line = lines_data[-1]
+                    if diff > 0:
+                        last_line['credit'] = Decimal(str(last_line.get('credit', 0))) + diff
+                    else:
+                        last_line['debit'] = Decimal(str(last_line.get('debit', 0))) - diff
+                total_debit = sum(Decimal(str(line.get('debit', 0))) for line in lines_data)
+                total_credit = sum(Decimal(str(line.get('credit', 0))) for line in lines_data)
+                print(f"✅ تم تعديل قيد journal لتوازن الفرق: debit={total_debit} credit={total_credit}")
             
             # إنشاء القيد
             # ملاحظة: entry_type موجود في قاعدة البيانات كـ NOT NULL
             # لكنه ليس في النموذج، لذا نضيفه يدوياً
             entry_type_value = 'daily'  # القيمة الافتراضية
             
+            # Determine created_by: prefer explicit user, then related invoice creator, then any active admin/user
+            created_by_user = user
+            if not created_by_user:
+                try:
+                    if sales_invoice and hasattr(sales_invoice, 'created_by'):
+                        created_by_user = sales_invoice.created_by
+                    elif purchase_invoice and hasattr(purchase_invoice, 'created_by'):
+                        created_by_user = purchase_invoice.created_by
+                except Exception:
+                    created_by_user = None
+
+            if not created_by_user:
+                try:
+                    from django.contrib.auth import get_user_model
+                    User = get_user_model()
+                    # Prefer an active superuser, otherwise first active user
+                    created_by_user = User.objects.filter(is_active=True, is_superuser=True).first() or User.objects.filter(is_active=True).first()
+                except Exception:
+                    created_by_user = None
+
+            # created_by is required by the JournalEntry model; ensure we provide a user if possible
             journal_entry = JournalEntry.objects.create(
                 entry_date=entry_date,
                 reference_id=reference_id,
                 description=description,
                 total_amount=total_debit,
-                created_by=user if user else None,  # يمكن أن يكون None إذا لم يتم تمرير user
+                created_by=created_by_user,
                 entry_type=entry_type_value,  # إضافة entry_type المفقود
                 purchase_invoice=purchase_invoice,
                 sales_invoice=sales_invoice,
@@ -276,21 +323,95 @@ class JournalService:
         
         lines_data = []
         
+        ## تحديد الحساب المدين حسب نوع الدفع
+        #is_card = getattr(invoice, 'pos_payment_method', None) == 'card'
+        #
+        #if invoice.payment_type == 'cash' and not is_card:
+        #    # البيع النقدي الصريح
+        #    if invoice.cashbox:
+        #        cash_account = JournalService.get_cashbox_account(invoice.cashbox)
+        #    else:
+        #        cash_account = JournalService.get_cash_account()
+        #    lines_data.append({
+        #        'account_id': cash_account.id,
+        #        'debit': invoice.total_amount,
+        #        'credit': 0,
+        #        'description': f'نقد - فاتورة مبيعات رقم {invoice.invoice_number}'
+        #    })
+        #elif is_card:
+        #    # البيع بالبطاقة: نستخدم نفس منطق الصندوق للبطاقة
+        #    card_account = JournalService.get_cashbox_account(invoice.cashbox) if invoice.cashbox else JournalService.get_cash_account()
+        #    lines_data.append({
+        #        'account_id': card_account.id,
+        #        'debit': invoice.total_amount,
+        #        'credit': 0,
+        #        'description': f'بطاقة - فاتورة مبيعات رقم {invoice.invoice_number}'
+        #    })
+
+
         # تحديد الحساب المدين حسب نوع الدفع
-        if invoice.payment_type == 'cash':
-            # البيع النقدي: حساب الصندوق المحدد (مدين)
+        # نعتمد على payment_type أو pos_payment_method
+        #payment_type = getattr(invoice, 'payment_type', '')
+        #pos_method = getattr(invoice, 'pos_payment_method', '')
+        #is_card = (payment_type == 'card') or (pos_method == 'card')
+
+        #if payment_type == 'cash' and not is_card:
+        #    # البيع النقدي
+        #    if invoice.cashbox:
+        #        cash_account = JournalService.get_cashbox_account(invoice.cashbox)
+        #    else:
+        #        cash_account = JournalService.get_cash_account()
+        #    lines_data.append({
+        #        'account_id': cash_account.id,
+        #        'debit': invoice.total_amount,
+        #        'credit': 0,
+        #        'description': f'نقد - فاتورة مبيعات رقم {invoice.invoice_number}'
+        #    })
+        #elif is_card:
+        #    # البيع بالبطاقة
+        #    # ملاحظة: إذا كان لديك حساب بنك خاص للبطاقات، يمكنك استبدال دالة الحساب هنا
+        #    card_account = JournalService.get_cashbox_account(invoice.cashbox) if invoice.cashbox else JournalService.get_cash_account()
+        #    lines_data.append({
+        #        'account_id': card_account.id,
+        #        'debit': invoice.total_amount,
+        #        'credit': 0,
+        #        'description': f'بطاقة - فاتورة مبيعات رقم {invoice.invoice_number}'
+        #    })
+        #else:
+            # البيع الآجل فقط
+        #    customer_account = JournalService.get_or_create_customer_account(invoice.customer)
+        #    lines_data.append({
+        #        'account_id': customer_account.id,
+        #        'debit': invoice.total_amount,
+        #        'credit': 0,
+        #        'description': f'فاتورة مبيعات رقم {invoice.invoice_number}'
+        #    })
+
+        # تحديد الحساب المدين حسب نوع الدفع
+        payment_type = getattr(invoice, 'payment_type', '')
+        pos_method = getattr(invoice, 'pos_payment_method', '')
+        # نحدد بوضوح ما إذا كانت العملية بطاقة
+        is_card = (payment_type == 'card') or (pos_method == 'card')
+
+        # دمج الكاش والبطاقة في منطق واحد يضمن تشغيل الكود لكليهما
+        if payment_type == 'cash' or is_card:
+            # هذا هو نفس كود الكاش الذي يعمل عندك، قمنا بتوحيده
             if invoice.cashbox:
-                cash_account = JournalService.get_cashbox_account(invoice.cashbox)
+                target_account = JournalService.get_cashbox_account(invoice.cashbox)
             else:
-                cash_account = JournalService.get_cash_account()
+                target_account = JournalService.get_cash_account()
+            
+            # تحديد الوصف ديناميكياً
+            desc_type = "بطاقة" if is_card else "نقد"
+            
             lines_data.append({
-                'account_id': cash_account.id,
+                'account_id': target_account.id,
                 'debit': invoice.total_amount,
                 'credit': 0,
-                'description': f'نقد - فاتورة مبيعات رقم {invoice.invoice_number}'
+                'description': f'{desc_type} - فاتورة مبيعات رقم {invoice.invoice_number}'
             })
         else:
-            # البيع الآجل: حساب العميل (مدين)
+            # البيع الآجل (فقط إذا لم يكن كاشاً ولا بطاقة)
             customer_account = JournalService.get_or_create_customer_account(invoice.customer)
             lines_data.append({
                 'account_id': customer_account.id,
@@ -352,15 +473,25 @@ class JournalService:
             print(f"تجاهل تحديث قيد لفاتورة {invoice.invoice_number if invoice else 'غير محدد'} - إجمالي صفر أو سالب")
             return None
         
-        # البحث عن القيد الموجود
+        # التحقق من وجود قيد سابق للفاتورة باستخدام معرفها ونوعها
         existing_entry = JournalEntry.objects.filter(
             reference_type='sales_invoice',
             reference_id=invoice.id
         ).first()
         
-        if not existing_entry:
-            print(f"لا يوجد قيد موجود للفاتورة {invoice.invoice_number} - سيتم إنشاء قيد جديد")
-            return JournalService.create_sales_invoice_entry(invoice, user)
+        if existing_entry:
+            print(f"✅ القيد موجود بالفعل للفاتورة {invoice.invoice_number}: {existing_entry.entry_number}")
+            return existing_entry
+        
+        # ✅ هذا السطر هو "المفتاح" الذي يحل المشكلة:
+        # إذا وصلنا هنا، فهذا يعني أنه لا يوجد قيد، لذا نقوم بإنشائه فوراً
+        print(f"🔍 لا يوجد قيد للفاتورة {invoice.invoice_number} - البدء في إنشاء قيد جديد")
+        return JournalService.create_sales_invoice_entry(invoice, user)
+        
+        # إذا لم يوجد، نطلب إنشاءه. 
+        # بفضل التعديل في الجزء الأول، سيتعرف الآن على 'card' أو 'cash' بشكل صحيح
+        print(f"🔍 لا يوجد قيد للفاتورة {invoice.invoice_number} - البدء في إنشاء قيد جديد")
+        return JournalService.create_sales_invoice_entry(invoice, user)
         
         # تحديث تاريخ القيد ووصفه
         existing_entry.entry_date = invoice.date

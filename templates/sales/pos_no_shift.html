@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "POS Shift Required" %}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <h3 class="card-title mb-4">{% trans "No Open POS Shift" %}</h3>
+            <p class="lead">
+                {% trans "Hello" %} {{ user_name }}، {% trans "your point of sale session cannot continue because there is no open shift." %}
+            </p>
+            <p>
+                {% trans "A POS shift must be opened before you can create sales from the POS screen." %}
+            </p>
+            {% if can_manage_pos_shifts %}
+            <form method="post" action="{% url 'sales:pos_open_shift' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-play-circle"></i> {% trans "Open POS Shift" %}
+                </button>
+                <a href="{% url 'sales:pos_shifts' %}" class="btn btn-outline-secondary ms-2">
+                    <i class="fas fa-list"></i> {% trans "View POS Shifts" %}
+                </a>
+            </form>
+            {% else %}
+            <div class="alert alert-info mt-4">
+                {% trans "If you need a shift opened, please ask a POS manager or system administrator." %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

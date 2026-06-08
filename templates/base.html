@@ -1315,6 +1315,12 @@
                                                                 {% trans "Point of Sale" %}</a>
                                                         </li>
                                                         {% endif %}
+                                                        {% if user.is_superuser or perms.sales.can_manage_pos_shifts %}
+                                                        <li class="nav-item">
+                                                            <a class="nav-link {% if active_menu == 'sales' and 'pos_shifts' in request.path %}active{% endif %}" href="{% url 'sales:pos_shifts' %}">
+                                                                <i class="fas fa-clock"></i> {% trans "POS Shifts" %}</a>
+                                                        </li>
+                                                        {% endif %}
                                                     </ul>
                                                 </div>
                                             </li>

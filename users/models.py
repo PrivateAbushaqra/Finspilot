@@ -389,7 +389,8 @@ class User(AbstractUser):
         return self.is_admin or self.has_perm('users.can_edit_invoice_numbers')
 
     def has_pos_permission(self):
-        return self.is_admin or self.user_type == 'pos_user' or self.has_perm('users.can_access_pos')
+        return (self.is_admin or self.user_type == 'pos_user' or
+                self.has_perm('users.can_access_pos') or self.has_perm('sales.can_access_pos'))
 
     def is_pos_only_user(self):
         return False  # تم إزالة الصلاحية غير المستخدمة

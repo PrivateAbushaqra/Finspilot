@@ -47,6 +47,106 @@ def get_product_stock_in_warehouse(product, warehouse):
         return product.current_stock if hasattr(product, 'current_stock') else Decimal('0')
 
 
+POS_CASHBOX_NAME = 'Cash POS Box'
+POS_CARD_CASHBOX_NAME = 'Card POS Box'
+OLD_CARD_CASHBOX_SUFFIX = ' - card'
+
+
+def get_or_create_user_pos_cashboxes(user):
+    """Return or create both cash and card cashboxes for POS users."""
+    from core.models import CompanySettings
+    from cashboxes.models import Cashbox
+
+    cashbox_name = POS_CASHBOX_NAME
+    card_cashbox_name = POS_CARD_CASHBOX_NAME
+
+    cashbox = Cashbox.objects.filter(
+        responsible_user=user,
+        is_active=True
+    ).filter(
+        Q(name__iexact=cashbox_name) |
+        Q(name__iexact=user.username)
+    ).first()
+
+    card_cashbox = Cashbox.objects.filter(
+        responsible_user=user,
+        is_active=True
+    ).filter(
+        Q(name__iexact=card_cashbox_name) |
+        Q(name__iexact=f"{user.username}{OLD_CARD_CASHBOX_SUFFIX}") |
+        Q(name__iexact=f"{user.username} - Card") |
+        Q(name__icontains='بطاقة') |
+        Q(name__icontains='Card')
+    ).first()
+
+    company_settings = CompanySettings.get_settings()
+    currency = 'JOD'
+    if company_settings and company_settings.currency:
+        currency = company_settings.currency
+
+    if cashbox and cashbox.name != cashbox_name:
+        cashbox.name = cashbox_name
+        cashbox.save(update_fields=['name'])
+
+    if card_cashbox and card_cashbox.name != card_cashbox_name:
+        card_cashbox.name = card_cashbox_name
+        card_cashbox.save(update_fields=['name'])
+
+    if not cashbox:
+        cashbox = Cashbox.objects.create(
+            name=cashbox_name,
+            description=_('صندوق مستخدم نقطة البيع: %(full_name)s') % {
+                'full_name': user.get_full_name() or user.username
+            },
+            balance=Decimal('0.000'),
+            currency=currency,
+            is_active=True,
+            location=_('نقطة البيع - %(username)s') % {'username': user.username},
+            responsible_user=user,
+        )
+        try:
+            AuditLog.objects.create(
+                user=user,
+                action_type='create',
+                content_type='Cashbox',
+                object_id=cashbox.id,
+                description=_('تم إنشاء صندوق كاش تلقائياً لمستخدم نقطة البيع: %(username)s') % {
+                    'username': user.username
+                },
+                ip_address='127.0.0.1'
+            )
+        except Exception:
+            pass
+
+    if not card_cashbox:
+        card_cashbox = Cashbox.objects.create(
+            name=card_cashbox_name,
+            description=_('صندوق بطاقة مستخدم نقطة البيع: %(full_name)s') % {
+                'full_name': user.get_full_name() or user.username
+            },
+            balance=Decimal('0.000'),
+            currency=currency,
+            is_active=True,
+            location=_('نقطة البيع - %(username)s') % {'username': user.username},
+            responsible_user=user,
+        )
+        try:
+            AuditLog.objects.create(
+                user=user,
+                action_type='create',
+                content_type='Cashbox',
+                object_id=card_cashbox.id,
+                description=_('تم إنشاء صندوق بطاقة تلقائياً لمستخدم نقطة البيع: %(username)s') % {
+                    'username': user.username
+                },
+                ip_address='127.0.0.1'
+            )
+        except Exception:
+            pass
+
+    return cashbox, card_cashbox
+
+
 def get_product_stock(request, product_id, warehouse_id):
     """
     API endpoint للحصول على مخزون المنتج في مستودع معين
@@ -643,7 +743,12 @@ def sales_invoice_create(request):
                         warehouse_id = request.POST.get('warehouse')
                         payment_type = request.POST.get('payment_type')
                         # الحصول على الصندوق فقط للدفع النقدي (الشيكات تُعالج من خلال سند القبض)
-                        cashbox_id = request.POST.get('cashbox') if payment_type == 'cash' else None
+                        #cashbox_id = request.POST.get('cashbox') if payment_type == 'cash' else None
+                        # ✅ السماح للصندوق بالتعيين إذا كان الدفع نقداً أو بطاقة (لكي تتمكن البطاقة من حمل صندوقها وبناء قيدها)
+                        if payment_type in ['cash', 'card']:
+                            cashbox_id = request.POST.get('cashbox')
+                        else:
+                            cashbox_id = None
                         set_default_cashbox = request.POST.get('set_default_cashbox') == 'on' and payment_type == 'cash'
                         notes = request.POST.get('notes', '')
                         discount_amount = Decimal(request.POST.get('discount', '0'))
@@ -722,7 +827,8 @@ def sales_invoice_create(request):
 
                         # الحصول على الصندوق فقط للدفع النقدي (الشيكات تُعالج من خلال سند القبض)
                         cashbox = None
-                        if payment_type == 'cash':
+                        #if payment_type == 'cash':
+                        if payment_type in ['cash', 'card']:
                             # 🔧 إعطاء الأولوية للصندوق المُختار من المستخدم
                             if cashbox_id:
                                 try:
@@ -906,6 +1012,14 @@ def sales_invoice_create(request):
                             tax_amount=0,  # سيتم تحديثها لاحقاً
                             total_amount=0  # سيتم تحديثها لاحقاً
                         )
+
+                        # --- بداية التعديل (الوسط) ---
+                        try:
+                            from journal.services import JournalService
+                            JournalService.create_sales_invoice_entry(invoice, user)
+                        except Exception as e:
+                            print(f"Error creating journal: {e}")
+                        # --- نهاية التعديل ---
 
                         # إذا كان المستخدم له صلاحية تغيير منشئ الفاتورة، تحقق من وجود حقل creator_user_id
                         try:
@@ -2559,7 +2673,7 @@ def pos_view(request):
     has_pos_permission = request.user.has_perm('sales.can_access_pos') or request.user.has_perm('sales.can_view_pos')
     
     if not (is_pos_user_type or has_pos_permission or request.user.is_superuser):
-        messages.error(request, 'ليس لديك صلاحية للوصول إلى نقطة البيع')
+        messages.error(request, _('You do not have access to the point of sale.'))
         return redirect('core:dashboard')
     
     # إنشاء عميل "Cash Customer" إذا لم يكن موجوداً
@@ -2584,45 +2698,27 @@ def pos_view(request):
             object_id=cash_customer.id,
             description=f'إنشاء عميل نقطة البيع تلقائياً: {cash_customer.name}'
         )
-    
+
+    # التحقق من أن مستخدم POS لديه شفت مفتوح
+    if is_pos_user_type and not request.user.is_superuser:
+        from .models import POSShift
+        current_shift = POSShift.current_shift_for_user(request.user)
+        if not current_shift:
+            return render(request, 'sales/pos_no_shift.html', {
+                'user_name': request.user.get_full_name() or request.user.username,
+                'can_manage_pos_shifts': request.user.has_perm('sales.can_manage_pos_shifts') or request.user.has_perm('users.can_access_pos') or request.user.is_superuser,
+            })
+    else:
+        current_shift = None
+
     # إدارة الصناديق حسب نوع المستخدم
     user_is_admin = request.user.is_superuser or request.user.is_staff
     
     if not user_is_admin:
-        # المستخدم العادي: إنشاء صندوق خاص به إذا لم يكن موجوداً
+        # المستخدم العادي: الحصول على صندوقي النقد والبطاقة الخاصين به
         try:
-            from cashboxes.models import Cashbox
-            pos_cashbox = Cashbox.objects.filter(responsible_user=request.user, is_active=True).first()
-            
-            if not pos_cashbox:
-                # الحصول على العملة الأساسية
-                from core.models import CompanySettings
-                company_settings = CompanySettings.get_settings()
-                currency = 'JOD'
-                if company_settings and company_settings.currency:
-                    currency = company_settings.currency
-                
-                pos_cashbox = Cashbox.objects.create(
-                    name=request.user.username,
-                    description=f"صندوق نقطة البيع - {request.user.get_full_name() or request.user.username}",
-                    balance=Decimal('0.000'),
-                    currency=currency,
-                    location=f"نقطة البيع - {request.user.username}",
-                    responsible_user=request.user,
-                    is_active=True
-                )
-                
-                # تسجيل إنشاء الصندوق في سجل الأنشطة
-                AuditLog.objects.create(
-                    user=request.user,
-                    action_type='create',
-                    content_type='Cashbox',
-                    object_id=pos_cashbox.id,
-                    description=f'إنشاء صندوق نقطة البيع تلقائياً: {pos_cashbox.name}'
-                )
-            
+            pos_cashbox, pos_card_cashbox = get_or_create_user_pos_cashboxes(request.user)
             selected_cashbox = pos_cashbox
-            
         except Exception as e:
             messages.error(request, f'خطأ في إعداد صندوق نقطة البيع: {str(e)}')
             return redirect('core:dashboard')
@@ -2637,10 +2733,14 @@ def pos_view(request):
             type__in=['customer', 'both'], 
             is_active=True
         ),
-        'payment_types': SalesInvoice.PAYMENT_TYPES,
+        'payment_methods': SalesInvoice.POS_PAYMENT_METHODS,
         'cash_customer': cash_customer,
         'user_is_admin': user_is_admin,
         'selected_cashbox': selected_cashbox,
+        'pos_cashbox': selected_cashbox if not user_is_admin else None,
+        'pos_card_cashbox': pos_card_cashbox if not user_is_admin else None,
+        'current_shift': current_shift,
+        'can_manage_pos_shifts': request.user.has_perm('sales.can_manage_pos_shifts') or request.user.has_perm('users.can_access_pos') or request.user.is_superuser,
     }
     
     # إعدادات العملة
@@ -2667,31 +2767,150 @@ def pos_view(request):
 
 
 @login_required
+def pos_shifts_view(request):
+    """عرض وإدارة شفتات نقطة البيع"""
+    if not (request.user.has_perm('sales.can_manage_pos_shifts') or request.user.is_superuser):
+        messages.error(request, _('You do not have permission to manage POS shifts.'))
+        return redirect('sales:pos')
+
+    from .models import POSShift
+    from cashboxes.models import Cashbox
+    from django.contrib.auth import get_user_model
+    
+    User = get_user_model()
+
+    shifts = POSShift.objects.select_related('user', 'opened_by', 'closed_by').order_by('-opened_at')
+    normalized_user_ids = set()
+    for shift in shifts:
+        if shift.user_id not in normalized_user_ids:
+            normalized_user_ids.add(shift.user_id)
+            get_or_create_user_pos_cashboxes(shift.user)
+
+    pos_user_ids = shifts.values_list('user_id', flat=True).distinct()
+    cashboxes = Cashbox.objects.filter(responsible_user_id__in=pos_user_ids, is_active=True)
+    cashbox_map = {}
+    for cashbox in cashboxes:
+        cashbox_map.setdefault(cashbox.responsible_user_id, []).append(cashbox)
+
+    shift_rows = []
+    for shift in shifts:
+        shift_rows.append({
+            'shift': shift,
+            'cashboxes': cashbox_map.get(shift.user_id, []),
+        })
+    
+    # الحصول على قائمة مستخدمي POS
+    pos_users = User.objects.filter(user_type='pos_user', is_active=True).order_by('username')
+
+    return render(request, 'sales/pos_shifts.html', {
+        'shift_rows': shift_rows,
+        'pos_users': pos_users,
+        'can_manage_pos_shifts': True,
+    })
+
+
+@login_required
+@require_http_methods(['POST'])
+def open_pos_shift(request):
+    """فتح شفت جديد لمستخدم POS"""
+    if not (request.user.has_perm('sales.can_manage_pos_shifts') or request.user.is_superuser):
+        messages.error(request, _('You do not have permission to open POS shifts.'))
+        return redirect('sales:pos_shifts')
+
+    from .models import POSShift
+    from django.contrib.auth import get_user_model
+    
+    User = get_user_model()
+    
+    # الحصول على معرف مستخدم POS من البيانات المرسلة
+    user_id = request.POST.get('pos_user_id')
+    
+    if not user_id:
+        messages.error(request, _('Please select a POS user.'))
+        return redirect('sales:pos_shifts')
+    
+    try:
+        pos_user = User.objects.get(id=user_id, user_type='pos_user', is_active=True)
+    except User.DoesNotExist:
+        messages.error(request, _('Selected POS user not found.'))
+        return redirect('sales:pos_shifts')
+    
+    # التحقق من عدم وجود شفت مفتوح بالفعل
+    current_shift = POSShift.current_shift_for_user(pos_user)
+    if current_shift:
+        messages.info(request, _(f'User {pos_user.username} already has an open POS shift.'))
+        return redirect('sales:pos_shifts')
+
+    POSShift.objects.create(
+        user=pos_user,
+        opened_by=request.user,
+        status='open',
+    )
+
+    messages.success(request, _(f'POS shift opened for {pos_user.username}.'))
+    return redirect('sales:pos_shifts')
+
+
+@login_required
+@require_http_methods(['POST'])
+def close_pos_shift(request, pk=None):
+    """Close an open POS shift."""
+    if not (request.user.has_perm('sales.can_manage_pos_shifts') or request.user.is_superuser):
+        messages.error(request, _('You do not have permission to close POS shifts.'))
+        return redirect('sales:pos')
+
+    from .models import POSShift
+    if pk:
+        shift = get_object_or_404(POSShift, pk=pk)
+    else:
+        shift = POSShift.current_shift_for_user(request.user)
+        if not shift:
+            messages.error(request, _('No open POS shift found.'))
+            return redirect('sales:pos')
+
+    if shift.status != 'open':
+        messages.info(request, _('This shift is already closed.'))
+        return redirect('sales:pos_shifts')
+
+    shift.status = 'closed'
+    shift.closed_by = request.user
+    shift.closed_at = timezone.now()
+    shift.save(update_fields=['status', 'closed_by', 'closed_at'])
+
+    messages.success(request, _('POS shift closed successfully.'))
+    return redirect('sales:pos_shifts')
+
+
+@login_required
 @require_http_methods(['POST'])
 def pos_create_invoice(request):
     """Create invoice from point of sale"""
     try:
         # التحقق من صلاحية نقطة البيع
         if not hasattr(request.user, 'has_pos_permission') or not request.user.has_pos_permission():
-            return JsonResponse({'success': False, 'message': 'ليس لديك صلاحية للوصول إلى نقطة البيع'})
+            return JsonResponse({'success': False, 'message': _('You do not have access to the point of sale.')})
         
         # التحقق من أن الطلب AJAX
         if not request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'message': 'طلب غير صحيح'})
+            return JsonResponse({'success': False, 'message': _('Invalid request.')})
         
         # التحقق من وجود البيانات
         if not request.body:
-            return JsonResponse({'success': False, 'message': 'البيانات المرسلة فارغة'})
+            return JsonResponse({'success': False, 'message': _('No data sent.')})
             
         data = json.loads(request.body)
         
         # التحقق من وجود البيانات المطلوبة
         if not data.get('items'):
-            return JsonResponse({'success': False, 'message': 'لا توجد عناصر في الفاتورة'})
+            return JsonResponse({'success': False, 'message': _('No items in the invoice.')})
         
         if not data.get('total'):
             return JsonResponse({'success': False, 'message': 'الإجمالي غير صحيح'})
-        
+
+        payment_method = data.get('payment_method')
+        if payment_method not in ['cash', 'card']:
+            return JsonResponse({'success': False, 'message': 'يجب اختيار طريقة الدفع نقداً أو بطاقة'})
+
         with transaction.atomic():
             # توليد رقم الفاتورة باستخدام معاينة أولاً
             try:
@@ -2737,15 +2956,25 @@ def pos_create_invoice(request):
                     balance=0,
                 )
             
+            # التحقق من وجود شفت مفتوح لمستخدم POS
+            if hasattr(request.user, 'user_type') and request.user.user_type == 'pos_user':
+                from .models import POSShift
+                current_shift = POSShift.current_shift_for_user(request.user)
+                if not current_shift:
+                    return JsonResponse({'success': False, 'message': _('No open POS shift.')})
+
             # تحديد الصندوق حسب نوع المستخدم
             user_is_admin = request.user.is_superuser or request.user.is_staff
             selected_cashbox = None
             
             if not user_is_admin:
-                # المستخدم العادي: استخدام صندوقه الخاص
+                # المستخدم العادي: استخدام صندوق الكاش أو صندوق البطاقة حسب طريقة الدفع
                 try:
                     from cashboxes.models import Cashbox
-                    selected_cashbox = Cashbox.objects.filter(responsible_user=request.user, is_active=True).first()
+                    pos_cashbox, pos_card_cashbox = get_or_create_user_pos_cashboxes(request.user)
+                    selected_cashbox = pos_card_cashbox if payment_method == 'card' else pos_cashbox
+                    if not selected_cashbox:
+                        raise Exception(_('Cashbox for selected payment method not found'))
                 except Exception as e:
                     return JsonResponse({'success': False, 'message': f'خطأ في تحديد صندوق نقطة البيع: {str(e)}'})
             else:
@@ -2772,6 +3001,7 @@ def pos_create_invoice(request):
                         customer=cash_customer,  # استخدام Cash Customer دائماً
                         date=date.today(),
                         payment_type='cash',  # دفع نقدي دائماً
+                        pos_payment_method=payment_method,
                         cashbox=selected_cashbox,  # ربط الفاتورة بالصندوق المحدد
                         notes=data.get('notes', ''),
                         created_by=request.user,
@@ -2819,29 +3049,29 @@ def pos_create_invoice(request):
             try:
                 from accounts.models import AccountTransaction
                 import uuid
-                
+
                 # إذا كان هناك عميل وطريقة الدفع ليست نقداً
-                if customer and data.get('payment_type') != 'cash':
+                if invoice.customer and invoice.payment_type != 'cash':
                     # حساب الإجمالي
-                    total_amount = Decimal(str(data.get('total', 0)))
-                    
+                    total_amount = invoice.total_amount
+
                     # توليد رقم الحركة
                     transaction_number = f"POS-SALE-{uuid.uuid4().hex[:8].upper()}"
-                    
+
                     # حساب الرصيد السابق
                     last_transaction = AccountTransaction.objects.filter(
-                        customer_supplier=customer
+                        customer_supplier=invoice.customer
                     ).order_by('-created_at').first()
-                    
+
                     previous_balance = last_transaction.balance_after if last_transaction else Decimal('0')
-                    
+
                     # إنشاء حركة مدينة للعميل (زيادة الذمم المدينة)
                     new_balance = previous_balance + total_amount
-                    
+
                     AccountTransaction.objects.create(
                         transaction_number=transaction_number,
                         date=date.today(),
-                        customer_supplier=customer,
+                        customer_supplier=invoice.customer,
                         transaction_type='sales_invoice',
                         direction='debit',
                         amount=total_amount,
@@ -2851,7 +3081,7 @@ def pos_create_invoice(request):
                         balance_after=new_balance,
                         created_by=request.user
                     )
-                    
+
             except ImportError:
                 # في حالة عدم وجود نموذج الحسابات
                 pass
@@ -2860,34 +3090,14 @@ def pos_create_invoice(request):
                 # لا نوقف العملية في حالة فشل تسجيل الحركة المالية
                 pass
             
-            # إنشاء القيد المحاسبي للفاتورة
-            try:
-                create_sales_invoice_journal_entry(invoice, request.user)
-            except Exception as journal_error:
-                print(f"خطأ في إنشاء القيد المحاسبي: {journal_error}")
-                # لا نوقف العملية في حالة فشل إنشاء القيد المحاسبي
-                pass
-            
-            # تحديث رصيد الصندوق
-            if selected_cashbox:
-                try:
-                    total_amount = Decimal(str(data.get('total', 0)))
-                    selected_cashbox.balance += total_amount
-                    selected_cashbox.save()
-                    
-                    # تسجيل تحديث رصيد الصندوق في سجل الأنشطة
-                    from core.models import AuditLog
-                    AuditLog.objects.create(
-                        user=request.user,
-                        action_type='update',
-                        content_type='Cashbox',
-                        object_id=selected_cashbox.id,
-                        description=f'تحديث رصيد الصندوق {selected_cashbox.name} بإضافة {total_amount} من فاتورة POS رقم {invoice.invoice_number}'
-                    )
-                except Exception as cashbox_error:
-                    print(f"خطأ في تحديث رصيد الصندوق: {cashbox_error}")
-                    # لا نوقف العملية في حالة فشل تحديث الرصيد
-                    pass
+        #    # إنشاء القيد المحاسبي للفاتورة
+        #    try:
+        #        create_sales_invoice_journal_entry(invoice, request.user)
+        #    except Exception as journal_error:
+        #        print(f"خطأ في إنشاء القيد المحاسبي: {journal_error}")
+        #       # لا نوقف العملية في حالة فشل إنشاء القيد المحاسبي
+        #       pass
+        #    
             
             # تحديث التسلسل بعد نجاح جميع العمليات
             try:
@@ -2901,7 +3111,7 @@ def pos_create_invoice(request):
                 # لا نوقف العملية في حالة فشل تحديث التسلسل
                 pass
             
-            # تسجيل إنشاء الفاتورة في سجل الأنشطة
+            # تسجيل إنشاء الفاتورة في سجل الأنشطة (خارج transaction للتأكد من عدم فشل البيانات الأساسية)
             try:
                 from core.models import AuditLog
                 AuditLog.objects.create(
@@ -2917,29 +3127,31 @@ def pos_create_invoice(request):
                 # لا نوقف العملية في حالة فشل تسجيل الأنشطة
                 pass
             
-            return JsonResponse({
+            # تأكد من إرجاع JSON response بشكل صحيح
+            response_data = {
                 'success': True, 
-                'message': _('Invoice created successfully'),
+                'message': 'تم إنشاء الفاتورة بنجاح',
                 'invoice_id': invoice.id,
                 'invoice_number': invoice.invoice_number
-            })
+            }
+            return JsonResponse(response_data, safe=True, status=200)
             
     except json.JSONDecodeError as e:
         return JsonResponse({
             'success': False, 
-            'message': 'خطأ في تحليل البيانات المرسلة'
+            'message': _('Error parsing sent data')
         }, status=400)
     except Product.DoesNotExist:
         return JsonResponse({
             'success': False, 
-            'message': 'أحد المنتجات غير موجود'
+            'message': _('Product not found')
         }, status=404)
     except Exception as e:
         import traceback
         traceback.print_exc()
         return JsonResponse({
             'success': False, 
-            'message': f'حدث خطأ أثناء إنشاء الفاتورة: {str(e)}'
+            'message': f'{_("An error occurred while creating the invoice:")} {str(e)}'
         }, status=500)
 
 
@@ -2947,7 +3159,7 @@ def pos_create_invoice(request):
 def pos_get_product(request, product_id):
     """Get product data for point of sale"""
     if not request.user.has_pos_permission():
-        return JsonResponse({'success': False, 'message': 'ليس لديك صلاحية للوصول إلى نقطة البيع'})
+        return JsonResponse({'success': False, 'message': _('You do not have access to the point of sale.')})
     
     try:
         product = Product.objects.get(id=product_id, is_active=True)
@@ -2984,7 +3196,7 @@ def pos_get_product(request, product_id):
             }
         })
     except Product.DoesNotExist:
-        return JsonResponse({'success': False, 'message': 'المنتج غير موجود'})
+        return JsonResponse({'success': False, 'message': _('Product not found.')})
     except Exception as e:
         # تسجيل الخطأ بشكل مفصل
         import sys
@@ -2998,7 +3210,7 @@ def pos_get_product(request, product_id):
 def pos_search_products(request):
     """Search for products in point of sale"""
     if not request.user.has_pos_permission():
-        return JsonResponse({'success': False, 'message': 'ليس لديك صلاحية للوصول إلى نقطة البيع'})
+        return JsonResponse({'success': False, 'message': _('You do not have access to the point of sale.')})
     
     query = request.GET.get('q', '').strip()
     if len(query) < 2:
