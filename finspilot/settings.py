@@ -301,13 +301,20 @@ for host in ALLOWED_HOSTS:
             CORS_ALLOWED_ORIGINS.append(origin)
 
 # CSRF
-CSRF_TRUSTED_ORIGINS = [f"https://{h.strip()}" for h in ALLOWED_HOSTS if h.strip()]
-# إعدادات CSRF للتوافق مع التبويبات الجديدة
-CSRF_COOKIE_SAMESITE = 'Lax'  # يسمح بإرسال CSRF token عند فتح تبويب جديد
-CSRF_COOKIE_HTTPONLY = False  # يجب أن تكون False لكي يتمكن JavaScript من قراءة CSRF token
+# نقوم بإضافة النطاق الأساسي وجميع النطاقات الفرعية الموثوقة لـ CSRF
+CSRF_TRUSTED_ORIGINS = [
+    "https://finspilot.com", 
+    "https://www.finspilot.com", 
+    "https://*.finspilot.com"
+]
+
+# إعدادات CSRF للتوافق مع النطاقات الفرعية
+CSRF_COOKIE_SAMESITE = 'None'  # يجب أن تكون None لأننا نستخدم HTTPS للنطاقات الفرعية
+CSRF_COOKIE_SECURE = True       # مطلوب إجبارياً عندما يكون SAMESITE هو None
+CSRF_COOKIE_HTTPONLY = False    # يجب أن تكون False لكي يتمكن JavaScript من قراءة CSRF token
 CSRF_COOKIE_NAME = 'finspilot_csrftoken'
-CSRF_COOKIE_AGE = 31449600  # سنة واحدة
-CSRF_USE_SESSIONS = False  # استخدام كوكيز منفصلة لـ CSRF
+CSRF_COOKIE_AGE = 31449600      # سنة واحدة
+CSRF_USE_SESSIONS = False       # استخدام كوكيز منفصلة لـ CSRF
 
 # Crispy Forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
