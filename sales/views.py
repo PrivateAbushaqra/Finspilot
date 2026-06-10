@@ -904,14 +904,26 @@ def sales_invoice_create(request):
                                         print(f"خطأ في حساب المخزون للمنتج {product.name}: {e}")
 
                                     # تحذير إذا المنتج غير متوفر في المستودع
-                                    if available_stock <= 0:
-                                        stock_warnings[str(product.id)] = _('Warning: Product "%(product)s" is not available in the selected warehouse.') % {'product': product.name}
-                                    elif quantity > available_stock:
-                                        stock_warnings[str(product.id)] = _('Warning: Requested quantity (%(quantity)s) exceeds available stock (%(available)s) for product "%(product)s" in the selected warehouse.') % {
-                                            'quantity': quantity,
-                                            'available': available_stock,
-                                            'product': product.name
-                                        }
+                                    # تم التعديل: إضافة شرط التحقق من النوع (ليس خدمة)
+                                    if not product.is_service:
+                                        if available_stock <= 0:
+                                            stock_warnings[str(product.id)] = _('Warning: Product "%(product)s" is not available in the selected warehouse.') % {'product': product.name}
+                                        elif quantity > available_stock:
+                                            stock_warnings[str(product.id)] = _('Warning: Requested quantity (%(quantity)s) exceeds available stock (%(available)s) for product "%(product)s" in the selected warehouse.') % {
+                                                'quantity': quantity,
+                                                'available': available_stock,
+                                                'product': product.name
+                                            }
+
+                                    ## تحذير إذا المنتج غير متوفر في المستودع
+                                    #if available_stock <= 0:
+                                    #    stock_warnings[str(product.id)] = _('Warning: Product "%(product)s" is not available in the selected warehouse.') % {'product': product.name}
+                                    #elif quantity > available_stock:
+                                    #    stock_warnings[str(product.id)] = _('Warning: Requested quantity (%(quantity)s) exceeds available stock (%(available)s) for product "%(product)s" in the selected warehouse.') % {
+                                    #        'quantity': quantity,
+                                    #        'available': available_stock,
+                                    #        'product': product.name
+                                    #    }
 
                                     line_subtotal = quantity * unit_price
                                     line_tax_amount = line_subtotal * (tax_rate / 100) if tax_rate > 0 else Decimal('0')

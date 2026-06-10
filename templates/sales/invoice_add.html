@@ -667,7 +667,7 @@ document.getElementById('salesInvoiceForm').addEventListener('submit', function(
             const container = document.querySelector('.form-container');
             const alert = document.createElement('div');
             alert.className = 'alert alert-danger client-validation-alert';
-            alert.textContent = "{% trans 'يرجى اختيار المستودع' %}";
+            alert.textContent = "{% trans 'Please select a warehouse' %}";
             container.insertBefore(alert, container.firstChild);
             alert.scrollIntoView({behavior: 'smooth', block: 'center'});
             return false;
@@ -1141,7 +1141,7 @@ function selectProduct(productId, productCode, productName, salePrice, taxRate, 
     // التحقق من اختيار المستودع أولاً
     const warehouseSelect = document.getElementById('id_warehouse');
     if (!warehouseSelect || !warehouseSelect.value) {
-        alert('{% trans "يرجى اختيار المستودع أولاً قبل اختيار المنتج" %}');
+        alert('{% trans "Please select the warehouse first before selecting the product." %}');
         return;
     }
     
@@ -2528,10 +2528,10 @@ document.addEventListener('keydown', function(e) {
 // Function to show keyboard shortcuts help
 function showKeyboardShortcuts() {
     const shortcuts = [
-        { key: 'Shift+A', description: '{% trans "إضافة سطر منتج جديد" %}' },
-        { key: 'Shift+D', description: '{% trans "حذف سطر المنتج الحالي" %}' },
-        { key: 'Ctrl+Enter', description: '{% trans "حفظ الفاتورة" %}' },
-        { key: 'Ctrl+H or Ctrl+?', description: '{% trans "عرض اختصارات لوحة المفاتيح" %}' }
+        { key: 'Shift+A', description: '{% trans "Add new product row" %}' },
+        { key: 'Shift+D', description: '{% trans "Delete current product row" %}' },
+        { key: 'Ctrl+Enter', description: '{% trans "Save the invoice" %}' },
+        { key: 'Ctrl+H or Ctrl+?', description: '{% trans "Display keyboard shortcuts" %}' }
     ];
     
     let message = 'اختصارات لوحة المفاتيح:\n\n';

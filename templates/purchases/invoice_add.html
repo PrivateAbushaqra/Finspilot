@@ -1023,7 +1023,7 @@ document.getElementById('invoiceForm').addEventListener('submit', function(e) {
     const warehouseSelect = document.getElementById('id_warehouse');
     if (!warehouseSelect || !warehouseSelect.value) {
         e.preventDefault();
-        alert('{% trans "يرجى اختيار المستودع" %}');
+        alert('{% trans "Please select a warehouse" %}');
         return false;
     }
     
@@ -2216,10 +2216,10 @@ document.addEventListener('keydown', function(e) {
 // Function to show keyboard shortcuts help
 function showKeyboardShortcuts() {
     const shortcuts = [
-        { key: 'Shift+A', description: '{% trans "إضافة سطر منتج جديد" %}' },
-        { key: 'Shift+D', description: '{% trans "حذف سطر المنتج الحالي" %}' },
-        { key: 'Ctrl+Enter', description: '{% trans "حفظ الفاتورة" %}' },
-        { key: 'Ctrl+H or Ctrl+?', description: '{% trans "عرض اختصارات لوحة المفاتيح" %}' }
+        { key: 'Shift+A', description: '{% trans "Add new product row" %}' },
+        { key: 'Shift+D', description: '{% trans "Delete current product row" %}' },
+        { key: 'Ctrl+Enter', description: '{% trans "Save the invoice" %}' },
+        { key: 'Ctrl+H or Ctrl+?', description: '{% trans "Display keyboard shortcuts" %}' }
     ];
     
     let message = 'اختصارات لوحة المفاتيح:\n\n';
