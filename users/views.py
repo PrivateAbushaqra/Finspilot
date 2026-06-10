@@ -2176,13 +2176,24 @@ def change_user_password(request, pk):
     import json
     
     User = get_user_model()
-    
-    # Check if user has permission to edit users
-    if not request.user.has_perm('users.change_user'):
+
+    # التعديل: السماح للمستخدم إذا كان Superuser أو إذا كان نوعه admin أو superadmin
+    # أو إذا كان يملك الصلاحية المحددة (change_user)
+
+    is_manager = request.user.user_type in ['admin', 'superadmin']
+
+    if not (request.user.is_superuser or is_manager or request.user.has_perm('users.change_user')):
         return JsonResponse({
             'success': False,
             'error': _('You do not have permission to change user passwords.')
         }, status=403)
+    
+    # Check if user has permission to edit users
+    #if not request.user.has_perm('users.change_user'):
+    #    return JsonResponse({
+    #        'success': False,
+    #        'error': _('You do not have permission to change user passwords.')
+    #    }, status=403)
     
     # Get user to edit
     try:
