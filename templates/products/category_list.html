@@ -351,9 +351,17 @@
                                     </td>
                                     <td>
                                         <h6 class="mb-1 fw-bold">
-                                            {{ category.name }}
+                                            {% if LANGUAGE_CODE == 'ar' %}
+                                                    {{ category.name }}
+                                                {% else %}
+                                                {% if category.name_en %}
+                                                    {{ category.name_en }}
+                                                    {% else %}
+                                                         {{ category.name }}
+                                                {% endif %}
+                                            {% endif %}
                                             {% if category.parent %}
-                                                <small class="text-muted">({% trans "Subcategory" %}: {{ category.parent.name }})</small>
+                                            <small class="text-muted">({% trans "Subcategory" %}: {% if LANGUAGE_CODE == 'ar' %}{{ category.parent.name }}{% else %}{% if category.parent.name_en %}{{ category.parent.name_en }}{% else %}{{ category.parent.name }}{% endif %}{% endif %})</small>
                                             {% else %}
                                                 <small class="text-muted">({% trans "Main Category" %})</small>
                                             {% endif %}
@@ -365,9 +373,13 @@
                                     <td>
                                         <span class="badge bg-light text-dark">{{ category.code|default:"-" }}</span>
                                     </td>
-                                    <td>
+                                    <!--<td>
                                         <!--{% trans "No description available" as no_desc %}
-                                        {{ category.description|default:no_desc|truncatewords:10 }}-->
+                                        {{ category.description|default:no_desc|truncatewords:10 }}
+                                        {% trans "No description available" as no_desc %}
+                                        {{ category.description|default:no_desc|truncatechars:100 }}
+                                    </td>-->
+                                    <td>
                                         {% trans "No description available" as no_desc %}
                                         {{ category.description|default:no_desc|truncatechars:100 }}
                                     </td>

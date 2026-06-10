@@ -616,6 +616,105 @@
                                     </td>
                                     <td title="{{ product.name }}">
                                         <a href="{% url 'products:product_movements' product.pk %}" class="text-decoration-none text-dark fw-bold">
+                                            {% if LANGUAGE_CODE == 'ar' %}{{ product.name|truncatechars:20 }}{% else %}{% if product.name_en %}{{ product.name_en|truncatechars:20 }}{% else %}{{ product.name|truncatechars:20 }}{% endif %}{% endif %}
+                                        </a>
+                                    </td>
+                                    <td title="{{ product.code }}">{{ product.code }}</td>
+                                    <td>
+                                        {% if product.is_service %}
+                                        <span class="badge bg-primary">
+                                            <i class="fas fa-cogs me-1"></i>
+                                            {% trans "Service" %}
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-box me-1"></i>
+                                            {% trans "Physical Product" %}
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td title="{{ product.category.name }}">
+                                        {% if LANGUAGE_CODE == 'ar' %}{{ product.category.name|truncatechars:15 }}{% else %}{% if product.category.name_en %}{{ product.category.name_en|truncatechars:15 }}{% else %}{{ product.category.name|truncatechars:15 }}{% endif %}{% endif %}
+                                    </td>
+                                    <td>{{ product.sale_price|currency_format }}</td>
+                                    <td>{{ product.get_price_with_tax|currency_format }}</td>
+                                    <td>
+                                        <span class="text-success">
+                                            {{ product.current_stock|floatformat:0 }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if product.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {% if product.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'products:product_detail' product.pk %}" class="btn btn-outline-primary btn-sm" title="{% trans "View Details" %}">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.products.can_edit_products %}
+                                            <a href="{% url 'products:product_edit' product.pk %}" class="btn btn-outline-warning btn-sm" title="{% trans "Edit" %}">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% endif %}
+                                            {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.products.can_delete_products %}
+                                            <button class="btn btn-outline-danger btn-sm delete-product" 
+                                                    data-product-name="{{ product.name }}" 
+                                                    data-product-id="{{ product.pk }}" 
+                                                    title="{% trans "Delete" %}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <!--<table class="table table-striped table-hover align-middle text-center" id="productsTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>{% trans "Image" %}</th>
+                                    <th class="sortable" data-column="1" style="cursor: pointer;">
+                                        {% trans "Product Name" %}
+                                        <i class="fas fa-sort ms-1"></i>
+                                    </th>
+                                    <th class="sortable" data-column="2" style="cursor: pointer;">
+                                        {% trans "Code" %}
+                                        <i class="fas fa-sort ms-1"></i>
+                                    </th>
+                                    <th>{% trans "Type" %}</th>
+                                    <th class="sortable" data-column="4" style="cursor: pointer;">
+                                        {% trans "Category" %}
+                                        <i class="fas fa-sort ms-1"></i>
+                                    </th>
+                                    <th class="sortable" data-column="5" style="cursor: pointer;">
+                                        {% trans "Sale Price" %}
+                                        <i class="fas fa-sort ms-1"></i>
+                                    </th>
+                                    <th class="sortable" data-column="6" style="cursor: pointer;">
+                                        {% trans "Price with Tax" %}
+                                        <i class="fas fa-sort ms-1"></i>
+                                    </th>
+                                    <th class="sortable" data-column="7" style="cursor: pointer;">
+                                        {% trans "Stock" %}
+                                        <i class="fas fa-sort ms-1"></i>
+                                    </th>
+                                    <th>{% trans "Status" %}</th>
+                                    <th>{% trans "Actions" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in products %}
+                                <tr>
+                                    <td>
+                                        <div class="product-image bg-light d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-radius: 6px;">
+                                            <i class="fas fa-box text-muted"></i>
+                                        </div>
+                                    </td>
+                                    <td title="{{ product.name }}">
+                                        <a href="{% url 'products:product_movements' product.pk %}" class="text-decoration-none text-dark fw-bold">
                                             {{ product.name|truncatechars:20 }}
                                         </a>
                                     </td>
@@ -669,7 +768,7 @@
                                 </tr>
                                 {% endfor %}
                             </tbody>
-                        </table>
+                        </table>-->
                     </div>
                     
                     <!-- Pagination -->

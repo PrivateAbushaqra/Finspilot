@@ -533,11 +533,11 @@
                 <!-- Empty State -->
                 <div class="text-center py-5">
                     <i class="fas fa-file-invoice fa-4x text-muted mb-3"></i>
-                    <h4>{% trans "No invoices found" %}</h4>
+                    <h4>{% trans "No Purchase Invoices Found" %}</h4>
                     <p class="text-muted">{% trans "No purchase invoices have been recorded yet." %}</p>
                     <a href="{% url 'purchases:invoice_add' %}" class="btn btn-success">
                         <i class="fas fa-plus me-2"></i>
-                        {% trans "Add" %} {% trans "Create New Invoice" %}
+                        {% trans "Create New Invoice" %}
                     </a>
                 </div>
             {% endif %}

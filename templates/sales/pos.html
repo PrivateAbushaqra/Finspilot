@@ -1029,11 +1029,22 @@
     <div class="pos-content">
         <!-- Products Section -->
         <div class="products-section">
-            <div class="products-header">
+            <!--<div class="products-header">
                 <h5><i class="fas fa-boxes"></i> {% trans "Products" %}</h5>
                 <div class="search-container">
                     <i class="fas fa-search search-icon"></i>
-                    <input type="text" class="search-input" id="product-search" placeholder="{% trans 'Search for products by name or barcode...' %}">
+                    <input type="text" class="search-input" id="product-search" placeholder="{% trans "Search for products by name or barcode..." %}">
+                    <button class="clear-search" type="button" onclick="clearSearch()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>-->
+            <div class="products-header">
+                <h5><i class="fas fa-boxes"></i> {% trans "Products" %}</h5>
+                <div class="search-container" style="{% if LANGUAGE_CODE == 'ar' %}direction: rtl; text-align: right;{% else %}direction: ltr; text-align: left;{% endif %}">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="search-input" id="product-search" 
+                        placeholder="{% if LANGUAGE_CODE == 'ar' %}ابحث عن المنتجات بالاسم أو الرمز...{% else %}Search for products by name or barcode...{% endif %}">
                     <button class="clear-search" type="button" onclick="clearSearch()">
                         <i class="fas fa-times"></i>
                     </button>
@@ -1061,7 +1072,14 @@
                                     data-stock="{{ product.current_stock }}"
                                     data-code="{{ product.code }}"
                                     data-tax-rate="{{ product.tax_rate }}">
-                                    <div class="product-name">{{ product.name }}</div>
+                                    <!--<div class="product-name">{{ product.name }}</div>-->
+                                    <div>
+                                        {% if LANGUAGE_CODE == 'ar' %}
+                                        {{ product.name }}
+                                        {% else %}
+                                        {% if product.name_en %}{{ product.name_en }}{% else %}{{ product.name }}{% endif %}
+                                        {% endif %}
+                                    </div> 
                                     <div class="product-price">{{ product.sale_price }} {% if base_currency %}{{ base_currency.symbol }}{% else %}{% get_currency_symbol %}{% endif %}</div>
                                     <div class="product-stock">
                                         {% if product.current_stock <= 5 %}
@@ -1079,101 +1097,7 @@
                                 {% endif %}
                             {% endfor %}
                         </div>     
-                    <!--<div class="product-grid" id="available-products">
-                        {% for product in products %}
-                            {% if product.current_stock > 0 %}
-                            <div class="product-card" 
-                                onclick="addToCart(this)" 
-                                style="border: 1px solid var(--primary-color);" 
-                                data-product-id="{{ product.id }}"
-                                data-name="{{ product.name|lower }}"
-                                data-barcode="{{ product.barcode|default:'' }}"
-                                data-price="{{ product.sale_price }}"
-                                data-stock="{{ product.current_stock }}"
-                                data-code="{{ product.code }}"
-                                data-tax-rate="{{ product.tax_rate }}">
-                                <div class="product-name">{{ product.name }}</div>
-                                <div class="product-price">{{ product.sale_price }} {% if base_currency %}{{ base_currency.symbol }}{% else %}{% get_currency_symbol %}{% endif %}</div>
-                                <div class="product-stock">
-                                    {% if product.current_stock <= 5 %}
-                                        <span class="stock-warning">{% trans "Low Stock" %}: {{ product.current_stock }}</span>
-                                    {% else %}
-                                        <span class="stock-good">{% trans "Stock" %}: {{ product.current_stock }}</span>
-                                    {% endif %}
-                                </div>
-                                {% if product.barcode %}
-                                    <div class="product-barcode">{{ product.barcode }}</div>
-                                {% endif %}
-                                <div class="product-id">{% trans "Product Code" %}: {{ product.code }}</div>
-                                <div class="product-tax-rate">{% trans "Tax Rate" %}: {{ product.tax_rate }}%</div>
-                            </div>
-                            {% endif %}
-                        {% endfor %}
-                    </div>-->
-                    <!--<div class="product-grid" id="available-products">
-                        {% for product in products %}
-                            {% if product.current_stock > 0 %}
-                            <div class="product-card" 
-                                 onclick="addToCart({{ product.id }})" 
-                                 data-product-id="{{ product.id }}"
-                                 data-name="{{ product.name|lower }}"
-                                 data-barcode="{{ product.barcode|default:'' }}"
-                                 data-price="{{ product.sale_price }}"
-                                 data-stock="{{ product.current_stock }}"
-                                 data-code="{{ product.code }}"
-                                 data-tax-rate="{{ product.tax_rate }}">
-                                <div class="product-name">{{ product.name }}</div>
-                                <div class="product-price">{{ product.sale_price }} {% if base_currency %}{{ base_currency.symbol }}{% else %}{% get_currency_symbol %}{% endif %}</div>
-                                <div class="product-stock">
-                                    {% if product.current_stock <= 5 %}
-                                        <span class="stock-warning">{% trans "Low Stock" %}: {{ product.current_stock }}</span>
-                                    {% else %}
-                                        <span class="stock-good">{% trans "Stock" %}: {{ product.current_stock }}</span>
-                                    {% endif %}
-                                </div>
-                                {% if product.barcode %}
-                                    <div class="product-barcode">{{ product.barcode }}</div>
-                                {% endif %}
-                                <div class="product-id">{% trans "Product Code" %}: {{ product.code }}</div>
-                                <div class="product-tax-rate">{% trans "Tax Rate" %}: {{ product.tax_rate }}%</div>
-                            </div>
-                            {% endif %}
-                        {% endfor %}
-                    </div>-->
                 </div>
-
-                <!--<div class="out-of-stock-section">
-                    <h6 class="section-title">
-                        <i class="fas fa-times-circle text-danger"></i>
-                        {% trans "Out of Stock Products" %}
-                        <span class="product-count" id="outofstock-count">0</span>
-                    </h6>
-                    <div class="product-grid" id="outofstock-products">
-                        {% for product in products %}
-                            {% if product.current_stock <= 0 %}
-                            <div class="product-card out-of-stock" 
-                                 data-product-id="{{ product.id }}"
-                                 data-name="{{ product.name|lower }}"
-                                 data-barcode="{{ product.barcode|default:'' }}"
-                                 data-price="{{ product.sale_price }}"
-                                 data-stock="{{ product.current_stock }}"
-                                 data-code="{{ product.code }}"
-                                 data-tax-rate="{{ product.tax_rate }}">
-                                <div class="product-name">{{ product.name }}</div>
-                                <div class="product-price">{{ product.sale_price }} {% if base_currency %}{{ base_currency.symbol }}{% else %}{% get_currency_symbol %}{% endif %}</div>
-                                <div class="product-stock">
-                                    <span class="stock-warning">نفد المخزون</span>
-                                </div>
-                                {% if product.barcode %}
-                                    <div class="product-barcode">{{ product.barcode }}</div>
-                                {% endif %}
-                                <div class="product-id">{% trans "Product Code" %}: {{ product.code }}</div>
-                                <div class="product-tax-rate">{% trans "Tax Rate" %}: {{ product.tax_rate }}%</div>
-                            </div>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                </div>-->
 <!--                                                                                             -->                
                 <div class="out-of-stock-section d-none" style="display: none;">
                     <h6 class="section-title">
@@ -1232,7 +1156,7 @@
                         <i class="fas fa-user"></i> {% trans "Customer" %}
                     </label>
                     <select class="form-select" id="customer-select">
-                        <option value="">{% trans "Cash Customer" %}</option>
+                       <!-- <option value="">{% trans "Cash Customer" %}</option>-->
                         {% for customer in customers %}
                         <option value="{{ customer.id }}">{{ customer.name }}</option>
                         {% endfor %}
@@ -1274,7 +1198,7 @@
                     <div class="alert alert-info" style="padding: 0.75rem; margin-bottom: 0;">
                         <small>
                             <i class="fas fa-info-circle"></i>
-                            <strong>{% trans "Customer:" %}</strong> {% trans "Cash Customer" %} | 
+                            <strong>{% trans "Customer:" %}</strong> {% trans "Cash Customer" %} |
                             <strong>{% trans "Cashbox:" %}</strong>
                             <span id="selected-cashbox-name" data-cashcashbox-name="{{ pos_cashbox.name }}" data-cardcashbox-name="{{ pos_card_cashbox.name }}">
                                 {{ selected_cashbox.name }}
