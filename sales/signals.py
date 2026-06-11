@@ -12,27 +12,30 @@ OLD_CARD_CASHBOX_SUFFIX = ' - card'
 
 
 def find_pos_cashbox_for_user(user, payment_method):
-    """Return the POS cashbox or card cashbox for a POS user."""
+    """Return the POS cashbox or card cashbox based on exact naming convention."""
     from cashboxes.models import Cashbox
+    
+    # الأسماء الموحدة والمعتمدة لنظام FinsPilot POS Pro
+    target_cash_name = f"{user.username} - Cash"
+    target_card_name = f"{user.username} - Card"
 
     if payment_method == 'card':
         return Cashbox.objects.filter(
             responsible_user=user,
-            is_active=True
-        ).filter(
-            Q(name__iexact=POS_CARD_CASHBOX_NAME) |
-            Q(name__iexact=f"{user.username}{OLD_CARD_CASHBOX_SUFFIX}") |
-            Q(name__iexact=f"{user.username} - Card") |
-            Q(name__icontains='بطاقة') |
-            Q(name__icontains='Card')
+            is_active=True,
+            name__iexact=target_card_name
         ).first()
 
     return Cashbox.objects.filter(
         responsible_user=user,
-        is_active=True
-    ).filter(
-        Q(name__iexact=POS_CASHBOX_NAME) |
-        Q(name__iexact=user.username)
+        is_active=True,
+        name__iexact=target_cash_name
+    ).first()
+
+    return Cashbox.objects.filter(
+        responsible_user=user,
+        is_active=True,
+        name=target_cash_name
     ).first()
 
 
@@ -90,15 +93,15 @@ def create_cashbox_transaction_for_sales(sender, instance, created, **kwargs):
             if not instance.cashbox:
                 from cashboxes.models import Cashbox
                 cashbox = None
+                
+                # حاول الحصول على صندوق الكاش للمستخدم من POS
                 if instance.created_by and instance.created_by.has_perm('users.can_access_pos'):
-                    cashbox_name = POS_CASHBOX_NAME
-                    if getattr(instance, 'pos_payment_method', None) == 'card':
-                        cashbox_name = POS_CARD_CASHBOX_NAME
-                    cashbox = Cashbox.objects.filter(responsible_user=instance.created_by).filter(
-                        Q(name__iexact=cashbox_name) | Q(name__iexact=instance.created_by.username)
-                    ).first()
+                    # استخدم الدالة الموحدة للبحث عن الصناديق
+                    payment_method = getattr(instance, 'pos_payment_method', 'cash')
+                    cashbox = find_pos_cashbox_for_user(instance.created_by, payment_method)
                 
                 if not cashbox:
+                    # إذا لم تجد صندوق POS، ابحث عن الصندوق الرئيسي
                     cashbox = Cashbox.objects.filter(name__icontains='رئيسي', is_active=True).first()
                 
                 if cashbox:

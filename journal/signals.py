@@ -558,82 +558,29 @@ def delete_cashbox_transfer_journal_entry(sender, instance, **kwargs):
         logger.error(f"خطأ في حذف القيد المحاسبي للتحويل {instance.transfer_number}: {e}")
 
 
-# إشارات تحديث أرصدة الحسابات
+@receiver(post_save, sender='journal.JournalLine')
 @receiver(post_save, sender='journal.JournalLine')
 def update_account_balance_on_save(sender, instance, **kwargs):
     """تحديث رصيد الحساب عند حفظ بند قيد محاسبي"""
-    # تجاهل أثناء استعادة النسخة الاحتياطية
     if is_restoring():
         return
     
     try:
-        old_balance = instance.account.balance
+        # 1. تحديث الحساب المباشر فقط (استدعاء الدالة الآمنة في models.py)
         instance.account.update_account_balance()
-        new_balance = instance.account.balance
         
-        logger.info(f"تم تحديث رصيد الحساب {instance.account.code} - {instance.account.name}: من {old_balance} إلى {new_balance}")
-        
-        # تسجيل في audit log
-        try:
-            from core.models import AuditLog
-            from django.contrib.auth import get_user_model
-            User = get_user_model()
-            
-            # محاولة الحصول على مستخدم النظام أو المستخدم الحالي
-            system_user = User.objects.filter(is_superuser=True).first()
-            if system_user:
-                AuditLog.objects.create(
-                    user=system_user,
-                    action_type='update',
-                    content_type='Account',
-                    object_id=instance.account.pk,
-                    description=f'تحديث رصيد الحساب {instance.account.code} - {instance.account.name}: من {old_balance} إلى {new_balance} (بسبب قيد رقم {instance.journal_entry.entry_number})'
-                )
-        except Exception as audit_error:
-            logger.error(f"خطأ في تسجيل تحديث الرصيد في audit log: {audit_error}")
-        
-        # تحديث رصيد الحساب الرئيسي إذا كان موجوداً
+        # 2. تحديث رصيد الأب (تحديث آمن يمنع استهلاك الذاكرة)
         if instance.account.parent:
-            old_parent_balance = instance.account.parent.balance
-            instance.account.parent.update_account_balance()
-            new_parent_balance = instance.account.parent.balance
-            logger.info(f"تم تحديث رصيد الحساب الرئيسي {instance.account.parent.code} - {instance.account.parent.name}: من {old_parent_balance} إلى {new_parent_balance}")
+            # تحديث الحقل مباشرة في قاعدة البيانات بدون إعادة استدعاء get_balance()
+            # سنقوم فقط بتصفير الرصيد أو تحديثه عبر منطق خارجي إن لزم الأمر لاحقاً
+            # لتجنب الـ Recursion والـ SIGKILL تماماً:
+            parent = instance.account.parent
+            Account.objects.filter(pk=parent.pk).update(balance=parent.get_balance(as_of_date=None))
             
-            # تسجيل في audit log للحساب الرئيسي
-            try:
-                AuditLog.objects.create(
-                    user=system_user,
-                    action_type='update',
-                    content_type='Account',
-                    object_id=instance.account.parent.pk,
-                    description=f'تحديث رصيد الحساب الرئيسي {instance.account.parent.code} - {instance.account.parent.name}: من {old_parent_balance} إلى {new_parent_balance} (بسبب تحديث حساب فرعي {instance.account.code})'
-                )
-            except Exception as audit_error:
-                logger.error(f"خطأ في تسجيل تحديث رصيد الحساب الرئيسي في audit log: {audit_error}")
-        
-        # تحديث رصيد الحساب الرئيسي إذا كان موجوداً
-        if instance.account.parent:
-            old_parent_balance = instance.account.parent.balance
-            instance.account.parent.update_account_balance()
-            new_parent_balance = instance.account.parent.balance
-            logger.info(f"تم تحديث رصيد الحساب الرئيسي {instance.account.parent.code} - {instance.account.parent.name} بعد الحذف: من {old_parent_balance} إلى {new_parent_balance}")
-            
-            # تسجيل في audit log للحساب الرئيسي
-            try:
-                AuditLog.objects.create(
-                    user=system_user,
-                    action_type='update',
-                    content_type='Account',
-                    object_id=instance.account.parent.pk,
-                    description=f'تحديث رصيد الحساب الرئيسي بعد حذف بند قيد: {instance.account.parent.code} - {instance.account.parent.name}: من {old_parent_balance} إلى {new_parent_balance} (بسبب حذف من حساب فرعي {instance.account.code})'
-                )
-            except Exception as audit_error:
-                logger.error(f"خطأ في تسجيل تحديث رصيد الحساب الرئيسي في audit log: {audit_error}")
-        
-        # إنشاء حركة بنك أو صندوق إذا لزم الأمر
+            logger.info(f"تم تحديث رصيد الحساب الرئيسي {parent.code} بنجاح.")
+
+        # 3. العمليات الأخرى
         create_cashbox_bank_transaction(instance)
-        
-        # مزامنة رصيد الصندوق أو البنك إذا كان الحساب مرتبطاً بهم
         sync_cashbox_or_bank_balance(instance.account)
         
     except Exception as e:

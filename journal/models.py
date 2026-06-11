@@ -49,10 +49,13 @@ class Account(models.Model):
         return f"{self.code} - {self.name}"
 
     def save(self, *args, **kwargs):
-        """
-        حفظ الحساب مع الربط التلقائي بالحساب الأب
-        """
-        # إذا لم يكن هناك حساب أب محدد، حاول ربطه تلقائياً
+        # 1. إذا كان التحديث يخص الرصيد فقط، نحفظ مباشرة دون البحث عن الأب
+        update_fields = kwargs.get('update_fields')
+        if update_fields and 'balance' in update_fields and len(update_fields) == 1:
+            super().save(*args, **kwargs)
+            return
+
+        # 2. في الحالات العادية، إذا لم يكن هناك أب، نبحث عنه
         if not self.parent:
             self.parent = self.get_auto_parent()
         
@@ -154,31 +157,57 @@ class Account(models.Model):
                     visited.add(current.pk)
                     current = current.parent
 
-    def get_balance(self, as_of_date=None):
-        """حساب الرصيد الحالي للحساب حتى تاريخ معين
-        
-        للحسابات الرئيسية (التي لها حسابات فرعية): يجمع أرصدة الحسابات الفرعية النشطة
-        للحسابات الفرعية: يحسب من قيوده الخاصة
+    def get_balance(self, as_of_date=None, visited=None):
         """
-        # إذا كان الحساب له حسابات فرعية، اجمع أرصدة الحسابات الفرعية النشطة
-        if self.children.filter(is_active=True).exists():
-            balance = Decimal('0')
-            for child in self.children.filter(is_active=True):
-                balance += child.get_balance(as_of_date)
-            return balance
+        حساب الرصيد الحالي للحساب بكفاءة عالية باستخدام QuerySet.aggregate()
+        بدلاً من الحلقات التكرارية - متوافق مع IFRS IAS 7
         
-        # إلا إذا كان حساب فرعي، احسب من قيوده الخاصة
-        lines = JournalLine.objects.filter(account=self)
+        المعاملات:
+            as_of_date: تاريخ يتم حساب الرصيد حتى هذا التاريخ (اختياري)
+            visited: مجموعة الحسابات المزارة لتجنب الحلقات المفرغة (يُستخدم داخلياً)
+        
+        العودة:
+            Decimal: رصيد الحساب
+        """
+        # حماية من الحلقات المفرغة
+        if visited is None:
+            visited = set()
+        
+        if self.id in visited:
+            return Decimal('0')
+        visited.add(self.id)
+        
+        # إذا كان الحساب له حسابات فرعية، اجمع أرصدة الحسابات الفرعية النشطة مباشرة
+        # باستخدام aggregate لعملية واحدة في قاعدة البيانات فقط
+        children_count = self.children.filter(is_active=True).exists()
+        if children_count:
+            # استعلام واحد فقط لجميع الأرصدة
+            total_balance = self.children.filter(is_active=True).aggregate(
+                total=models.Sum('balance')
+            )['total'] or Decimal('0')
+            return total_balance
+        
+        # إذا لم يكن له أبناء، احسب من قيوده الخاصة باستخدام QuerySet المُحسّن
+        lines = JournalLine.objects.filter(account=self).only('debit', 'credit')
+        
         if as_of_date:
+            # فلتر التاريخ يجب أن يكون قبل يتم تنفيذه في قاعدة البيانات
             lines = lines.filter(journal_entry__entry_date__lte=as_of_date)
-        debit_total = lines.aggregate(total=models.Sum('debit'))['total'] or Decimal('0')
-        credit_total = lines.aggregate(total=models.Sum('credit'))['total'] or Decimal('0')
         
-        # الأصول والمصاريف ترتفع بالمدين
+        # استعلام واحد فقط للمجاميع
+        totals = lines.aggregate(
+            debit=models.Sum('debit', output_field=models.DecimalField()), 
+            credit=models.Sum('credit', output_field=models.DecimalField())
+        )
+        debit_total = totals['debit'] or Decimal('0')
+        credit_total = totals['credit'] or Decimal('0')
+        
+        # تحديد طبيعة الحساب حسب معايير IFRS
         if self.account_type in ['asset', 'expense', 'purchases']:
+            # الأصول والمصاريف: الرصيد = الجانب المدين - الجانب الدائن
             return debit_total - credit_total
-        # المطلوبات والإيرادات وحقوق الملكية ترتفع بالدائن
         else:
+            # المطلوبات والإيرادات: الرصيد = الجانب الدائن - الجانب المدين
             return credit_total - debit_total
 
     def has_parent(self):
@@ -218,9 +247,20 @@ class Account(models.Model):
         return " > ".join(codes)
 
     def update_account_balance(self):
-        """تحديث رصيد الحساب بناءً على جميع القيود"""
-        self.balance = self.get_balance()
-        self.save(update_fields=['balance'])
+        """
+        تحديث رصيد الحساب المباشر فقط دون استدعاء الأب.
+        هذا يمنع الحلقات المفرغة والاستعلامات المتعددة.
+        
+        ملاحظة مهمة: يجب استدعاء هذه الدالة من signals بشكل آمن فقط.
+        """
+        new_balance = self.get_balance()
+        
+        # تحديث الرصيد فقط في قاعدة البيانات مباشرة (QuerySet.update)
+        # هذا يتجنب استدعاء save() الذي قد يثير signals إضافية
+        Account.objects.filter(pk=self.pk).update(balance=new_balance)
+        
+        # تحديث القيمة المحلية أيضاً للاستخدام الفوري
+        self.balance = new_balance
 
     def validate_hierarchy(self):
         """

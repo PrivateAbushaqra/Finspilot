@@ -173,7 +173,8 @@ def cashbox_list(request):
     from banks.models import BankAccount
     from django.utils import timezone
     
-    cashboxes = Cashbox.objects.filter(is_active=True).order_by('name')
+    # الترتيب حسب تاريخ الإنشاء تنازلياً (الأحدث أولاً)
+    cashboxes = Cashbox.objects.filter(is_active=True).order_by('-created_at')
     
     # مزامنة أرصدة الصناديق
     for cashbox in cashboxes:
@@ -893,7 +894,7 @@ def transfer_list(request):
     page_obj = paginator.get_page(page_number)
     
     # البيانات المساعدة
-    cashboxes = Cashbox.objects.filter(is_active=True).order_by('name')
+    cashboxes = Cashbox.objects.filter(is_active=True).order_by('-created_at')
     banks = BankAccount.objects.filter(is_active=True).order_by('name')
     
     # الحصول على رقم التحويل التالي

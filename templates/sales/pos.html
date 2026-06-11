@@ -1052,7 +1052,6 @@
             </div>
             
             <div class="products-grid-container">
-                <!-- {% trans "Available Products" %} -->
                 <div class="available-products-section">
                     <h6 class="section-title">
                         <i class="fas fa-check-circle text-success"></i>
@@ -1061,7 +1060,7 @@
                     </h6>   
                         <div class="product-grid" id="available-products">
                             {% for product in products %}
-                                {% if product.current_stock > 0 %}
+                                {% if product.current_stock > 0 or product.is_service %}
                                 <div class="product-card" 
                                     onclick="addToCart('{{ product.id }}')" 
                                     style="border: 1px solid var(--primary-color);" 
@@ -1071,7 +1070,8 @@
                                     data-price="{{ product.sale_price }}"
                                     data-stock="{{ product.current_stock }}"
                                     data-code="{{ product.code }}"
-                                    data-tax-rate="{{ product.tax_rate }}">
+                                    data-tax-rate="{{ product.tax_rate }}"
+                                    data-is-service="{{ product.is_service|yesno:'true,false' }}">
                                     <!--<div class="product-name">{{ product.name }}</div>-->
                                     <div>
                                         {% if LANGUAGE_CODE == 'ar' %}
@@ -1300,8 +1300,12 @@ updateTime();
 // {% trans "Add" %} منتج للسلة
 function addToCart(productId) {
     const productCard = document.querySelector(`[data-product-id="${productId}"]`);
-    if (productCard.classList.contains('out-of-stock')) {
+    /*if (productCard.classList.contains('out-of-stock')) {
         alert_('This product is out of stock.');
+        return;
+    }*/
+    if (productCard.classList.contains('out-of-stock') && productCard.getAttribute('data-is-service') !== 'true') {
+        alert('This product is out of stock.');
         return;
     }
     
@@ -1312,7 +1316,8 @@ function addToCart(productId) {
                 const product = data.product;
                 
                 // التحقق من المخزون
-                if (product.stock <= 0) {
+                //if (product.stock <= 0) {
+                if (!product.is_service && product.stock <= 0) {
                     alert_('This product is out of stock.');
                     return;
                 }
@@ -1322,7 +1327,8 @@ function addToCart(productId) {
                 
                 if (existingItem) {
                     // زيادة {% trans "Quantity" %}
-                    if (existingItem.quantity >= product.stock) {
+                    //if (existingItem.quantity >= product.stock) {
+                    if (!product.is_service && existingItem.quantity >= product.stock) {
                         alert(`{% trans "Cannot Add more than" %} ${product.stock} {% trans "units" %}`);
                         return;
                     }

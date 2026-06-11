@@ -47,104 +47,32 @@ def get_product_stock_in_warehouse(product, warehouse):
         return product.current_stock if hasattr(product, 'current_stock') else Decimal('0')
 
 
-POS_CASHBOX_NAME = 'Cash POS Box'
-POS_CARD_CASHBOX_NAME = 'Card POS Box'
-OLD_CARD_CASHBOX_SUFFIX = ' - card'
-
-
 def get_or_create_user_pos_cashboxes(user):
-    """Return or create both cash and card cashboxes for POS users."""
-    from core.models import CompanySettings
+    """
+    الحصول على صناديق نقطة البيع للمستخدم (النقد والبطاقة).
+    ملاحظة مهمة: الصناديق تُنشأ تلقائياً عند إنشاء مستخدم POS في users/signals.py
+    هذه الدالة تبحث فقط عن الصناديق الموجودة ولا تنشئ صناديق إضافية.
+    """
     from cashboxes.models import Cashbox
-
-    cashbox_name = POS_CASHBOX_NAME
-    card_cashbox_name = POS_CARD_CASHBOX_NAME
-
-    cashbox = Cashbox.objects.filter(
+    from users.signals import _build_pos_cashbox_names
+    
+    # الحصول على أسماء الصناديق الموحدة من users/signals
+    expected_cash_name, expected_card_name = _build_pos_cashbox_names(user.username)
+    
+    # البحث عن الصناديق بناءً على الأسماء الموحدة
+    cash_cashbox = Cashbox.objects.filter(
         responsible_user=user,
-        is_active=True
-    ).filter(
-        Q(name__iexact=cashbox_name) |
-        Q(name__iexact=user.username)
+        is_active=True,
+        name__iexact=expected_cash_name
     ).first()
 
     card_cashbox = Cashbox.objects.filter(
         responsible_user=user,
-        is_active=True
-    ).filter(
-        Q(name__iexact=card_cashbox_name) |
-        Q(name__iexact=f"{user.username}{OLD_CARD_CASHBOX_SUFFIX}") |
-        Q(name__iexact=f"{user.username} - Card") |
-        Q(name__icontains='بطاقة') |
-        Q(name__icontains='Card')
+        is_active=True,
+        name__iexact=expected_card_name
     ).first()
 
-    company_settings = CompanySettings.get_settings()
-    currency = 'JOD'
-    if company_settings and company_settings.currency:
-        currency = company_settings.currency
-
-    if cashbox and cashbox.name != cashbox_name:
-        cashbox.name = cashbox_name
-        cashbox.save(update_fields=['name'])
-
-    if card_cashbox and card_cashbox.name != card_cashbox_name:
-        card_cashbox.name = card_cashbox_name
-        card_cashbox.save(update_fields=['name'])
-
-    if not cashbox:
-        cashbox = Cashbox.objects.create(
-            name=cashbox_name,
-            description=_('صندوق مستخدم نقطة البيع: %(full_name)s') % {
-                'full_name': user.get_full_name() or user.username
-            },
-            balance=Decimal('0.000'),
-            currency=currency,
-            is_active=True,
-            location=_('نقطة البيع - %(username)s') % {'username': user.username},
-            responsible_user=user,
-        )
-        try:
-            AuditLog.objects.create(
-                user=user,
-                action_type='create',
-                content_type='Cashbox',
-                object_id=cashbox.id,
-                description=_('تم إنشاء صندوق كاش تلقائياً لمستخدم نقطة البيع: %(username)s') % {
-                    'username': user.username
-                },
-                ip_address='127.0.0.1'
-            )
-        except Exception:
-            pass
-
-    if not card_cashbox:
-        card_cashbox = Cashbox.objects.create(
-            name=card_cashbox_name,
-            description=_('صندوق بطاقة مستخدم نقطة البيع: %(full_name)s') % {
-                'full_name': user.get_full_name() or user.username
-            },
-            balance=Decimal('0.000'),
-            currency=currency,
-            is_active=True,
-            location=_('نقطة البيع - %(username)s') % {'username': user.username},
-            responsible_user=user,
-        )
-        try:
-            AuditLog.objects.create(
-                user=user,
-                action_type='create',
-                content_type='Cashbox',
-                object_id=card_cashbox.id,
-                description=_('تم إنشاء صندوق بطاقة تلقائياً لمستخدم نقطة البيع: %(username)s') % {
-                    'username': user.username
-                },
-                ip_address='127.0.0.1'
-            )
-        except Exception:
-            pass
-
-    return cashbox, card_cashbox
+    return cash_cashbox, card_cashbox
 
 
 def get_product_stock(request, product_id, warehouse_id):
@@ -156,9 +84,15 @@ def get_product_stock(request, product_id, warehouse_id):
         from inventory.models import Warehouse
         warehouse = get_object_or_404(Warehouse, id=warehouse_id)
         stock = get_product_stock_in_warehouse(product, warehouse)
-        return JsonResponse({'stock': str(stock)})
+        
+        # التعديل: إرسال is_service مع المخزون
+        return JsonResponse({
+            'stock': str(stock),
+            'is_service': product.is_service # <-- هذا هو التعديل المضاف
+        })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
 from core.models import DocumentSequence
 from accounts.services import create_sales_invoice_transaction, create_sales_return_transaction, delete_transaction_by_reference
 from journal.services import JournalService
@@ -2782,23 +2716,16 @@ def pos_shifts_view(request):
     User = get_user_model()
 
     shifts = POSShift.objects.select_related('user', 'opened_by', 'closed_by').order_by('-opened_at')
-    normalized_user_ids = set()
-    for shift in shifts:
-        if shift.user_id not in normalized_user_ids:
-            normalized_user_ids.add(shift.user_id)
-            get_or_create_user_pos_cashboxes(shift.user)
-
-    pos_user_ids = shifts.values_list('user_id', flat=True).distinct()
-    cashboxes = Cashbox.objects.filter(responsible_user_id__in=pos_user_ids, is_active=True)
-    cashbox_map = {}
-    for cashbox in cashboxes:
-        cashbox_map.setdefault(cashbox.responsible_user_id, []).append(cashbox)
-
+    
     shift_rows = []
     for shift in shifts:
+        # الحصول على صناديق المستخدم للشفت الحالي
+        cash_box, card_box = get_or_create_user_pos_cashboxes(shift.user)
+        cashboxes = [box for box in [cash_box, card_box] if box]
+        
         shift_rows.append({
             'shift': shift,
-            'cashboxes': cashbox_map.get(shift.user_id, []),
+            'cashboxes': cashboxes,
         })
     
     # الحصول على قائمة مستخدمي POS
@@ -2843,15 +2770,20 @@ def open_pos_shift(request):
         messages.info(request, _(f'User {pos_user.username} already has an open POS shift.'))
         return redirect('sales:pos_shifts')
 
-    POSShift.objects.create(
+    # الكود الجديد يبدأ هنا
+    # نقوم بإنشاء الشفت فقط
+    new_shift = POSShift.objects.create(
         user=pos_user,
         opened_by=request.user,
         status='open',
     )
 
+    # تحذير: إذا كان النظام يقوم بإنشاء صناديق تلقائية عند فتح الشفت،
+    # تأكد من عدم وجود دالة مثل ensure_shift_cashboxes(new_shift) 
+    # في مكان آخر في ملف models.py الخاص بالـ POSShift أو في Signals.
+    
     messages.success(request, _(f'POS shift opened for {pos_user.username}.'))
     return redirect('sales:pos_shifts')
-
 
 @login_required
 @require_http_methods(['POST'])
@@ -3195,6 +3127,7 @@ def pos_get_product(request, product_id):
                 'tax_rate': tax_rate,
                 'barcode': product.barcode or '',
                 'track_inventory': True,  # افتراض أن جميع المنتجات تتبع المخزون
+                'is_service': getattr(product, 'is_service', False), # إضافة هذه السطر لإرسال حالة الخدمة
             }
         })
     except Product.DoesNotExist:

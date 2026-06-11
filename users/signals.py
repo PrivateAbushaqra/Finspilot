@@ -8,13 +8,12 @@ from decimal import Decimal
 User = get_user_model()
 
 
-CASH_CASHBOX_NAME = 'كاش'
-CARD_CASHBOX_NAME = 'صندوق البطاقة'
 OLD_CARD_CASHBOX_SUFFIX = ' - card'
 
 
 def _build_pos_cashbox_names(username):
-    return CASH_CASHBOX_NAME, CARD_CASHBOX_NAME
+    # نستخدم f-string مع _() للسماح للمترجم بالتعامل مع النصوص
+    return _("Cash - %(username)s") % {'username': username}, _("Card - %(username)s") % {'username': username}
 
 
 def _create_pos_cashbox(instance, name, description, location, currency):
@@ -41,22 +40,31 @@ def create_pos_cashboxes(sender, instance, created, **kwargs):
 
         if created and instance.user_type == 'pos_user':
             cashbox_name, card_cashbox_name = _build_pos_cashbox_names(instance.username)
+            
+            # فحص دقيق ومباشر للاسم الجديد الفريد فقط
             existing_cashbox = Cashbox.objects.filter(
                 responsible_user=instance,
+                name=cashbox_name,
                 is_active=True
-            ).filter(
-                Q(name__iexact=cashbox_name) |
-                Q(name__iexact=instance.username)
             ).first()
+            
             existing_card_cashbox = Cashbox.objects.filter(
                 responsible_user=instance,
+                name=card_cashbox_name,
                 is_active=True
-            ).filter(
-                Q(name__iexact=card_cashbox_name) |
-                Q(name__iexact=f"{instance.username}{OLD_CARD_CASHBOX_SUFFIX}") |
-                Q(name__iexact=f"{instance.username} - Card") |
-                Q(name__icontains='بطاقة') |
-                Q(name__icontains='Card')
+            ).first()
+            # الكود الجديد (التعديل المطلوب):
+            # البحث يجب أن يكون دقيقاً جداً ولا يعتمد على أسماء عامة
+            existing_cashbox = Cashbox.objects.filter(
+                responsible_user=instance,
+                name__iexact=cashbox_name,
+                is_active=True
+            ).first()
+            
+            existing_card_cashbox = Cashbox.objects.filter(
+                responsible_user=instance,
+                name__iexact=card_cashbox_name,
+                is_active=True
             ).first()
 
             company_settings = CompanySettings.get_settings()
