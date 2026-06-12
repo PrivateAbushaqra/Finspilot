@@ -597,13 +597,28 @@
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         {% endif %}
-                                        {% if user.is_superuser or perms.sales.can_post_sales %}
+                                        <!--{% if user.is_superuser or perms.sales.can_post_sales %}
                                         <a href="{% url 'sales:invoice_post' invoice.pk %}" 
                                            class="btn {% if invoice.is_posted_to_tax %}btn-secondary{% else %}btn-success{% endif %}" 
                                            title="{% if invoice.is_posted_to_tax %}{% trans 'Posted to Tax Authority' %}{% else %}{% trans 'Post to Tax Authority' %}{% endif %}"
                                            {% if not invoice.is_posted_to_tax %}onclick="return confirm('{% trans "Are you sure you want to post this invoice to tax authority?" %}')"{% endif %}>
                                             <i class="fas fa-paper-plane"></i>
-                                        </a>
+                                        </a>-->
+                                        {% if user.is_superuser or perms.sales.can_post_sales %}
+                                            {% if invoice.is_posted_to_tax %}
+                                                <span class="btn btn-secondary" title="{% trans 'Already Posted' %}">
+                                                    <i class="fas fa-check-circle"></i>
+                                                </span>
+                                            {% else %}
+                                                <!--<form action="{% url 'sales:invoice_post' invoice.pk %}" method="POST" style="display:inline;" onsubmit="return confirm('{% trans "Are you sure you want to post this invoice to tax authority?" %}')">-->
+                                                <form action="{% url 'sales:send_invoice_to_jofotara' invoice.pk %}" method="POST" style="display:inline;" onsubmit="return confirm('{% trans "Are you sure you want to post this invoice to tax authority?" %}')">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-success" title="{% trans 'Post to Tax Authority' %}">
+                                                        <i class="fas fa-paper-plane"></i>
+                                                    </button>
+                                                </form>
+                                            {% endif %}
+                                        {% endif %}
                                         {% endif %}
                                         {% if user.is_superuser or perms.sales.can_delete_sales %}
                                         <a href="{% url 'sales:invoice_delete' invoice.pk %}" 

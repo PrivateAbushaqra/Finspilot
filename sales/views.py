@@ -21,6 +21,8 @@ from settings.models import CompanySettings, Currency
 from core.models import DocumentSequence
 import openpyxl
 from core.models import AuditLog
+from django.views.generic import TemplateView
+import time
 
 
 def get_product_stock_in_warehouse(product, warehouse):
@@ -3266,137 +3268,87 @@ class SalesStatementView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         start_date = today.replace(day=1)
         end_date = today
         
-        # تطبيق الفلاتر من الطلب
-        if self.request.GET.get('start_date'):
-            start_date = datetime.strptime(self.request.GET.get('start_date'), '%Y-%m-%d').date()
-        if self.request.GET.get('end_date'):
-            end_date = datetime.strptime(self.request.GET.get('end_date'), '%Y-%m-%d').date()
-        
-        # جلب فواتير المبيعات مرتبة حسب التاريخ
-        sales_invoices = SalesInvoice.objects.filter(
-            date__range=[start_date, end_date]
-        ).order_by('date', 'invoice_number')
-        
-        # حساب الرصيد التراكمي (دائن - إيرادات المبيعات)
-        running_balance = Decimal('0')
-        statement_data = []
-        
-        for invoice in sales_invoices:
-            # قيمة الفاتورة قبل الضريبة وبعد الخصم
-            credit_amount = invoice.subtotal - invoice.discount_amount
-            running_balance += credit_amount
-            
-            statement_data.append({
-                'date': invoice.date,
-                'document_number': invoice.invoice_number,
-                'description': 'فاتورة مبيعات',
-                'credit': credit_amount,
-                'balance': running_balance,
-                'invoice': invoice
-            })
-        
-        context.update({
-            'start_date': start_date,
-            'end_date': end_date,
-            'statement_data': statement_data,
-            'final_balance': running_balance,
-        })
-        
-        return context
-
-
-class SalesReturnStatementView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
-    """View sales returns statement"""
-    template_name = 'sales/sales_return_statement.html'
-    
-    def test_func(self):
-        return self.request.user.has_perm('sales.can_view_sales_returns_statement') or self.request.user.is_superuser
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        
-        # فترة البحث الافتراضية (الشهر الحالي)
-        today = timezone.now().date()
-        start_date = today.replace(day=1)
-        end_date = today
-        
-        # تطبيق الفلاتر من الطلب
-        if self.request.GET.get('start_date'):
-            start_date = datetime.strptime(self.request.GET.get('start_date'), '%Y-%m-%d').date()
-        if self.request.GET.get('end_date'):
-            end_date = datetime.strptime(self.request.GET.get('end_date'), '%Y-%m-%d').date()
-        
-        # جلب مردودات المبيعات مرتبة حسب التاريخ
-        sales_returns = SalesReturn.objects.filter(
-            date__range=[start_date, end_date]
-        ).order_by('date', 'return_number')
-        
-        # حساب الرصيد التراكمي (مدين - يقلل من الإيرادات)
-        running_balance = Decimal('0')
-        statement_data = []
-        
-        for return_item in sales_returns:
-            # قيمة المردود قبل الضريبة وبعد الخصم
-            debit_amount = return_item.subtotal
-            running_balance += debit_amount
-            
-            statement_data.append({
-                'date': return_item.date,
-                'document_number': return_item.return_number,
-                'description': 'مردود مبيعات',
-                'debit': debit_amount,
-                'balance': running_balance,
-                'return_item': return_item
-            })
-        
-        context.update({
-            'start_date': start_date,
-            'end_date': end_date,
-            'statement_data': statement_data,
-            'final_balance': running_balance,
-        })
-        
-        return context
-
-
 @login_required
 @require_POST
 def send_invoice_to_jofotara(request, pk):
-    """Send sales invoice to JoFotara"""
-    # للطلبات AJAX، نتحقق من الـ header ونعيد JSON response
-    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    """Send sales invoice to JoFotara - Supports both AJAX and Form POST"""
+    print(f"DEBUG: I am inside the send_invoice_to_jofotara function for PK: {pk}")
     
-    if not is_ajax:
-        return JsonResponse({
-            'success': False,
-            'error': 'هذه الدالة تستخدم للطلبات AJAX فقط'
-        }, status=400)
+    # التحقق من نوع الطلب
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     
     try:
         # Get the invoice
         invoice = get_object_or_404(SalesInvoice, pk=pk)
+        print(f"DEBUG: Fetching status for: {invoice.invoice_number}")
         
-        # Check if user has permission to send invoices
+        # Check if user has permission
         if not request.user.has_perm('sales.can_send_to_jofotara'):
-            return JsonResponse({
-                'success': False,
-                'error': 'ليس لديك صلاحية إرسال الفواتير إلى JoFotara'
-            })
+            error_msg = 'ليس لديك صلاحية إرسال الفواتير إلى JoFotara'
+            if is_ajax:
+                return JsonResponse({'success': False, 'error': error_msg})
+            messages.error(request, error_msg)
+            return redirect('sales:invoice_list')
         
         # Import the utility function
         from settings.utils import send_sales_invoice_to_jofotara
         
+        import time
+        from django.contrib import messages
+        from django.utils import timezone
+        from settings.utils import get_invoice_status_from_jofotara
+
         # Send the invoice
         result = send_sales_invoice_to_jofotara(invoice, request.user)
+        print(f"DEBUG: FULL SERVER RESPONSE: {result}")
         
-        if result['success']:
-            # Update invoice with JoFotara data
+        # --- محاولة جلب الحالة إذا كان الـ QR مفقوداً ---
+        if result.get('success') and not result.get('qr_code'):
+            time.sleep(1.5) # تأخير بسيط للسماح للسيرفر بمعالجة الطلب
+            try:
+                status_result = get_invoice_status_from_jofotara(invoice.invoice_number)
+                
+                if status_result.get('success') and status_result.get('qr_code'):
+                    result['qr_code'] = status_result['qr_code']
+                    result['verification_url'] = status_result.get('verification_url')
+                else:
+                    if not is_ajax:
+                        messages.warning(request, "تم إرسال الفاتورة بنجاح، لكن رمز QR غير جاهز حالياً. يرجى الانتظار دقيقة ثم التحديث.")
+            except Exception as e:
+                print(f"DEBUG: Status check failed: {e}")
+        
+        # --- استكمال الحفظ (الجزء المضاف لإتمام العملية) ---
+        if result.get('success'):
             if 'uuid' in result:
-                invoice.jofotara_uuid = result['uuid']
+                invoice.jofotara_uuid = result.get('uuid')
                 invoice.jofotara_sent_at = timezone.now()
                 invoice.jofotara_verification_url = result.get('verification_url')
-                invoice.jofotara_qr_code = result.get('qr_code')  # حفظ QR Code
-                invoice.is_posted_to_tax = True  # تم الترحيل بنجاح
+                
+                qr_val = (result.get('qr_code') or "").strip()
+                
+                if qr_val:
+                    invoice.jofotara_qr_code = qr_val if qr_val.startswith('data:image') else f"data:image/png;base64,{qr_val}"
+                else:
+                    invoice.jofotara_qr_code = None 
+                
+                invoice.is_posted_to_tax = True
+                invoice.save()
+        
+        # استكمال الحفظ
+        if result['success']:
+            if 'uuid' in result:
+                invoice.jofotara_uuid = result.get('uuid')
+                invoice.jofotara_sent_at = timezone.now()
+                invoice.jofotara_verification_url = result.get('verification_url')
+                
+                qr_val = (result.get('qr_code') or "").strip()
+                
+                if qr_val:
+                    invoice.jofotara_qr_code = qr_val if qr_val.startswith('data:image') else f"data:image/png;base64,{qr_val}"
+                else:
+                    invoice.jofotara_qr_code = None 
+                
+                invoice.is_posted_to_tax = True
                 invoice.save()
                 
                 # تسجيل في سجل الأنشطة
@@ -3407,48 +3359,39 @@ def send_invoice_to_jofotara(request, pk):
                         action_type='post_to_tax',
                         content_type='SalesInvoice',
                         object_id=invoice.id,
-                        description=f'تم إرسال الفاتورة {invoice.invoice_number} إلى JoFotara بنجاح - UUID: {result["uuid"]}',
+                        description=f'تم إرسال الفاتورة {invoice.invoice_number} إلى JoFotara بنجاح',
                         ip_address=request.META.get('REMOTE_ADDR')
                     )
                 except Exception:
                     pass
             
-            # تحقق من وجود QR Code في الاستجابة
-            if not result.get('qr_code'):
-                messages.warning(request, f'تم إرسال الفاتورة {invoice.invoice_number} إلى JoFotara لكن لم يتم استلام رمز QR. يرجى التحقق من إعدادات JoFotara.')
-            else:
-                messages.success(request, f'تم إرسال الفاتورة {invoice.invoice_number} إلى JoFotara بنجاح وحفظ رمز QR')
+            msg = f'تم إرسال الفاتورة {invoice.invoice_number} إلى JoFotara بنجاح.'
+            if not invoice.jofotara_qr_code:
+                msg += " (لم يتم استلام رمز QR)."
+            
+            if not is_ajax:
+                messages.success(request, msg)
         else:
             # فشل الإرسال
             invoice.is_posted_to_tax = False
             invoice.save()
-            
-            # تسجيل الفشل في سجل الأنشطة
-            try:
-                from core.models import AuditLog
-                AuditLog.objects.create(
-                    user=request.user,
-                    action_type='error',
-                    content_type='SalesInvoice',
-                    object_id=invoice.id,
-                    description=f'فشل إرسال الفاتورة {invoice.invoice_number} إلى JoFotara: {result.get("error", "خطأ غير معروف")}',
-                    ip_address=request.META.get('REMOTE_ADDR')
-                )
-            except Exception:
-                pass
-            
-            messages.error(request, f'فشل في إرسال الفاتورة: {result.get("error", "خطأ غير معروف")}')
+            error_msg = f'فشل إرسال الفاتورة {invoice.invoice_number}: {result.get("error", "خطأ غير معروف")}'
+            if not is_ajax:
+                messages.error(request, error_msg)
         
-        return JsonResponse(result)
+        # الرد بناءً على نوع الطلب
+        if is_ajax:
+            return JsonResponse(result)
+        return redirect('sales:invoice_list')
         
     except Exception as e:
+        import logging
         logger = logging.getLogger(__name__)
         logger.error(f"Error sending invoice to JoFotara: {str(e)}")
-        return JsonResponse({
-            'success': False,
-            'error': f'خطأ في النظام: {str(e)}'
-        })
-
+        if is_ajax:
+            return JsonResponse({'success': False, 'error': f'خطأ في النظام: {str(e)}'})
+        messages.error(request, f'خطأ في النظام: {str(e)}')
+        return redirect('sales:invoice_list')
 
 @login_required
 @require_POST
@@ -4158,45 +4101,48 @@ def invoice_delete_item(request, invoice_id, item_id):
 @require_http_methods(["GET", "POST"])
 def invoice_post_to_tax(request, pk):
     """
-    Post sales invoice to tax authority (JoFotara)
+    Post sales invoice to tax authority (JoFotara) and update QR
     """
     invoice = get_object_or_404(SalesInvoice, pk=pk)
     
     # Check permissions
     if not (request.user.is_superuser or request.user.has_perm('sales.can_post_sales')):
         messages.error(request, _('You do not have permission to post invoices to tax authority'))
-        return redirect('sales:invoice_list')
+        return redirect('sales:invoice_detail', pk=pk)
     
-    # Check if already posted
-    if invoice.is_posted_to_tax:
-        messages.warning(request, _('This invoice has already been posted to tax authority'))
-        return redirect('sales:invoice_list')
+    # استيراد الوظائف المطلوبة
+    import time
+    from django.utils import timezone
+    from settings.utils import get_invoice_status_from_jofotara
+    from sales.utils import send_sales_invoice_to_jofotara # الدالة التي ترسل الفاتورة
+
+    # 1. عملية الإرسال الفعلي للسيرفر
+    result = send_sales_invoice_to_jofotara(invoice, request.user)
     
-    try:
-        with transaction.atomic():
-            # Update invoice status
-            invoice.is_posted_to_tax = True
-            invoice.jofotara_sent_at = timezone.now()
-            invoice.save(update_fields=['is_posted_to_tax', 'jofotara_sent_at'])
-            
-            # Log activity
-            try:
-                from core.signals import log_user_activity
-                log_user_activity(
-                    request,
-                    'update',
-                    invoice,
-                    f'تم ترحيل فاتورة المبيعات {invoice.invoice_number} إلى إدارة الضريبة'
-                )
-            except Exception:
-                pass
-            
-            messages.success(request, _('Invoice has been successfully posted to tax authority'))
-            
-    except Exception as e:
-        messages.error(request, f'خطأ في ترحيل الفاتورة: {str(e)}')
+    # 2. إذا نجح الإرسال ولكن لا يوجد QR، حاول الاستعلام
+    if result.get('success') and not result.get('qr_code'):
+        time.sleep(1.5)
+        status_result = get_invoice_status_from_jofotara(invoice.invoice_number)
+        if status_result.get('success') and status_result.get('qr_code'):
+            result['qr_code'] = status_result['qr_code']
+            result['verification_url'] = status_result.get('verification_url')
+
+    # 3. الحفظ في قاعدة البيانات
+    if result.get('success'):
+        invoice.is_posted_to_tax = True
+        invoice.jofotara_sent_at = timezone.now()
+        invoice.jofotara_uuid = result.get('uuid')
+        
+        qr_val = (result.get('qr_code') or "").strip()
+        if qr_val:
+            invoice.jofotara_qr_code = qr_val if qr_val.startswith('data:image') else f"data:image/png;base64,{qr_val}"
+        
+        invoice.save()
+        messages.success(request, _('Invoice has been successfully posted to tax authority'))
+    else:
+        messages.error(request, f"خطأ في الاتصال بالضريبة: {result.get('error', 'Unknown Error')}")
     
-    return redirect('sales:invoice_list')
+    return redirect('sales:invoice_detail', pk=pk)
 
 
 @login_required
@@ -4288,3 +4234,54 @@ def creditnote_post_to_tax(request, pk):
     
     return redirect('sales:creditnote_list')
 
+class SalesReturnStatementView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'sales/sales_return_statement.html'
+    
+    def test_func(self):
+        return self.request.user.has_perm('sales.can_view_sales_returns_statement') or self.request.user.is_superuser
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # فترة البحث الافتراضية (الشهر الحالي)
+        today = timezone.now().date()
+        start_date = today.replace(day=1)
+        end_date = today
+        
+        # تطبيق الفلاتر من الطلب
+        if self.request.GET.get('start_date'):
+            start_date = datetime.strptime(self.request.GET.get('start_date'), '%Y-%m-%d').date()
+        if self.request.GET.get('end_date'):
+            end_date = datetime.strptime(self.request.GET.get('end_date'), '%Y-%m-%d').date()
+        
+        # جلب مردودات المبيعات مرتبة حسب التاريخ
+        from sales.models import SalesReturn # تأكد من الاستيراد
+        sales_returns = SalesReturn.objects.filter(
+            date__range=[start_date, end_date]
+        ).order_by('date', 'return_number')
+        
+        # حساب الرصيد التراكمي
+        running_balance = Decimal('0')
+        statement_data = []
+        
+        for return_item in sales_returns:
+            debit_amount = return_item.subtotal
+            running_balance += debit_amount
+            
+            statement_data.append({
+                'date': return_item.date,
+                'document_number': return_item.return_number,
+                'description': 'مردود مبيعات',
+                'debit': debit_amount,
+                'balance': running_balance,
+                'return_item': return_item
+            })
+        
+        context.update({
+            'start_date': start_date,
+            'end_date': end_date,
+            'statement_data': statement_data,
+            'final_balance': running_balance,
+        })
+        
+        return context

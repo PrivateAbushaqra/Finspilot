@@ -98,9 +98,10 @@ class JoFotaraAPI:
                 'invoice': xml_base64,
                 'invoiceNumber': invoice_data.get('invoice_number', 'UNKNOWN')
             }
-
             # Use data parameter with json.dumps to preserve headers
             import json as json_module
+            # أضف هذا السطر للتشخيص
+            print("DEBUG PAYLOAD KEYS:", payload.keys())
             response = requests.post(
                 f"{self.settings.api_url.rstrip('/')}/core/invoices",
                 data=json_module.dumps(payload),
@@ -112,9 +113,8 @@ class JoFotaraAPI:
             logger.info(f"Response status: {response.status_code}")
             logger.info(f"Response body: {response.text[:200]}")
 
-            if response.status_code == 200:
+            if response.status_code in [200, 201]:
                 response_data = response.json()
-                # Map server response to expected format
                 return {
                     'success': True,
                     'uuid': response_data.get('uuid'),
@@ -124,9 +124,15 @@ class JoFotaraAPI:
                     'message': response_data.get('message')
                 }
             else:
+                # محاولة استخراج رسالة الخطأ من السيرفر إذا كانت JSON
+                try:
+                    error_detail = response.json().get('message', response.text)
+                except:
+                    error_detail = response.text
+                
                 return {
                     'success': False,
-                    'error': f"HTTP {response.status_code}: {response.text}"
+                    'error': f"رفض السيرفر الطلب (كود {response.status_code}): {error_detail}"
                 }
 
         except Exception as e:
@@ -754,10 +760,22 @@ def prepare_debit_note_data(debit_note):
 def send_sales_invoice_to_jofotara(sales_invoice, user=None):
     """Send sales invoice to JoFotara"""
     try:
+        # 1. تجهيز البيانات الأساسية
         invoice_data = prepare_sales_invoice_data(sales_invoice)
+        
+        # 2. توليد الـ XML
+        xml_content = sales_invoice.generate_ubl_xml() if hasattr(sales_invoice, 'generate_ubl_xml') else ""
+        
+        # 3. دمج الـ XML في مستوى يراه الـ API ولا يمسحه
+        # نستخدم دمجاً ذكياً داخل 'invoice' لضمان بقائه
+        if isinstance(invoice_data.get('invoice'), dict):
+            invoice_data['invoice']['xml_content'] = xml_content
+        
+        # 4. استخدام الدالة الأصلية في مشروعك (التي تعمل مع الـ Imports الموجودة لديك)
+        # هذا يضمن عدم حدوث خطأ في الـ Import
         result = send_invoice_to_jofotara(invoice_data, 'sales')
 
-        # Log the result only if user is provided
+        # Log the result
         if user:
             from core.models import AuditLog
             AuditLog.objects.create(
@@ -765,26 +783,31 @@ def send_sales_invoice_to_jofotara(sales_invoice, user=None):
                 action_type='send_invoice',
                 content_type='SalesInvoice',
                 object_id=sales_invoice.id,
-                description=f'إرسال فاتورة مبيعات {sales_invoice.invoice_number} إلى JoFotara: {"نجح" if result["success"] else "فشل"}'
+                description=f'إرسال فاتورة {sales_invoice.invoice_number}: {"نجح" if result.get("success") else "فشل"}'
             )
 
         return result
 
     except Exception as e:
         logger.error(f"Error sending sales invoice: {str(e)}")
-        return {
-            'success': False,
-            'error': str(e)
-        }
-
+        return {'success': False, 'error': str(e)}
 
 def send_credit_note_to_jofotara(credit_note, user=None):
     """Send credit note to JoFotara"""
     try:
+        # 1. تجهيز البيانات الأساسية
         invoice_data = prepare_credit_note_data(credit_note)
+        
+        # 2. ضمان وجود الـ XML في البيانات
+        if 'invoice_xml' not in invoice_data:
+            if hasattr(credit_note, 'generate_ubl_xml'):
+                invoice_data['invoice_xml'] = credit_note.generate_ubl_xml()
+            else:
+                invoice_data['invoice_xml'] = ""
+            
+        # 3. إرسال البيانات
         result = send_invoice_to_jofotara(invoice_data, 'credit_note')
 
-        # Log the result only if user is provided
         if user:
             from core.models import AuditLog
             AuditLog.objects.create(
@@ -792,17 +815,14 @@ def send_credit_note_to_jofotara(credit_note, user=None):
                 action_type='send_credit_note',
                 content_type='SalesCreditNote',
                 object_id=credit_note.id,
-                description=f'إرسال إشعار خصم {credit_note.note_number} إلى JoFotara: {"نجح" if result["success"] else "فشل"}'
+                description=f'إرسال إشعار خصم {credit_note.note_number} إلى JoFotara: {"نجح" if result.get("success") else "فشل"}'
             )
 
         return result
 
     except Exception as e:
         logger.error(f"Error sending credit note: {str(e)}")
-        return {
-            'success': False,
-            'error': str(e)
-        }
+        return {'success': False, 'error': str(e)}
 
 
 def send_debit_note_to_jofotara(debit_note, user=None):
@@ -1048,4 +1068,37 @@ def send_purchase_debit_note_to_jofotara(debit_note, user=None):
             'success': False,
             'error': str(e)
         }
-
+def get_invoice_status_from_jofotara(invoice_number):
+    """
+    تستعلم عن حالة الفاتورة من سيرفر JoFotara لجلب الـ QR Code
+    """
+    import requests
+    from settings.models import JoFotaraSettings
+    
+    settings = JoFotaraSettings.objects.first()
+    if not settings:
+        return {'success': False, 'error': 'إعدادات JoFotara غير موجودة'}
+        
+    url = f"{settings.api_url.rstrip('/')}/invoices/{invoice_number}/status"
+    
+    # إضافة headers للتعامل مع الـ JSON بشكل صحيح
+    headers = {'Content-Type': 'application/json'}
+    
+    try:
+        # رفع التايم أوت إلى 15 ثانية لضمان استجابة السيرفر
+        response = requests.get(url, headers=headers, timeout=15)
+        
+        if response.status_code == 200:
+            data = response.json()
+            return {
+                'success': True,
+                # استخدام مفاتيح بديلة لضمان جلب البيانات حتى لو تغيرت تسمية الحقول في الـ API
+                'qr_code': data.get('qr_code') or data.get('qr'),
+                'verification_url': data.get('verification_url') or data.get('qr_link')
+            }
+        
+        # في حال الفشل، إرجاع نص الخطأ القادم من السيرفر لسهولة التشخيص
+        return {'success': False, 'error': f"السيرفر أعاد كود: {response.status_code}, الرد: {response.text}"}
+        
+    except Exception as e:
+        return {'success': False, 'error': str(e)}

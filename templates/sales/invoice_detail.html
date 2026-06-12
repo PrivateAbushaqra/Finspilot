@@ -201,14 +201,53 @@
                         </td>
                     </tr>
                     {% endif %}
-                    {% if invoice.jofotara_qr_code %}
+                    <tr>
+                        <td><strong>{% trans "Tax Status" %}:</strong></td>
+                        <td>
+                            {% if invoice.is_posted_to_tax %}
+                                {% if invoice.jofotara_qr_code %}
+                                    <span class="badge badge-success">{% trans "Posted Successfully" %}</span>
+                                    <br>
+                                    <img src="{{ invoice.jofotara_qr_code }}" 
+                                            alt="JoFotara QR Code" 
+                                            style="max-width: 150px; max-height: 150px;" 
+                                            class="border p-2 mt-2">
+                                {% else %}
+                                    <span class="badge badge-warning">{% trans "Pending QR Code" %}</span>
+                                    <br>
+                                    <small class="text-muted">{% trans "Invoice sent, waiting for tax authority." %}</small>
+                                    <br>
+                                    <a href="{% url 'sales:send_invoice_to_jofotara' invoice.pk %}" class="btn btn-sm btn-secondary mt-2">
+                                        {% trans "Update Status" %}
+                                    </a>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge badge-danger">{% trans "Not Posted" %}</span>
+                                <br>
+                                <a href="{% url 'sales:send_invoice_to_jofotara' invoice.pk %}" class="btn btn-sm btn-primary mt-2">
+                                    {% trans "Send to JoFotara" %}
+                                </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <!--{% if invoice.jofotara_qr_code %}
                     <tr>
                         <td><strong>{% trans "QR Code" %}:</strong></td>
                         <td>
-                            <img src="{{ invoice.jofotara_qr_code }}" alt="JoFotara QR Code" style="max-width: 200px; max-height: 200px;" class="border p-2">
+                            <img src="{{ invoice.jofotara_qr_code }}" 
+                                 alt="JoFotara QR Code" 
+                                 style="max-width: 200px; max-height: 200px;" 
+                                 class="border p-2">
                         </td>
                     </tr>
-                    {% endif %}
+                    {% else %}
+                    <tr>
+                        <td><strong>{% trans "QR Code" %}:</strong></td>
+                        <td>
+                            <span class="text-muted">{% trans "Not available" %}</span>
+                        </td>
+                    </tr>
+                    {% endif %}-->
                     {% endif %}
                 </table>
             </div>
