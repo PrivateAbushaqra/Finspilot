@@ -1068,37 +1068,77 @@ def send_purchase_debit_note_to_jofotara(debit_note, user=None):
             'success': False,
             'error': str(e)
         }
-def get_invoice_status_from_jofotara(invoice_number):
+def get_invoice_status_from_jofotara(invoice_number, max_retries=3, retry_delay=2):
     """
-    تستعلم عن حالة الفاتورة من سيرفر JoFotara لجلب الـ QR Code
+    تستعلم عن حالة الفاتورة من سيرفر JoFotara لجلب الـ QR Code.
+    تعيد المحاولة عند فشل الاتصال أو حدوث خطأ مؤقت في السيرفر (5xx).
     """
     import requests
+    import time
     from settings.models import JoFotaraSettings
-    
+
     settings = JoFotaraSettings.objects.first()
     if not settings:
         return {'success': False, 'error': 'إعدادات JoFotara غير موجودة'}
-        
+
     url = f"{settings.api_url.rstrip('/')}/invoices/{invoice_number}/status"
-    
-    # إضافة headers للتعامل مع الـ JSON بشكل صحيح
     headers = {'Content-Type': 'application/json'}
-    
-    try:
-        # رفع التايم أوت إلى 15 ثانية لضمان استجابة السيرفر
-        response = requests.get(url, headers=headers, timeout=15)
-        
-        if response.status_code == 200:
-            data = response.json()
-            return {
-                'success': True,
-                # استخدام مفاتيح بديلة لضمان جلب البيانات حتى لو تغيرت تسمية الحقول في الـ API
-                'qr_code': data.get('qr_code') or data.get('qr'),
-                'verification_url': data.get('verification_url') or data.get('qr_link')
-            }
-        
-        # في حال الفشل، إرجاع نص الخطأ القادم من السيرفر لسهولة التشخيص
-        return {'success': False, 'error': f"السيرفر أعاد كود: {response.status_code}, الرد: {response.text}"}
-        
-    except Exception as e:
-        return {'success': False, 'error': str(e)}
+
+    last_error = None
+    for attempt in range(1, max_retries + 1):
+        try:
+            # رفع الـ timeout لـ 15 ثانية لضمان اكتمال الاستجابة
+            response = requests.get(url, headers=headers, timeout=15)
+
+            if response.status_code == 200:
+                data = response.json()
+                # إضافة مرونة لجلب البيانات حتى لو اختلفت مسميات الحقول في الـ API
+                return {
+                    'success': True,
+                    'qr_code': data.get('qr_code') or data.get('qr'),
+                    'verification_url': data.get('verification_url') or data.get('qr_link')
+                }
+
+            # إرجاع نص الرد من السيرفر لتسهيل التشخيص عند حدوث خطأ
+            last_error = f"كود السيرفر: {response.status_code}, الرد: {response.text}"
+            # أخطاء الخادم المؤقتة (5xx) تستحق إعادة المحاولة
+            if response.status_code >= 500 and attempt < max_retries:
+                logger.warning(f"JoFotara status check attempt {attempt}/{max_retries} returned {response.status_code}, retrying...")
+                time.sleep(retry_delay)
+                continue
+            return {'success': False, 'error': last_error}
+
+        except requests.RequestException as e:
+            # فشل في الاتصال بالشبكة/السيرفر: أعد المحاولة
+            last_error = str(e)
+            logger.warning(f"JoFotara status check attempt {attempt}/{max_retries} failed: {last_error}")
+            if attempt < max_retries:
+                time.sleep(retry_delay)
+                continue
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    return {'success': False, 'error': last_error or 'فشل الاتصال بالسيرفر بعد عدة محاولات'}
+
+
+def fetch_invoice_qr_with_retry(invoice_number, max_attempts=5, delay=2):
+    """
+    تحاول جلب رمز QR من سيرفر JoFotara بشكل متكرر حتى الحصول عليه أو
+    استنفاد عدد المحاولات. تُستخدم بعد إرسال الفاتورة مباشرة لأن السيرفر
+    قد يحتاج بعض الوقت لتوليد رمز QR (فالاستعلام يستمر حتى ينجح).
+    """
+    import time
+
+    last_result = {'success': False, 'error': 'لم تبدأ المحاولة'}
+    for attempt in range(1, max_attempts + 1):
+        status_result = get_invoice_status_from_jofotara(invoice_number)
+        last_result = status_result
+        if status_result.get('success') and status_result.get('qr_code'):
+            status_result['attempts'] = attempt
+            return status_result
+        logger.info(f"QR not ready for invoice {invoice_number} (attempt {attempt}/{max_attempts})")
+        if attempt < max_attempts:
+            time.sleep(delay)
+
+    last_result['attempts'] = max_attempts
+    return last_result

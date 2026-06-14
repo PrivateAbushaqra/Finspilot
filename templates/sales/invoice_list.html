@@ -577,6 +577,19 @@
                                         <span class="badge bg-secondary" title="{% trans 'Posted to Tax Authority' %}">
                                             <i class="fas fa-check-circle"></i> {% trans "Posted" %}
                                         </span>
+                                        {% if invoice.jofotara_qr_code %}
+                                            <br>
+                                            <img src="{{ invoice.jofotara_qr_code }}"
+                                                 alt="JoFotara QR Code"
+                                                 title="{% trans 'JoFotara QR Code' %}"
+                                                 style="max-width: 60px; max-height: 60px;"
+                                                 class="border p-1 mt-1">
+                                        {% else %}
+                                            <br>
+                                            <span class="badge bg-warning text-dark mt-1" title="{% trans 'Invoice sent, waiting for QR code' %}">
+                                                {% trans "Pending QR Code" %}
+                                            </span>
+                                        {% endif %}
                                     {% else %}
                                         <span class="badge bg-danger" title="{% trans 'Not posted yet' %}">
                                             <i class="fas fa-times-circle"></i> {% trans "Not Posted" %}

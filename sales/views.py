@@ -3290,67 +3290,56 @@ def send_invoice_to_jofotara(request, pk):
             messages.error(request, error_msg)
             return redirect('sales:invoice_list')
         
-        # Import the utility function
-        from settings.utils import send_sales_invoice_to_jofotara
-        
-        import time
+        # Import the utility functions
         from django.contrib import messages
         from django.utils import timezone
-        from settings.utils import get_invoice_status_from_jofotara
+        from settings.utils import (
+            send_sales_invoice_to_jofotara,
+            fetch_invoice_qr_with_retry,
+        )
 
-        # Send the invoice
-        result = send_sales_invoice_to_jofotara(invoice, request.user)
-        print(f"DEBUG: FULL SERVER RESPONSE: {result}")
-        
-        # --- محاولة جلب الحالة إذا كان الـ QR مفقوداً ---
-        if result.get('success') and not result.get('qr_code'):
-            time.sleep(1.5) # تأخير بسيط للسماح للسيرفر بمعالجة الطلب
-            try:
-                status_result = get_invoice_status_from_jofotara(invoice.invoice_number)
-                
+        # --- منطق "مدرك للحالة" (status-aware) ---
+        # إذا سبق إرسال الفاتورة (لها jofotara_uuid)، فلا نعيد الإرسال للسيرفر
+        # (ما يمنع أخطاء 405 Method Not Allowed والإرسال المكرر)، بل نكتفي
+        # بالاستعلام عن رمز QR. وإلا نقوم بالإرسال الأصلي ثم نجلب الـ QR.
+        if invoice.jofotara_uuid:
+            print(f"DEBUG: Invoice already submitted (UUID: {invoice.jofotara_uuid}), fetching QR only")
+            result = {'success': True, 'uuid': invoice.jofotara_uuid}
+            status_result = fetch_invoice_qr_with_retry(invoice.invoice_number)
+            if status_result.get('success') and status_result.get('qr_code'):
+                result['qr_code'] = status_result['qr_code']
+                result['verification_url'] = status_result.get('verification_url')
+            elif not is_ajax:
+                messages.warning(request, "تم إرسال الفاتورة مسبقاً، لكن رمز QR غير جاهز حالياً. يرجى الانتظار دقيقة ثم التحديث.")
+        else:
+            # Send the invoice for the first time
+            result = send_sales_invoice_to_jofotara(invoice, request.user)
+            print(f"DEBUG: FULL SERVER RESPONSE: {result}")
+
+            # --- جلب الحالة إذا نجح الإرسال لكن الـ QR مفقود ---
+            if result.get('success') and not result.get('qr_code'):
+                status_result = fetch_invoice_qr_with_retry(invoice.invoice_number)
                 if status_result.get('success') and status_result.get('qr_code'):
                     result['qr_code'] = status_result['qr_code']
                     result['verification_url'] = status_result.get('verification_url')
-                else:
-                    if not is_ajax:
-                        messages.warning(request, "تم إرسال الفاتورة بنجاح، لكن رمز QR غير جاهز حالياً. يرجى الانتظار دقيقة ثم التحديث.")
-            except Exception as e:
-                print(f"DEBUG: Status check failed: {e}")
-        
-        # --- استكمال الحفظ (الجزء المضاف لإتمام العملية) ---
+                elif not is_ajax:
+                    messages.warning(request, "تم إرسال الفاتورة بنجاح، لكن رمز QR غير جاهز حالياً. يرجى الانتظار دقيقة ثم التحديث.")
+
+        # --- استكمال الحفظ ---
         if result.get('success'):
             if 'uuid' in result:
                 invoice.jofotara_uuid = result.get('uuid')
                 invoice.jofotara_sent_at = timezone.now()
-                invoice.jofotara_verification_url = result.get('verification_url')
-                
+                if result.get('verification_url'):
+                    invoice.jofotara_verification_url = result.get('verification_url')
+
                 qr_val = (result.get('qr_code') or "").strip()
-                
                 if qr_val:
                     invoice.jofotara_qr_code = qr_val if qr_val.startswith('data:image') else f"data:image/png;base64,{qr_val}"
-                else:
-                    invoice.jofotara_qr_code = None 
-                
+
                 invoice.is_posted_to_tax = True
                 invoice.save()
-        
-        # استكمال الحفظ
-        if result['success']:
-            if 'uuid' in result:
-                invoice.jofotara_uuid = result.get('uuid')
-                invoice.jofotara_sent_at = timezone.now()
-                invoice.jofotara_verification_url = result.get('verification_url')
-                
-                qr_val = (result.get('qr_code') or "").strip()
-                
-                if qr_val:
-                    invoice.jofotara_qr_code = qr_val if qr_val.startswith('data:image') else f"data:image/png;base64,{qr_val}"
-                else:
-                    invoice.jofotara_qr_code = None 
-                
-                invoice.is_posted_to_tax = True
-                invoice.save()
-                
+
                 # تسجيل في سجل الأنشطة
                 try:
                     from core.models import AuditLog
@@ -3364,11 +3353,11 @@ def send_invoice_to_jofotara(request, pk):
                     )
                 except Exception:
                     pass
-            
+
             msg = f'تم إرسال الفاتورة {invoice.invoice_number} إلى JoFotara بنجاح.'
             if not invoice.jofotara_qr_code:
                 msg += " (لم يتم استلام رمز QR)."
-            
+
             if not is_ajax:
                 messages.success(request, msg)
         else:
@@ -4111,37 +4100,47 @@ def invoice_post_to_tax(request, pk):
         return redirect('sales:invoice_detail', pk=pk)
     
     # استيراد الوظائف المطلوبة
-    import time
     from django.utils import timezone
-    from settings.utils import get_invoice_status_from_jofotara
-    from sales.utils import send_sales_invoice_to_jofotara # الدالة التي ترسل الفاتورة
+    from settings.utils import (
+        fetch_invoice_qr_with_retry,
+        send_sales_invoice_to_jofotara,  # الدالة التي ترسل الفاتورة
+    )
 
-    # 1. عملية الإرسال الفعلي للسيرفر
+    # 1. إذا كان رمز QR محفوظاً مسبقاً، فلا داعي لإعادة الإرسال للسيرفر
+    if invoice.is_posted_to_tax and (invoice.jofotara_qr_code or "").strip():
+        messages.info(request, _('This invoice has already been posted and its QR code is stored.'))
+        return redirect('sales:invoice_detail', pk=pk)
+
+    # 2. عملية الإرسال الفعلي للسيرفر
     result = send_sales_invoice_to_jofotara(invoice, request.user)
-    
-    # 2. إذا نجح الإرسال ولكن لا يوجد QR، حاول الاستعلام
+
+    # 3. إذا نجح الإرسال ولكن لا يوجد QR، أعد محاولة الاستعلام حتى الحصول عليه
     if result.get('success') and not result.get('qr_code'):
-        time.sleep(1.5)
-        status_result = get_invoice_status_from_jofotara(invoice.invoice_number)
+        status_result = fetch_invoice_qr_with_retry(invoice.invoice_number)
         if status_result.get('success') and status_result.get('qr_code'):
             result['qr_code'] = status_result['qr_code']
             result['verification_url'] = status_result.get('verification_url')
 
-    # 3. الحفظ في قاعدة البيانات
+    # 4. الحفظ في قاعدة البيانات
     if result.get('success'):
         invoice.is_posted_to_tax = True
         invoice.jofotara_sent_at = timezone.now()
         invoice.jofotara_uuid = result.get('uuid')
-        
+        if result.get('verification_url'):
+            invoice.jofotara_verification_url = result.get('verification_url')
+
         qr_val = (result.get('qr_code') or "").strip()
         if qr_val:
             invoice.jofotara_qr_code = qr_val if qr_val.startswith('data:image') else f"data:image/png;base64,{qr_val}"
-        
+
         invoice.save()
-        messages.success(request, _('Invoice has been successfully posted to tax authority'))
+        if (invoice.jofotara_qr_code or "").strip():
+            messages.success(request, _('Invoice has been successfully posted to tax authority'))
+        else:
+            messages.warning(request, _('Invoice sent, but the QR code is not ready yet. Please update the status later.'))
     else:
         messages.error(request, f"خطأ في الاتصال بالضريبة: {result.get('error', 'Unknown Error')}")
-    
+
     return redirect('sales:invoice_detail', pk=pk)
 
 
