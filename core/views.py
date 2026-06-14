@@ -46,7 +46,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         
         # جمع dashboard_sections من مجموعات المستخدم
-        #user_groups = self.request.user.groups.all()
+        user_groups = self.request.user.groups.all()
         dashboard_sections = set()
         for group in user_groups:
             #sections = getattr(group, 'dashboard_sections', '').split(',') if getattr(group, 'dashboard_sections', None) else []
