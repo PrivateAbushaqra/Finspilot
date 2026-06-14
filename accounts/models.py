@@ -4,6 +4,21 @@ from django.contrib.auth import get_user_model
 from customers.models import CustomerSupplier
 from decimal import Decimal
 
+from django.contrib.auth.models import Group
+
+# موديل مستقل لتخزين الإعدادات الخاصة بالمجموعات
+class GroupSettings(models.Model):
+    group = models.OneToOneField(Group, on_delete=models.CASCADE, related_name='settings')
+    dashboard_sections = models.TextField(
+        _('Dashboard Sections'), 
+        blank=True, 
+        null=True,
+        help_text=_('Comma separated list of sections')
+    )
+
+    class Meta:
+        verbose_name = _('Group Settings')
+
 User = get_user_model()
 
 
