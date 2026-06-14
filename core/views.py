@@ -47,21 +47,12 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         
         # جمع dashboard_sections من مجموعات المستخدم
         #user_groups = self.request.user.groups.all()
-        #dashboard_sections = set()
-        #for group in user_groups:
-            #sections = getattr(group, 'dashboard_sections', '').split(',') if getattr(group, 'dashboard_sections', None) else []
-            ##sections = group.dashboard_sections.split(',') if group.dashboard_sections else []
-            #dashboard_sections.update(sections)
-        # جمع dashboard_sections من مجموعات المستخدم
-        user_groups = self.request.user.groups.all()
         dashboard_sections = set()
         for group in user_groups:
-            # محاولة آمنة لجلب القيمة دون التسبب في خطأ إذا كان العمود غير موجود
-            try:
-                sections = group.dashboard_sections.split(',') if hasattr(group, 'dashboard_sections') and group.dashboard_sections else []
-                dashboard_sections.update(sections)
-            except:
-                pass
+            #sections = getattr(group, 'dashboard_sections', '').split(',') if getattr(group, 'dashboard_sections', None) else []
+            sections = group.dashboard_sections.split(',') if group.dashboard_sections else []
+            dashboard_sections.update(sections)
+        
         
         # إضافة الأقسام تلقائياً للمستخدمين ذوي الصلاحيات العالية
         if self.request.user.is_superuser or getattr(self.request.user, 'user_type', None) in ['superadmin', 'admin']:
