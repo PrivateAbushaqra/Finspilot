@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('auth', '0013_group_dashboard_sections_group_is_system_group'),
+        #('auth', '0013_group_dashboard_sections_group_is_system_group'),
         ('accounts', '0007_alter_accounttransaction_options_and_more'),
     ]
 
